@@ -1,0 +1,4 @@
+[submodule "docs"]
+	path = docs
+	url = https://github.com/ITU-Core-Dumped/epulse-docs.git
+	branch = main
