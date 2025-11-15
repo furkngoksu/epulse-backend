@@ -48,3 +48,6 @@ media/
 # Docker
 *.pid
 *.tar
+
+# UV
+uv.lock
