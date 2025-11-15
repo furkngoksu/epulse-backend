@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.pyc
+
+# Virtual environment
+venv/
+.env/
+*.env
+
+# Environment & config
+.env.*
+*.sqlite3
+instance/
+
+# FastAPI / Uvicorn
+*.log
+
+# Byte-compiled / optimized / DLL files
+*.dll
+*.dylib
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Cache
+.cache/
+.mypy_cache/
+.pytest_cache/
+coverage_html/
+htmlcov/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Static / generated files
+staticfiles/
+media/
+
+# Docker
+*.pid
+*.tar

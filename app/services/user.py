@@ -1,13 +1,13 @@
 from sqlalchemy.orm import Session
 from app.repositories.user import UserRepository
+from app.schemas.auth import LoginRequest
 from app.schemas.user import UserCreate
 from app.models.user import User
-from app.core.security import hash_password, create_access_token, create_refresh_token
+from app.core.security import hash_password, create_access_token, create_refresh_token, verify_password
 from app.exceptions.exceptions import (
     ConflictException,
-    BadRequestException
+    UnauthorizedException
 )
-
 
 class UserService:
 
@@ -38,3 +38,17 @@ class UserService:
         refresh_token = create_refresh_token({"sub": str(saved_user.id)})
 
         return saved_user, access_token, refresh_token
+    
+    @staticmethod
+    def login(db: Session, req: LoginRequest):
+        user = UserRepository.get_by_tc(db, req.nationalid)
+        if not user:
+            raise UnauthorizedException("Invalid national ID or password")
+
+        if not verify_password(req.password, user.passwordHash):
+            raise UnauthorizedException("Invalid national ID or password")
+
+        access_token = create_access_token({"sub": str(user.id)})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+
+        return user, access_token, refresh_token

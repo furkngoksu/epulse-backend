@@ -15,7 +15,12 @@ async def lifespan(app: FastAPI):
     print("👋 Application shutting down...")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="E-Pulse Mobile API",
+    description="Backend API for E-Pulse mobile healthcare system.",
+    version="1.0.0"
+)
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -45,4 +50,10 @@ app.include_router(app_router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "app.main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,        
+        log_level="info"
+    )
