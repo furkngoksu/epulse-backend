@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.models.doctor_profile import DoctorProfile
 from app.models.user import RoleEnum
@@ -17,14 +16,14 @@ class DoctorProfileService:
         return DoctorProfileRepository.get_all(db, skip=skip, limit=limit)
 
     @staticmethod
-    def get_by_id(db: Session, profile_id: UUID) -> DoctorProfile:
+    def get_by_id(db: Session, profile_id: int) -> DoctorProfile:
         profile = DoctorProfileRepository.get_by_id(db, profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")
         return profile
 
     @staticmethod
-    def get_by_hospital_id(db: Session, hospital_id: UUID) -> list[DoctorProfile]:
+    def get_by_hospital_id(db: Session, hospital_id: int) -> list[DoctorProfile]:
         # Verify hospital exists
         hospital = HospitalRepository.get_by_id(db, hospital_id)
         if not hospital:
@@ -60,7 +59,7 @@ class DoctorProfileService:
         return DoctorProfileRepository.create(db, profile)
 
     @staticmethod
-    def update(db: Session, profile_id: UUID, data: DoctorProfileUpdate) -> DoctorProfile:
+    def update(db: Session, profile_id: int, data: DoctorProfileUpdate) -> DoctorProfile:
         profile = DoctorProfileRepository.get_by_id(db, profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")
@@ -79,7 +78,7 @@ class DoctorProfileService:
         return DoctorProfileRepository.update(db, profile)
 
     @staticmethod
-    def delete(db: Session, profile_id: UUID) -> None:
+    def delete(db: Session, profile_id: int) -> None:
         profile = DoctorProfileRepository.get_by_id(db, profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")

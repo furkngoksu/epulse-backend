@@ -1,7 +1,5 @@
-from sqlalchemy import Column, String, Date, Enum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Date, Enum, Integer
 from app.db.base import Base
-import uuid
 import enum
 
 
@@ -20,7 +18,7 @@ class RoleEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     nationalId = Column(String(11), unique=True, index=True, nullable=False)
     firstName = Column(String(50), nullable=False)
     lastName = Column(String(50), nullable=False)

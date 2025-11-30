@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
@@ -32,7 +31,7 @@ def get_doctor_profiles(
 
 @router.get("/hospital/{hospital_id}", response_model=list[DoctorProfileResponse])
 def get_doctors_by_hospital(
-    hospital_id: UUID,
+    hospital_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -46,7 +45,7 @@ def get_doctors_by_hospital(
 
 @router.get("/{profile_id}", response_model=DoctorProfileResponse)
 def get_doctor_profile(
-    profile_id: UUID,
+    profile_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -74,7 +73,7 @@ def create_doctor_profile(
 
 @router.put("/{profile_id}", response_model=DoctorProfileResponse)
 def update_doctor_profile(
-    profile_id: UUID,
+    profile_id: int,
     data: DoctorProfileUpdate,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
@@ -89,7 +88,7 @@ def update_doctor_profile(
 
 @router.delete("/{profile_id}", status_code=204)
 def delete_doctor_profile(
-    profile_id: UUID,
+    profile_id: int,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
 ):

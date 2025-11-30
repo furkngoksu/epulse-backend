@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from uuid import UUID
 
 
 class HospitalBase(BaseModel):
@@ -23,7 +22,7 @@ class HospitalUpdate(BaseModel):
 
 
 class HospitalResponse(HospitalBase):
-    id: UUID
+    id: int
 
     class Config:
         from_attributes = True

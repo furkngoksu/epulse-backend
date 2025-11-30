@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
@@ -28,7 +27,7 @@ def get_hospitals(
 
 @router.get("/{hospital_id}", response_model=HospitalResponse)
 def get_hospital(
-    hospital_id: UUID,
+    hospital_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -56,7 +55,7 @@ def create_hospital(
 
 @router.put("/{hospital_id}", response_model=HospitalResponse)
 def update_hospital(
-    hospital_id: UUID,
+    hospital_id: int,
     data: HospitalUpdate,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
@@ -71,7 +70,7 @@ def update_hospital(
 
 @router.delete("/{hospital_id}", status_code=204)
 def delete_hospital(
-    hospital_id: UUID,
+    hospital_id: int,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin)
 ):

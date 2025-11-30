@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from app.models.hospital import Hospital
 from app.repositories.hospital import HospitalRepository
@@ -14,7 +13,7 @@ class HospitalService:
         return HospitalRepository.get_all(db, skip=skip, limit=limit)
 
     @staticmethod
-    def get_by_id(db: Session, hospital_id: UUID) -> Hospital:
+    def get_by_id(db: Session, hospital_id: int) -> Hospital:
         hospital = HospitalRepository.get_by_id(db, hospital_id)
         if not hospital:
             raise NotFoundException("Hospital not found")
@@ -32,7 +31,7 @@ class HospitalService:
         return HospitalRepository.create(db, hospital)
 
     @staticmethod
-    def update(db: Session, hospital_id: UUID, data: HospitalUpdate) -> Hospital:
+    def update(db: Session, hospital_id: int, data: HospitalUpdate) -> Hospital:
         hospital = HospitalRepository.get_by_id(db, hospital_id)
         if not hospital:
             raise NotFoundException("Hospital not found")
@@ -52,7 +51,7 @@ class HospitalService:
         return HospitalRepository.update(db, hospital)
 
     @staticmethod
-    def delete(db: Session, hospital_id: UUID) -> None:
+    def delete(db: Session, hospital_id: int) -> None:
         hospital = HospitalRepository.get_by_id(db, hospital_id)
         if not hospital:
             raise NotFoundException("Hospital not found")

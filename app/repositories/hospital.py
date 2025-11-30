@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from uuid import UUID
 from app.models.hospital import Hospital
 
 
@@ -10,7 +9,7 @@ class HospitalRepository:
         return db.query(Hospital).offset(skip).limit(limit).all()
 
     @staticmethod
-    def get_by_id(db: Session, hospital_id: UUID) -> Hospital | None:
+    def get_by_id(db: Session, hospital_id: int) -> Hospital | None:
         return db.query(Hospital).filter(Hospital.id == hospital_id).first()
 
     @staticmethod
