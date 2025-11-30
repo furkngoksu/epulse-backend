@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from app.api.deps.db import get_db
 from app.core.security import get_user_id_from_token
 from app.repositories.user import UserRepository
-from app.exceptions.exceptions import UnauthorizedException
+from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
+from app.models.user import User, RoleEnum
 
 def get_current_user(
     db: Session = Depends(get_db),
@@ -25,3 +26,11 @@ def get_current_user(
         raise UnauthorizedException("User not found")
 
     return user
+
+
+def get_current_admin(
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.role != RoleEnum.admin:
+        raise ForbiddenException("Admin access required")
+    return current_user
