@@ -41,7 +41,7 @@ class UserService:
     
     @staticmethod
     def login(db: Session, req: LoginRequest):
-        user = UserRepository.get_by_tc(db, req.nationalid)
+        user = UserRepository.get_by_tc(db, req.nationalId)
         if not user:
             raise UnauthorizedException("Invalid national ID or password")
 

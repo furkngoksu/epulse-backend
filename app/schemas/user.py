@@ -1,7 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import date
 from app.models.user import GenderEnum, RoleEnum
-from uuid import UUID
 
 
 class UserCreate(BaseModel):
@@ -16,7 +15,7 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: UUID
+    id: int
     nationalId: str
     firstName: str
     lastName: str
