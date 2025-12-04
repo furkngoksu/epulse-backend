@@ -7,6 +7,7 @@ from app.api.v1.doctor_profile import router as doctor_profile_router
 from app.api.v1.medication import router as medication_router
 from app.api.v1.drug_interaction import router as drug_interaction_router
 from app.api.v1.doctor_patient_relationship import router as doctor_patient_relationship_router
+from app.api.v1.appointment import router as appointment_router
 
 app_router = APIRouter(prefix="/api/v1")
 
@@ -17,3 +18,4 @@ app_router.include_router(doctor_profile_router, prefix="/doctor-profiles", tags
 app_router.include_router(medication_router, prefix="/medications", tags=["Medications"])
 app_router.include_router(drug_interaction_router, prefix="/drug-interactions", tags=["Drug Interactions"])
 app_router.include_router(doctor_patient_relationship_router, prefix="/doctor-patient-relationships", tags=["Doctor-Patient Relationships"])
+app_router.include_router(appointment_router, prefix="/appointments", tags=["Appointments"])

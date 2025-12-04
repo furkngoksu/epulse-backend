@@ -4,6 +4,7 @@ from .doctor_profile import DoctorProfile
 from .medication import Medication
 from .drug_interaction import DrugInteraction
 from .doctor_patient_relationship import DoctorPatientRelationship
+from .appointment import Appointment
 
 __all__ = [
     "User",
@@ -11,5 +12,6 @@ __all__ = [
     "DoctorProfile",
     "Medication",
     "DrugInteraction",
-    "DoctorPatientRelationship"
+    "DoctorPatientRelationship",
+    "Appointment"
 ]
