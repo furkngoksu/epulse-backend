@@ -51,7 +51,6 @@ def decode_token(token: str, refresh: bool = False) -> dict:
     except JWTError:
         raise UnauthorizedException("Invalid or expired token.")
 
-
 def get_user_id_from_token(token: str) -> str:
     payload = decode_token(token)
     user_id = payload.get("sub")

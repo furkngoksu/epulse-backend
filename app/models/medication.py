@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Text
 from app.db.base import Base
-
+from sqlalchemy.orm import relationship
 
 class Medication(Base):
     __tablename__ = "medications"
@@ -12,3 +12,6 @@ class Medication(Base):
     strength = Column(String(50), nullable=False)
     manufacturer = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
+
+    # Relationships
+    patient_medications = relationship("PatientMedications", back_populates="medication")
