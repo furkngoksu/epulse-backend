@@ -5,7 +5,7 @@ from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.user import User
 from app.schemas.hospital import HospitalCreate, HospitalUpdate, HospitalResponse
-from app.services.hospital import HospitalService
+from app.services.doctor_service import DoctorService
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ def get_hospitals(
     Get all hospitals.
     Requires authentication.
     """
-    hospitals = HospitalService.get_all(db, skip=skip, limit=limit)
+    hospitals = DoctorService.get_all_hospitals(db, skip=skip, limit=limit)
     return hospitals
 
 
@@ -35,7 +35,7 @@ def get_hospital(
     Get a hospital by ID.
     Requires authentication.
     """
-    hospital = HospitalService.get_by_id(db, hospital_id)
+    hospital = DoctorService.get_hospital_by_id(db, hospital_id)
     return hospital
 
 
@@ -49,7 +49,7 @@ def create_hospital(
     Create a new hospital.
     Requires admin role.
     """
-    hospital = HospitalService.create(db, data)
+    hospital = DoctorService.create_hospital(db, data)
     return hospital
 
 
@@ -64,7 +64,7 @@ def update_hospital(
     Update a hospital.
     Requires admin role.
     """
-    hospital = HospitalService.update(db, hospital_id, data)
+    hospital = DoctorService.update_hospital(db, hospital_id, data)
     return hospital
 
 
@@ -78,4 +78,4 @@ def delete_hospital(
     Delete a hospital.
     Requires admin role.
     """
-    HospitalService.delete(db, hospital_id)
+    DoctorService.delete_hospital(db, hospital_id)

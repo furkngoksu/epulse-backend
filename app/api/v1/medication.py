@@ -5,7 +5,7 @@ from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.user import User
 from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
-from app.services.medication import MedicationService
+from app.services.catalog_service import CatalogService
 
 router = APIRouter()
 
@@ -21,7 +21,7 @@ def get_medications(
     Get all medications.
     Requires authentication.
     """
-    medications = MedicationService.get_all(db, skip=skip, limit=limit)
+    medications = CatalogService.get_all_medications(db, skip=skip, limit=limit)
     return medications
 
 
@@ -37,7 +37,7 @@ def search_medications(
     Search medications by commercial name.
     Requires authentication.
     """
-    medications = MedicationService.search_by_name(db, name, skip=skip, limit=limit)
+    medications = CatalogService.search_medications(db, name, skip=skip, limit=limit)
     return medications
 
 
@@ -51,7 +51,7 @@ def get_medication(
     Get a medication by ID.
     Requires authentication.
     """
-    medication = MedicationService.get_by_id(db, medication_id)
+    medication = CatalogService.get_medication_by_id(db, medication_id)
     return medication
 
 
@@ -65,7 +65,7 @@ def create_medication(
     Create a new medication.
     Requires admin role.
     """
-    medication = MedicationService.create(db, data)
+    medication = CatalogService.create_medication(db, data)
     return medication
 
 
@@ -80,7 +80,7 @@ def update_medication(
     Update a medication.
     Requires admin role.
     """
-    medication = MedicationService.update(db, medication_id, data)
+    medication = CatalogService.update_medication(db, medication_id, data)
     return medication
 
 
@@ -94,4 +94,4 @@ def delete_medication(
     Delete a medication.
     Requires admin role.
     """
-    MedicationService.delete(db, medication_id)
+    CatalogService.delete_medication(db, medication_id)

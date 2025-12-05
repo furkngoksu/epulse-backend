@@ -3,11 +3,12 @@ from sqlalchemy.orm import Session
 
 from app.models.appointment import Appointment, AppointmentStatusEnum
 from app.models.user import RoleEnum
-from app.models.doctor_patient_relationship import DoctorPatientRelationship
 from app.repositories.appointment import AppointmentRepository
 from app.repositories.user import UserRepository
 from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
 from app.schemas.appointment import AppointmentCreate, AppointmentUpdate, AppointmentBook
+from app.schemas.doctor_patient_relationship import DoctorPatientRelationshipCreate
+from app.services.doctor_service import DoctorService
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
 
 
@@ -141,11 +142,11 @@ class AppointmentService:
             db, appointment.doctor_id, patient_id
         )
         if not existing_relationship:
-            relationship = DoctorPatientRelationship(
+            relationship_data = DoctorPatientRelationshipCreate(
                 doctor_id=appointment.doctor_id,
                 patient_id=patient_id
             )
-            db.add(relationship)
+            DoctorService.create_doctor_patient_relationship(db, relationship_data)
 
         return AppointmentRepository.update(db, appointment)
 

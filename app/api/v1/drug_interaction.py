@@ -9,7 +9,7 @@ from app.schemas.drug_interaction import (
     DrugInteractionUpdate,
     DrugInteractionResponse
 )
-from app.services.drug_interaction import DrugInteractionService
+from app.services.catalog_service import CatalogService
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ def get_drug_interactions(
     Get all drug interactions.
     Requires authentication.
     """
-    interactions = DrugInteractionService.get_all(db, skip=skip, limit=limit)
+    interactions = CatalogService.get_all_interactions(db, skip=skip, limit=limit)
     return interactions
 
 
@@ -41,7 +41,7 @@ def check_drug_interaction(
     Returns the interaction if found, null otherwise.
     Requires authentication.
     """
-    interaction = DrugInteractionService.check_interaction(db, medication_id_1, medication_id_2)
+    interaction = CatalogService.check_drug_interaction(db, medication_id_1, medication_id_2)
     return interaction
 
 
@@ -55,7 +55,7 @@ def get_interactions_for_medication(
     Get all interactions for a specific medication.
     Requires authentication.
     """
-    interactions = DrugInteractionService.get_interactions_for_medication(db, medication_id)
+    interactions = CatalogService.get_medication_interactions(db, medication_id)
     return interactions
 
 
@@ -69,7 +69,7 @@ def get_drug_interaction(
     Get a drug interaction by ID.
     Requires authentication.
     """
-    interaction = DrugInteractionService.get_by_id(db, interaction_id)
+    interaction = CatalogService.get_interaction_by_id(db, interaction_id)
     return interaction
 
 
@@ -83,7 +83,7 @@ def create_drug_interaction(
     Create a new drug interaction.
     Requires admin role.
     """
-    interaction = DrugInteractionService.create(db, data)
+    interaction = CatalogService.create_interaction(db, data)
     return interaction
 
 
@@ -98,7 +98,7 @@ def update_drug_interaction(
     Update a drug interaction.
     Requires admin role.
     """
-    interaction = DrugInteractionService.update(db, interaction_id, data)
+    interaction = CatalogService.update_interaction(db, interaction_id, data)
     return interaction
 
 
@@ -112,4 +112,4 @@ def delete_drug_interaction(
     Delete a drug interaction.
     Requires admin role.
     """
-    DrugInteractionService.delete(db, interaction_id)
+    CatalogService.delete_interaction(db, interaction_id)

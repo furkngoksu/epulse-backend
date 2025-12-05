@@ -9,7 +9,7 @@ from app.schemas.doctor_profile import (
     DoctorProfileUpdate,
     DoctorProfileResponse
 )
-from app.services.doctor_profile import DoctorProfileService
+from app.services.doctor_service import DoctorService
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ def get_doctor_profiles(
     Get all doctor profiles.
     Requires authentication.
     """
-    profiles = DoctorProfileService.get_all(db, skip=skip, limit=limit)
+    profiles = DoctorService.get_all_doctor_profiles(db, skip=skip, limit=limit)
     return profiles
 
 
@@ -39,7 +39,7 @@ def get_doctors_by_hospital(
     Get all doctors at a specific hospital.
     Requires authentication.
     """
-    profiles = DoctorProfileService.get_by_hospital_id(db, hospital_id)
+    profiles = DoctorService.get_doctors_by_hospital(db, hospital_id)
     return profiles
 
 
@@ -53,7 +53,7 @@ def get_doctor_profile(
     Get a doctor profile by ID.
     Requires authentication.
     """
-    profile = DoctorProfileService.get_by_id(db, profile_id)
+    profile = DoctorService.get_doctor_profile_by_id(db, profile_id)
     return profile
 
 
@@ -67,7 +67,7 @@ def create_doctor_profile(
     Create a new doctor profile.
     Requires admin role.
     """
-    profile = DoctorProfileService.create(db, data)
+    profile = DoctorService.create_doctor_profile(db, data)
     return profile
 
 
@@ -82,7 +82,7 @@ def update_doctor_profile(
     Update a doctor profile.
     Requires admin role.
     """
-    profile = DoctorProfileService.update(db, profile_id, data)
+    profile = DoctorService.update_doctor_profile(db, profile_id, data)
     return profile
 
 
@@ -96,4 +96,4 @@ def delete_doctor_profile(
     Delete a doctor profile.
     Requires admin role.
     """
-    DoctorProfileService.delete(db, profile_id)
+    DoctorService.delete_doctor_profile(db, profile_id)

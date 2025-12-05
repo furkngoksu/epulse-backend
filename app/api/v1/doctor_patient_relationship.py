@@ -8,7 +8,7 @@ from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
     DoctorPatientRelationshipResponse
 )
-from app.services.doctor_patient_relationship import DoctorPatientRelationshipService
+from app.services.doctor_service import DoctorService
 from app.exceptions.exceptions import ForbiddenException
 
 router = APIRouter()
@@ -25,7 +25,7 @@ def get_all_relationships(
     Get all doctor-patient relationships.
     Requires admin role.
     """
-    relationships = DoctorPatientRelationshipService.get_all(db, skip=skip, limit=limit)
+    relationships = DoctorService.get_all_relationships(db, skip=skip, limit=limit)
     return relationships
 
 
@@ -50,7 +50,7 @@ def get_patients_for_doctor(
     if current_user.role == RoleEnum.doctor and current_user.id != doctor_id:
         raise ForbiddenException("You can only view your own patients")
 
-    relationships = DoctorPatientRelationshipService.get_patients_for_doctor(
+    relationships = DoctorService.get_doctor_patients(
         db, doctor_id, skip=skip, limit=limit
     )
     return relationships
@@ -77,7 +77,7 @@ def get_doctors_for_patient(
     if current_user.role == RoleEnum.patient and current_user.id != patient_id:
         raise ForbiddenException("You can only view your own doctors")
 
-    relationships = DoctorPatientRelationshipService.get_doctors_for_patient(
+    relationships = DoctorService.get_patient_doctors(
         db, patient_id, skip=skip, limit=limit
     )
     return relationships
@@ -93,7 +93,7 @@ def get_relationship(
     Get a doctor-patient relationship by ID.
     Requires authentication.
     """
-    relationship = DoctorPatientRelationshipService.get_by_id(db, relationship_id)
+    relationship = DoctorService.get_relationship_by_id(db, relationship_id)
     return relationship
 
 
@@ -116,7 +116,7 @@ def create_relationship(
     if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot create doctor-patient relationships")
 
-    relationship = DoctorPatientRelationshipService.create(db, data)
+    relationship = DoctorService.create_doctor_patient_relationship(db, data)
     return relationship
 
 
@@ -130,4 +130,4 @@ def delete_relationship(
     Delete a doctor-patient relationship.
     Requires admin role.
     """
-    DoctorPatientRelationshipService.delete(db, relationship_id)
+    DoctorService.delete_doctor_patient_relationship(db, relationship_id)
