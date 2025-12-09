@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, Date, Enum, Integer
 from app.db.base import Base
+from sqlalchemy.orm import relationship
 import enum
 
 
@@ -28,3 +29,6 @@ class User(Base):
     dateOfBirth = Column(Date, nullable=False)
     gender = Column(Enum(GenderEnum), nullable=False)
     role = Column(Enum(RoleEnum), default=RoleEnum.patient, nullable=False)
+
+    # Relationships
+    medications = relationship("PatientMedications", back_populates="user")

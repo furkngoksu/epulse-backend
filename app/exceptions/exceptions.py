@@ -1,6 +1,5 @@
 from fastapi import HTTPException, status
 
-
 class BadRequestException(HTTPException):
     def __init__(self, message: str, fields: dict | None = None):
         detail = {
@@ -15,7 +14,6 @@ class BadRequestException(HTTPException):
             detail=detail
         )
 
-
 class UnauthorizedException(HTTPException):
     def __init__(self, message: str = "Unauthorized"):
         detail = {
@@ -27,7 +25,6 @@ class UnauthorizedException(HTTPException):
             detail=detail
         )
 
-
 class ForbiddenException(HTTPException):
     def __init__(self, message: str = "Forbidden"):
         detail = {
@@ -38,7 +35,6 @@ class ForbiddenException(HTTPException):
             status_code=status.HTTP_403_FORBIDDEN,
             detail=detail
         )
-
 
 class NotFoundException(HTTPException):
     def __init__(self, message: str = "Not found"):
@@ -60,5 +56,16 @@ class ConflictException(HTTPException):
         }
         super().__init__(
             status_code=status.HTTP_409_CONFLICT,
+            detail=detail
+        )
+
+class PermissionDeniedException(HTTPException):
+    def __init__(self, message: str = "Permission Denied"):
+        detail = {
+            "code": "PERMISSION_DENIED",
+            "message": message,
+        }
+        super().__init__(
+            status_code=status.HTTP_403_FORBIDDEN,
             detail=detail
         )
