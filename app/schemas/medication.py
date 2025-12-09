@@ -22,9 +22,11 @@ class MedicationUpdate(BaseModel):
     manufacturer: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = None
 
-
-class MedicationResponse(MedicationBase):
+class Medication(MedicationBase):
     id: int
 
     class Config:
         from_attributes = True
+
+class MedicationResponse(Medication):
+    pass

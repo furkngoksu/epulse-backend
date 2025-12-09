@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.api.deps.auth import get_current_user
-from app.models.user import User
+from app.schemas.user import User
 
 router = APIRouter()
 
@@ -14,7 +14,7 @@ def get_user_profile(current_user: User = Depends(get_current_user)):
     return {
         "success": True,
         "data": {
-            "firstName": current_user.firstName,
-            "lastName": current_user.lastName
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name
         }
     }

@@ -1,29 +1,28 @@
-from pydantic import BaseModel, EmailStr, Field
+import uuid
 from datetime import date
+from pydantic import BaseModel, EmailStr, Field
 from app.models.user import GenderEnum, RoleEnum
 
-
-class UserCreate(BaseModel):
-    nationalId: str = Field(..., min_length=11, max_length=11)
-    firstName: str
-    lastName: str
+class User(BaseModel):
+    id : uuid.UUID
+    national_id: str
+    first_name: str
+    last_name: str
     email: EmailStr
-    password: str = Field(..., min_length=8, max_length=128)
-    phoneNumber: str
-    dateOfBirth: date
+    phone_number: str
+    date_of_birth: date
     gender: GenderEnum
-
-
-class UserResponse(BaseModel):
-    id: int
-    nationalId: str
-    firstName: str
-    lastName: str
-    email: str
-    phoneNumber: str
     role: RoleEnum
 
     class Config:
         from_attributes = True
+class UserUpdate(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    email: EmailStr | None = None
+    phone_number: str | None = None
+    date_of_birth: date | None = None
+    gender: GenderEnum | None = None
 
-
+class UserResponse(User):
+    pass

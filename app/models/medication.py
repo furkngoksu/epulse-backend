@@ -1,14 +1,28 @@
-from sqlalchemy import Column, String, Integer, Text
+from typing import TYPE_CHECKING
+import uuid
+from sqlalchemy import String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
+
 from app.db.base import Base
 
+if TYPE_CHECKING:
+    from app.models.prescription_item import PrescriptionItemModel
 
-class Medication(Base):
+class MedicationModel(Base):
     __tablename__ = "medications"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    commercial_name = Column(String(200), nullable=False)
-    active_ingredients = Column(String(500), nullable=False)
-    dosage_form = Column(String(100), nullable=False)
-    strength = Column(String(50), nullable=False)
-    manufacturer = Column(String(200), nullable=False)
-    description = Column(Text, nullable=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
+
+    commercial_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    active_ingredients: Mapped[str] = mapped_column(String(500), nullable=False)
+    dosage_form: Mapped[str] = mapped_column(String(100), nullable=False)
+    strength: Mapped[str] = mapped_column(String(50), nullable=False)
+    manufacturer: Mapped[str] = mapped_column(String(200), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    prescription_items: Mapped[list["PrescriptionItemModel"]] = relationship(
+        back_populates="medication"
+    )

@@ -4,28 +4,26 @@ from app.models.hospital import Hospital
 
 class HospitalRepository:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[Hospital]:
-        return db.query(Hospital).offset(skip).limit(limit).all()
+    def __init__(self, db: Session):
+        self.db = db
 
-    @staticmethod
-    def get_by_id(db: Session, hospital_id: int) -> Hospital | None:
-        return db.query(Hospital).filter(Hospital.id == hospital_id).first()
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[Hospital]:
+        return self.db.query(Hospital).offset(skip).limit(limit).all()
 
-    @staticmethod
-    def create(db: Session, hospital: Hospital) -> Hospital:
-        db.add(hospital)
-        db.commit()
-        db.refresh(hospital)
+    def get_by_id(self, hospital_id: int) -> Hospital | None:
+        return self.db.query(Hospital).filter(Hospital.id == hospital_id).first()
+
+    def create(self, hospital: Hospital) -> Hospital:
+        self.db.add(hospital)
+        self.db.commit()
+        self.db.refresh(hospital)
         return hospital
 
-    @staticmethod
-    def update(db: Session, hospital: Hospital) -> Hospital:
-        db.commit()
-        db.refresh(hospital)
+    def update(self, hospital: Hospital) -> Hospital:
+        self.db.commit()
+        self.db.refresh(hospital)
         return hospital
 
-    @staticmethod
-    def delete(db: Session, hospital: Hospital) -> None:
-        db.delete(hospital)
-        db.commit()
+    def delete(self, hospital: Hospital) -> None:
+        self.db.delete(hospital)
+        self.db.commit()
