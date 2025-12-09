@@ -12,11 +12,8 @@ if TYPE_CHECKING:
     from app.models.prescription_item import PrescriptionItemModel
 
 class Status(str, Enum):
-    PENDING_APPROVAL = "PENDING_APPROVAL"
-    APPROVED = "APPROVED"
-    DECLINED = "DECLINED"
-    EXPIRED = "EXPIRED"
-
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
 
 class PrescriptionModel(Base):
     __tablename__ = "prescriptions"
@@ -31,7 +28,7 @@ class PrescriptionModel(Base):
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     status: Mapped[Status] = mapped_column(
-        SAEnum(Status), nullable=False, default=Status.PENDING_APPROVAL
+        SAEnum(Status), nullable=False, default=Status.INACTIVE
     )
 
     items: Mapped[list["PrescriptionItemModel"]] = relationship(

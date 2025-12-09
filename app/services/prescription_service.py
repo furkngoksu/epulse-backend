@@ -42,7 +42,7 @@ class PrescriptionService:
             doctor_id=self.current_user.id,
             patient_id=data.patient_id,
             notes=data.notes,
-            status=Status.PENDING_APPROVAL
+            status=Status.INACTIVE
         )
 
         created = self.prescription_repository.create(prescription=new_prescription)
