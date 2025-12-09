@@ -1,9 +1,24 @@
 from pydantic import BaseModel, Field
-
+from app.schemas.user import UserResponse
 class LoginRequest(BaseModel):
-    nationalId: str = Field(..., min_length=11, max_length=11)
+    national_id: str = Field(..., min_length=11, max_length=11)
     password: str
-
 class LoginResponse(BaseModel):
     success: bool = True
-    data: dict
+    user: UserResponse
+    access_token: str
+    refresh_token: str
+class RegisterResponse(BaseModel):
+    user: UserResponse
+    access_token: str
+    refresh_token: str
+
+class RegisterRequest(BaseModel):
+    national_id: str = Field(..., min_length=11, max_length=11)
+    first_name: str
+    last_name: str
+    email: str
+    phone_number: str
+    password: str
+    date_of_birth: str
+    gender: str

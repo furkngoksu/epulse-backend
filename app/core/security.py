@@ -3,6 +3,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from app.core.config import settings
 from app.exceptions.exceptions import UnauthorizedException
+import uuid
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -51,10 +52,14 @@ def decode_token(token: str, refresh: bool = False) -> dict:
     except JWTError:
         raise UnauthorizedException("Invalid or expired token.")
 
-def get_user_id_from_token(token: str) -> str:
+def get_user_id_from_token(token: str) -> uuid.UUID:
     payload = decode_token(token)
-    user_id = payload.get("sub")
-    if not user_id:
+    user_id_str = payload.get("sub")
+    if not user_id_str:
         raise UnauthorizedException("Token does not contain user ID.")
+    try:
+        user_id = uuid.UUID(user_id_str)
+    except ValueError:
+        raise UnauthorizedException("Invalid user ID in token.")
 
     return user_id

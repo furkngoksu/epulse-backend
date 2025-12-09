@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.doctor_profile import DoctorProfile
 from app.models.user import RoleEnum
-from app.repositories.doctor_profile import DoctorProfileRepository
+from app.repositories.doctor_profile_repository import DoctorProfileRepository
 from app.repositories.user import UserRepository
 from app.repositories.hospital import HospitalRepository
 from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate
@@ -38,7 +38,7 @@ class DoctorProfileService:
         if not user:
             raise NotFoundException("User not found")
 
-        if user.role != RoleEnum.doctor:
+        if user.role != RoleEnum.DOCTOR:
             raise BadRequestException("User must have doctor role")
 
         # Check if profile already exists for this user

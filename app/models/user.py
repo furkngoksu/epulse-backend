@@ -1,34 +1,41 @@
-from sqlalchemy import Column, String, Date, Enum, Integer
+import uuid
+from datetime import date
+from enum import Enum
+
+from sqlalchemy import String, Date, Enum as SAEnum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
-from sqlalchemy.orm import relationship
-import enum
+
+class GenderEnum(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+    OTHER = "OTHER"
 
 
-class GenderEnum(str, enum.Enum):
-    male = "male"
-    female = "female"
-    other = "other"
+class RoleEnum(str, Enum):
+    ADMIN = "ADMIN"
+    DOCTOR = "DOCTOR"
+    PATIENT = "PATIENT"
 
 
-class RoleEnum(str, enum.Enum):
-    admin = "admin"
-    doctor = "doctor"
-    patient = "patient"
-
-
-class User(Base):
+class UserModel(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    nationalId = Column(String(11), unique=True, index=True, nullable=False)
-    firstName = Column(String(50), nullable=False)
-    lastName = Column(String(50), nullable=False)
-    email = Column(String(100), unique=True, index=True, nullable=False)
-    phoneNumber = Column(String(20), nullable=False)
-    passwordHash = Column(String(255), nullable=False)
-    dateOfBirth = Column(Date, nullable=False)
-    gender = Column(Enum(GenderEnum), nullable=False)
-    role = Column(Enum(RoleEnum), default=RoleEnum.patient, nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
 
-    # Relationships
-    medications = relationship("PatientMedications", back_populates="user")
+    national_id: Mapped[str] = mapped_column(String(11), unique=True, index=True, nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    phone_number: Mapped[str] = mapped_column(String(20), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    date_of_birth: Mapped[date] = mapped_column(Date, nullable=False)
+
+    gender: Mapped[GenderEnum] = mapped_column(SAEnum(GenderEnum), nullable=False)
+    role: Mapped[RoleEnum] = mapped_column(
+        SAEnum(RoleEnum), default=RoleEnum.PATIENT, nullable=False
+    )

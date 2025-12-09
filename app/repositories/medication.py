@@ -1,41 +1,40 @@
 from sqlalchemy.orm import Session
-from app.models.medication import Medication
+from app.models.medication import MedicationModel
 
 
 class MedicationRepository:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[Medication]:
-        return db.query(Medication).offset(skip).limit(limit).all()
+    def __init__(self, db: Session):
+        self.db = db
 
-    @staticmethod
-    def get_by_id(db: Session, medication_id: int) -> Medication | None:
-        return db.query(Medication).filter(Medication.id == medication_id).first()
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[MedicationModel]:
+        return self.db.query(MedicationModel).offset(skip).limit(limit).all()
 
-    @staticmethod
-    def search_by_name(db: Session, name: str, skip: int = 0, limit: int = 100) -> list[Medication]:
+    def get_by_id(self, medication_id: int) -> MedicationModel | None:
+        return self.db.query(MedicationModel).filter(MedicationModel.id == medication_id).first()
+
+    def search_by_name(self, name: str, skip: int = 0, limit: int = 100) -> list[MedicationModel]:
         return (
-            db.query(Medication)
-            .filter(Medication.commercial_name.ilike(f"%{name}%"))
+            self.db.query(MedicationModel)
+            .filter(MedicationModel.commercial_name.ilike(f"%{name}%"))
             .offset(skip)
             .limit(limit)
             .all()
         )
 
-    @staticmethod
-    def create(db: Session, medication: Medication) -> Medication:
-        db.add(medication)
-        db.commit()
-        db.refresh(medication)
+    def create(self, medication: MedicationModel) -> MedicationModel:
+        self.db.add(medication)
+        self.db.commit()
+        self.db.refresh(medication)
         return medication
 
-    @staticmethod
-    def update(db: Session, medication: Medication) -> Medication:
-        db.commit()
-        db.refresh(medication)
+    def update(self, medication: MedicationModel) -> MedicationModel:
+        self.db.commit()
+        self.db.refresh(medication)
         return medication
 
-    @staticmethod
-    def delete(db: Session, medication: Medication) -> None:
-        db.delete(medication)
-        db.commit()
+    def delete(self, medication: MedicationModel) -> None:
+        self.db.delete(medication)
+        self.db.commit()
+        self.db.delete(medication)
+        self.db.commit()

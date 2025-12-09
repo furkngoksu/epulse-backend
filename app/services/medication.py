@@ -1,43 +1,36 @@
-from sqlalchemy.orm import Session
-
-from app.models.medication import Medication
+from app.models import MedicationModel
 from app.repositories.medication import MedicationRepository
 from app.schemas.medication import MedicationCreate, MedicationUpdate
 from app.exceptions.exceptions import NotFoundException
+from app.schemas.medication import Medication
 
 
 class MedicationService:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[Medication]:
-        return MedicationRepository.get_all(db, skip=skip, limit=limit)
+    def __init__(self, medication_repository: MedicationRepository):
+        self.medication_repository = medication_repository
 
-    @staticmethod
-    def get_by_id(db: Session, medication_id: int) -> Medication:
-        medication = MedicationRepository.get_by_id(db, medication_id)
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[Medication]:
+        medications = self.medication_repository.get_all(skip=skip, limit=limit)
+        return [Medication.model_validate(m) for m in medications]
+
+    def get_by_id(self, medication_id: int) -> Medication:
+        medication = self.medication_repository.get_by_id(medication_id)
         if not medication:
             raise NotFoundException("Medication not found")
-        return medication
+        return Medication.model_validate(medication)
 
-    @staticmethod
-    def search_by_name(db: Session, name: str, skip: int = 0, limit: int = 100) -> list[Medication]:
-        return MedicationRepository.search_by_name(db, name, skip=skip, limit=limit)
+    def search_by_name(self, name: str, skip: int = 0, limit: int = 100) -> list[Medication]:
+        medications = self.medication_repository.search_by_name(name, skip=skip, limit=limit)
+        return [Medication.model_validate(m) for m in medications]
 
-    @staticmethod
-    def create(db: Session, data: MedicationCreate) -> Medication:
-        medication = Medication(
-            commercial_name=data.commercial_name,
-            active_ingredients=data.active_ingredients,
-            dosage_form=data.dosage_form,
-            strength=data.strength,
-            manufacturer=data.manufacturer,
-            description=data.description
-        )
-        return MedicationRepository.create(db, medication)
+    def create(self, data: MedicationCreate) -> Medication:
+        new_medication = MedicationModel(**data.model_dump())
+        medication = self.medication_repository.create(new_medication)
+        return Medication.model_validate(medication)
 
-    @staticmethod
-    def update(db: Session, medication_id: int, data: MedicationUpdate) -> Medication:
-        medication = MedicationRepository.get_by_id(db, medication_id)
+    def update(self, medication_id: int, data: MedicationUpdate) -> Medication:
+        medication = self.medication_repository.get_by_id(medication_id)
         if not medication:
             raise NotFoundException("Medication not found")
 
@@ -55,11 +48,11 @@ class MedicationService:
         if data.description is not None:
             medication.description = data.description
 
-        return MedicationRepository.update(db, medication)
+        updated_medication = self.medication_repository.update(medication)
+        return Medication.model_validate(updated_medication)
 
-    @staticmethod
-    def delete(db: Session, medication_id: int) -> None:
-        medication = MedicationRepository.get_by_id(db, medication_id)
+    def delete(self, medication_id: int) -> None:
+        medication = self.medication_repository.get_by_id(medication_id)
         if not medication:
             raise NotFoundException("Medication not found")
-        MedicationRepository.delete(db, medication)
+        self.medication_repository.delete(medication)
