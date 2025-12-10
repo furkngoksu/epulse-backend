@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
-from app.models.user import User, RoleEnum
+from app.schemas.user import User, RoleEnum
 from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
     DoctorPatientRelationshipResponse
