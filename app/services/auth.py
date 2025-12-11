@@ -1,8 +1,10 @@
+import uuid
 from app.repositories.user import UserRepository
-from app.schemas.auth import LoginRequest, RegisterRequest, RegisterResponse, LoginResponse
-from app.core.security import hash_password, create_access_token, create_refresh_token, verify_password
+from app.schemas.auth import ForgotPasswordRequest, LoginRequest, RefreshTokenRequest, RegisterRequest, RegisterResponse, LoginResponse, ResetPasswordRequest
+from app.core.security import create_password_reset_token, decode_password_reset_token, decode_token, hash_password, create_access_token, create_refresh_token, verify_password
 from app.exceptions.exceptions import (
     ConflictException,
+    NotFoundException,
     UnauthorizedException
 )
 from app.models.user import UserModel
@@ -62,3 +64,48 @@ class AuthService:
             access_token=access_token,
             refresh_token=refresh_token
         )
+
+    def refresh_token(self, request: RefreshTokenRequest) -> LoginResponse:
+        payload = decode_token(request.refresh_token, refresh=True)
+        user_id = payload.get("sub")
+
+        user = self.user_repository.get_by_id(uuid.UUID(user_id))
+        if not user:
+            raise UnauthorizedException("User not found")
+
+        new_access_token = create_access_token({"sub": user_id})
+        new_refresh_token = create_refresh_token({"sub": user_id})
+
+        return LoginResponse(
+            success=True,
+            user=UserResponse.model_validate(user),
+            access_token=new_access_token,
+            refresh_token=new_refresh_token
+        )
+    
+    def forgot_password(self, request: ForgotPasswordRequest) -> dict:
+        
+        user = self.user_repository.get_by_email(request.email)
+        if not user:
+            raise NotFoundException("User not found")
+        
+        token = create_password_reset_token(str(user.id))
+
+        # TODO: Mail gönderme işlemi burada yapılacak
+
+        return {"reset_token": token}
+    
+    def reset_password(self, request: ResetPasswordRequest) -> dict:
+        
+        user_id_str = decode_password_reset_token(request.token)
+        user_id = uuid.UUID(user_id_str)
+
+        user = self.user_repository.get_by_id(user_id)
+        if not user:
+            raise UnauthorizedException("Invalid reset token")
+
+        user.password_hash = hash_password(request.new_password)
+        self.user_repository.update(user)
+
+        return {"message": "Password updated successfully"}
+
