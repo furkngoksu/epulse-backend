@@ -8,7 +8,9 @@ from app.api.v1 import app_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("📌 Database initialized.")
+    # Initialize database - create tables if they don't exist
+    init_db()
+    print("📌 Database initialized - tables created if not exists.")
     yield
     # Shutdown
     print("👋 Application shutting down...")
