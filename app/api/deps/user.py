@@ -1,9 +1,4 @@
-from fastapi import Depends
-from sqlalchemy.orm import Session
-from app.api.deps.db import get_db
-from app.repositories.user import UserRepository
+# Re-export from centralized repositories module
+from app.api.deps.repositories import get_user_repository
 
-def get_user_repository(
-    db: Session = Depends(get_db),
-) -> UserRepository:
-    return UserRepository(db=db)
+__all__ = ["get_user_repository"]
