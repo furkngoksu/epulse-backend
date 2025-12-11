@@ -63,3 +63,39 @@ def get_user_id_from_token(token: str) -> uuid.UUID:
         raise UnauthorizedException("Invalid user ID in token.")
 
     return user_id
+
+def create_password_reset_token(user_id: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    to_encode = {
+        "sub": user_id,
+        "type": "password_reset",
+        "exp": int(expire.timestamp()),
+    }
+
+    encoded_jwt = jwt.encode(
+        to_encode,
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
+    return encoded_jwt
+
+
+def decode_password_reset_token(token: str) -> str:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+        if payload.get("type") != "password_reset":
+            raise UnauthorizedException("Invalid reset token.")
+
+        user_id_str = payload.get("sub")
+        if not user_id_str:
+            raise UnauthorizedException("Invalid reset token.")
+
+        return user_id_str
+
+    except JWTError:
+        raise UnauthorizedException("Invalid or expired reset token.")
