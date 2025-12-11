@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
-from app.models.user import User
+from app.schemas.user import User
 from app.schemas.drug_interaction import (
     DrugInteractionCreate,
     DrugInteractionUpdate,
