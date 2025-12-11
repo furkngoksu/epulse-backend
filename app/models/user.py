@@ -4,9 +4,15 @@ from enum import Enum
 
 from sqlalchemy import String, Date, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.patient_medication import PatientMedicationModel
+    from app.models.appointment import Appointment
+    from app.models.doctor_profile import DoctorProfile
+    from app.models.doctor_patient_relationship import DoctorPatientRelationship
 
 class GenderEnum(str, Enum):
     MALE = "MALE"
@@ -38,4 +44,32 @@ class UserModel(Base):
     gender: Mapped[GenderEnum] = mapped_column(SAEnum(GenderEnum), nullable=False)
     role: Mapped[RoleEnum] = mapped_column(
         SAEnum(RoleEnum), default=RoleEnum.PATIENT, nullable=False
+    )
+
+    # Relationships
+    patient_medications: Mapped[list["PatientMedicationModel"]] = relationship(
+        "PatientMedicationModel", back_populates="user"
+    )
+    doctor_appointments: Mapped[list["Appointment"]] = relationship(
+        "Appointment",
+        foreign_keys="Appointment.doctor_id",
+        back_populates="doctor"
+    )
+    patient_appointments: Mapped[list["Appointment"]] = relationship(
+        "Appointment",
+        foreign_keys="Appointment.patient_id",
+        back_populates="patient"
+    )
+    doctor_profile: Mapped["DoctorProfile | None"] = relationship(
+        "DoctorProfile", back_populates="user", uselist=False
+    )
+    patient_relationships: Mapped[list["DoctorPatientRelationship"]] = relationship(
+        "DoctorPatientRelationship",
+        foreign_keys="DoctorPatientRelationship.doctor_id",
+        back_populates="doctor"
+    )
+    doctor_relationships: Mapped[list["DoctorPatientRelationship"]] = relationship(
+        "DoctorPatientRelationship",
+        foreign_keys="DoctorPatientRelationship.patient_id",
+        back_populates="patient"
     )
