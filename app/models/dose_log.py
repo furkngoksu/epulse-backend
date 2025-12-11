@@ -1,22 +1,30 @@
-from sqlalchemy import Column, Enum, Integer, ForeignKey, DateTime, Boolean, String
+import uuid
+from sqlalchemy import Enum, ForeignKey, DateTime, String
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from sqlalchemy.orm import Mapped, mapped_column
+from datetime import datetime
 import enum
+from sqlalchemy import UUID
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.patient_medication import PatientMedicationModel
 
 class  DoseStatusEnum(str, enum.Enum):
-    taken = "taken"
-    missed = "missed"
-    skipped = "skipped"
+    TAKEN = "taken"
+    MISSED = "missed"
+    SKIPPED = "skipped"
 
-class DoseLog(Base):
+class DoseLogModel(Base):
     __tablename__ = "dose_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    patient_medication_id = Column(Integer, ForeignKey("patient_medications.id"), nullable=False)
-    scheduled_time = Column(DateTime, nullable=False)
-    taken_time = Column(DateTime, nullable=True)
-    status = Column(Enum(DoseStatusEnum), nullable=False)
-    skip_reason = Column(String(500), nullable=True)
+    id : Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4, index=True)
+    patient_medication_id : Mapped[uuid.UUID] = mapped_column(UUID, ForeignKey("patient_medications.id"), nullable=False)
+    scheduled_time : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    taken_time : Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    status : Mapped[DoseStatusEnum] = mapped_column(Enum(DoseStatusEnum), nullable=False)
+    skip_reason : Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # Relationships
-    patient_medication = relationship("PatientMedication", back_populates="dose_logs", foreign_keys=[patient_medication_id])
+    patient_medication : Mapped["PatientMedicationModel"] = relationship("PatientMedicationModel", back_populates="dose_logs", foreign_keys=[patient_medication_id])

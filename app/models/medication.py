@@ -1,4 +1,5 @@
-from sqlalchemy import String, Integer, Text
+import uuid
+from sqlalchemy import UUID, String, Text
 from app.db.base import Base
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import TYPE_CHECKING
@@ -8,7 +9,7 @@ if TYPE_CHECKING:
 class MedicationModel(Base):
     __tablename__ = "medications"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4, index=True)
     commercial_name: Mapped[str] = mapped_column(String(200), nullable=False)
     active_ingredients: Mapped[str] = mapped_column(String(500), nullable=False)
     dosage_form: Mapped[str] = mapped_column(String(100), nullable=False)

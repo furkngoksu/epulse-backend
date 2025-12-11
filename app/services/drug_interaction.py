@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.models.drug_interaction import DrugInteraction
 from app.repositories.drug_interaction import DrugInteractionRepository
-from app.repositories.medication import MedicationRepository
+from app.repositories.medication_repository import MedicationRepository
 from app.schemas.drug_interaction import DrugInteractionCreate, DrugInteractionUpdate
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
 

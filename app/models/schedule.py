@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.models.patient_medication import PatientMedicationModel
+    from app.models.schedule_time import ScheduleTimeModel
 
 class ScheduleModel(Base):
     __tablename__ = "schedules"
@@ -20,3 +21,4 @@ class ScheduleModel(Base):
     specific_days: Mapped[JSONB] = mapped_column(JSONB, nullable=True)
 
     patient_medication: Mapped["PatientMedicationModel"] = relationship("PatientMedicationModel", back_populates="schedules")
+    schedule_times: Mapped[list["ScheduleTimeModel"]] = relationship("ScheduleTimeModel", back_populates="schedule", cascade="all, delete-orphan")

@@ -1,3 +1,4 @@
+from app.models.patient_medication import PatientMedicationModel
 from app.models.schedule import ScheduleModel
 from sqlalchemy.orm import Session
 import uuid
@@ -14,21 +15,32 @@ class ScheduleRepository:
         self.db.refresh(schedule)
         return schedule
 
-    def get_schedule(self, schedule_id: uuid.UUID) -> ScheduleModel | None:
+    def get_by_id(self, schedule_id: uuid.UUID) -> ScheduleModel | None:
         return self.db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).first()
 
-    def update_schedule(self, schedule_id: uuid.UUID, schedule: ScheduleModel) -> ScheduleModel:
-        self.db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).update(schedule)
+    def update_schedule(self, schedule: ScheduleModel) -> ScheduleModel:
         self.db.commit()
+        self.db.refresh(schedule)
         return schedule
 
     def delete_schedule(self, schedule_id: uuid.UUID) -> bool:
         self.db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).delete()
         self.db.commit()
-        if self.get_schedule(schedule_id) is None:
+        if self.get_by_id(schedule_id) is None:
             return True
         return False
-
+    
+    def get_all_schedule_for_patient_today(self, patient_id: uuid.UUID, date) -> list[ScheduleModel]:
+        return (
+            self.db.query(ScheduleModel)
+            .join(PatientMedicationModel, ScheduleModel.patient_medication_id == PatientMedicationModel.id)
+            .join(ScheduleTimeModel, ScheduleModel.id == ScheduleTimeModel.schedule_id)
+            .filter(PatientMedicationModel.is_active == True)
+            .filter(PatientMedicationModel.user_id == patient_id)
+            .filter(ScheduleModel.start_date <= date)
+            .filter(ScheduleModel.end_date >= date)
+            .all()
+        )
 
 class ScheduleTimeRepository:
     def __init__(self, db_session: Session):
@@ -40,17 +52,17 @@ class ScheduleTimeRepository:
         self.db.refresh(schedule_time)
         return schedule_time
 
-    def get_schedule_time(self, schedule_time_id: uuid.UUID) -> ScheduleTimeModel | None:
+    def get_by_id(self, schedule_time_id: uuid.UUID) -> ScheduleTimeModel | None:
         return self.db.query(ScheduleTimeModel).filter(ScheduleTimeModel.id == schedule_time_id).first()
 
-    def update_schedule_time(self, schedule_time_id: uuid.UUID, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
-        self.db.query(ScheduleTimeModel).filter(ScheduleTimeModel.id == schedule_time_id).update(schedule_time)
+    def update_schedule_time(self, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
         self.db.commit()
+        self.db.refresh(schedule_time)
         return schedule_time
 
     def delete_schedule_time(self, schedule_time_id: uuid.UUID) -> bool:
         self.db.query(ScheduleTimeModel).filter(ScheduleTimeModel.id == schedule_time_id).delete()
         self.db.commit()
-        if self.get_schedule_time(schedule_time_id) is None:
+        if self.get_by_id(schedule_time_id) is None:
             return True
         return False
