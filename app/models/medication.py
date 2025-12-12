@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.prescription_item import PrescriptionItemModel
+    from app.models.patient_medication import PatientMedicationModel
 
 class MedicationModel(Base):
     __tablename__ = "medications"
@@ -18,3 +19,4 @@ class MedicationModel(Base):
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
     prescription_items: Mapped[list["PrescriptionItemModel"]] = relationship("PrescriptionItemModel", back_populates="medication")
+    patient_medications: Mapped[list["PatientMedicationModel"]] = relationship("PatientMedicationModel", back_populates="medication")

@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from app.models.drug_interaction import DrugInteraction
@@ -5,22 +6,22 @@ from app.models.drug_interaction import DrugInteraction
 
 class DrugInteractionRepository:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[DrugInteraction]:
-        return db.query(DrugInteraction).offset(skip).limit(limit).all()
+    def __init__(self, db: Session):
+        self.db = db
 
-    @staticmethod
-    def get_by_id(db: Session, interaction_id: int) -> DrugInteraction | None:
-        return db.query(DrugInteraction).filter(DrugInteraction.id == interaction_id).first()
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[DrugInteraction]:
+        return self.db.query(DrugInteraction).offset(skip).limit(limit).all()
 
-    @staticmethod
-    def get_by_medication_ids(db: Session, med_id_1: int, med_id_2: int) -> DrugInteraction | None:
+    def get_by_id(self, interaction_id: uuid.UUID) -> DrugInteraction | None:
+        return self.db.query(DrugInteraction).filter(DrugInteraction.id == interaction_id).first()
+
+    def get_by_medication_ids(self, med_id_1: uuid.UUID, med_id_2: uuid.UUID) -> DrugInteraction | None:
         """
         Check if there's an interaction between two medications.
         Checks both directions since the interaction is bidirectional.
         """
         return (
-            db.query(DrugInteraction)
+            self.db.query(DrugInteraction)
             .filter(
                 or_(
                     and_(
@@ -36,11 +37,10 @@ class DrugInteractionRepository:
             .first()
         )
 
-    @staticmethod
-    def get_interactions_for_medication(db: Session, medication_id: int) -> list[DrugInteraction]:
+    def get_interactions_for_medication(self, medication_id: uuid.UUID) -> list[DrugInteraction]:
         """Get all interactions involving a specific medication."""
         return (
-            db.query(DrugInteraction)
+            self.db.query(DrugInteraction)
             .filter(
                 or_(
                     DrugInteraction.medication_id_1 == medication_id,
@@ -50,20 +50,17 @@ class DrugInteractionRepository:
             .all()
         )
 
-    @staticmethod
-    def create(db: Session, interaction: DrugInteraction) -> DrugInteraction:
-        db.add(interaction)
-        db.commit()
-        db.refresh(interaction)
+    def create(self, interaction: DrugInteraction) -> DrugInteraction:
+        self.db.add(interaction)
+        self.db.commit()
+        self.db.refresh(interaction)
         return interaction
 
-    @staticmethod
-    def update(db: Session, interaction: DrugInteraction) -> DrugInteraction:
-        db.commit()
-        db.refresh(interaction)
+    def update(self, interaction: DrugInteraction) -> DrugInteraction:
+        self.db.commit()
+        self.db.refresh(interaction)
         return interaction
 
-    @staticmethod
-    def delete(db: Session, interaction: DrugInteraction) -> None:
-        db.delete(interaction)
-        db.commit()
+    def delete(self, interaction: DrugInteraction) -> None:
+        self.db.delete(interaction)
+        self.db.commit()

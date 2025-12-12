@@ -1,4 +1,6 @@
+import uuid
 from sqlalchemy import Boolean, String, ForeignKey, Integer
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 from sqlalchemy.orm import Mapped, mapped_column
@@ -13,9 +15,9 @@ if TYPE_CHECKING:
 class PatientMedicationModel(Base):
     __tablename__ = "patient_medications"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    medication_id: Mapped[int] = mapped_column(Integer, ForeignKey("medications.id"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    medication_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("medications.id"), nullable=False)
     custom_name: Mapped[str] = mapped_column(String(255), nullable=False)
     initial_stock: Mapped[int] = mapped_column(Integer, nullable=False)
     current_stock: Mapped[int] = mapped_column(Integer, nullable=False)

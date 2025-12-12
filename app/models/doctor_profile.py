@@ -1,15 +1,26 @@
-from sqlalchemy import Column, String, ForeignKey, Integer
-from sqlalchemy.orm import relationship
+import uuid
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import TYPE_CHECKING
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.user import UserModel
+    from app.models.hospital import Hospital
 
 
 class DoctorProfile(Base):
     __tablename__ = "doctor_profiles"
 
-    id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    hospital_id = Column(Integer, ForeignKey("hospitals.id"), nullable=False)
-    specialty = Column(String(100), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True
+    )
+    hospital_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("hospitals.id"), nullable=False
+    )
+    specialty: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Relationships
-    user = relationship("User", backref="doctor_profile")
-    hospital = relationship("Hospital", backref="doctor_profiles")
+    user: Mapped["UserModel"] = relationship("UserModel", back_populates="doctor_profile")
+    hospital: Mapped["Hospital"] = relationship("Hospital", back_populates="doctor_profiles")

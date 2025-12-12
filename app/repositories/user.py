@@ -15,6 +15,14 @@ class UserRepository:
 
     def get_by_id(self, user_id: uuid.UUID) -> UserModel | None:
         return self.db.query(UserModel).filter(UserModel.id == user_id).first()
+    
+    def get_users(self, skip=0, limit=100):
+        return (
+            self.db.query(UserModel)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def create(self, user: UserModel) -> UserModel:
         self.db.add(user)
