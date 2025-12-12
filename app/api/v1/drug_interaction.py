@@ -9,7 +9,7 @@ from app.schemas.drug_interaction import (
     DrugInteractionUpdate,
     DrugInteractionResponse
 )
-from app.services.drug_interaction import DrugInteractionService
+from app.services import DrugInteractionService
 
 router = APIRouter()
 

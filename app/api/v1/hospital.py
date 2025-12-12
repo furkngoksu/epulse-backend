@@ -5,7 +5,7 @@ from app.api.deps.db import get_db
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.user import User
 from app.schemas.hospital import HospitalCreate, HospitalUpdate, HospitalResponse
-from app.services.hospital import HospitalService
+from app.services import HospitalService
 
 router = APIRouter()
 

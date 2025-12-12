@@ -2,13 +2,19 @@ import uuid
 from app.repositories.user import UserRepository
 from app.schemas.auth import ForgotPasswordRequest, LoginRequest, RefreshTokenRequest, RegisterRequest, RegisterResponse, LoginResponse, ResetPasswordRequest
 from app.core.security import create_password_reset_token, decode_password_reset_token, decode_token, hash_password, create_access_token, create_refresh_token, verify_password
-from app.exceptions.exceptions import (
+from app.exceptions import (
     ConflictException,
     NotFoundException,
     UnauthorizedException
 )
+from app.schemas.auth import (
+    ForgotPasswordRequest, ForgotPasswordResponse,
+    LoginRequest, LoginResponse,
+    RefreshTokenRequest,
+    RegisterRequest, RegisterResponse,
+    ResetPasswordRequest, ResetPasswordResponse, UserResponse
+)
 from app.models.user import UserModel
-from app.schemas.user import UserResponse
 
 class AuthService:
 
@@ -83,7 +89,7 @@ class AuthService:
             refresh_token=new_refresh_token
         )
     
-    def forgot_password(self, request: ForgotPasswordRequest) -> dict:
+    def forgot_password(self, request: ForgotPasswordRequest) -> ForgotPasswordResponse:
         
         user = self.user_repository.get_by_email(request.email)
         if not user:
@@ -93,9 +99,9 @@ class AuthService:
 
         # TODO: Mail gönderme işlemi burada yapılacak
 
-        return {"reset_token": token}
+        return ForgotPasswordResponse(reset_token=token)
     
-    def reset_password(self, request: ResetPasswordRequest) -> dict:
+    def reset_password(self, request: ResetPasswordRequest) -> ResetPasswordResponse:
         
         user_id_str = decode_password_reset_token(request.token)
         user_id = uuid.UUID(user_id_str)
@@ -107,5 +113,5 @@ class AuthService:
         user.password_hash = hash_password(request.new_password)
         self.user_repository.update(user)
 
-        return {"message": "Password updated successfully"}
+        return ResetPasswordResponse()
 

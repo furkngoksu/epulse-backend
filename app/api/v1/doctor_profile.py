@@ -9,7 +9,7 @@ from app.schemas.doctor_profile import (
     DoctorProfileUpdate,
     DoctorProfileResponse
 )
-from app.services.doctor_profile import DoctorProfileService
+from app.services import DoctorProfileService
 
 router = APIRouter()
 

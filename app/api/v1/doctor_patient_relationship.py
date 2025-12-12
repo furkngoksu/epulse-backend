@@ -8,8 +8,8 @@ from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
     DoctorPatientRelationshipResponse
 )
-from app.services.doctor_patient_relationship import DoctorPatientRelationshipService
-from app.exceptions.exceptions import ForbiddenException
+from app.services import DoctorPatientRelationshipService
+from app.exceptions import ForbiddenException
 
 router = APIRouter()
 
