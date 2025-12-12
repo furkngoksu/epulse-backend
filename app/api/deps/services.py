@@ -22,7 +22,7 @@ from app.repositories.prescription_item_repository import PrescriptionItemReposi
 from app.repositories.prescription_repository import PrescriptionRepository
 from app.repositories.user import UserRepository
 from app.schemas.user import User
-from app.services.appointment import AppointmentService
+from app.services.appointment_service import AppointmentService
 from app.services.catalog_service import CatalogService
 from app.services.doctor_service import DoctorService
 from app.services.prescription_service import PrescriptionService

@@ -14,7 +14,7 @@ from app.schemas.appointment import (
     AppointmentBook,
     AppointmentResponse
 )
-from app.services.appointment import AppointmentService
+from app.services.appointment_service import AppointmentService
 from app.exceptions.exceptions import ForbiddenException
 
 router = APIRouter()
