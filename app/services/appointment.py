@@ -1,5 +1,5 @@
+import uuid
 from datetime import datetime
-from sqlalchemy.orm import Session
 
 from app.models.appointment import Appointment, AppointmentStatusEnum
 from app.models.user import RoleEnum
@@ -13,82 +13,86 @@ from app.exceptions.exceptions import NotFoundException, BadRequestException, Co
 
 class AppointmentService:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[Appointment]:
-        return AppointmentRepository.get_all(db, skip=skip, limit=limit)
+    def __init__(
+        self,
+        appointment_repository: AppointmentRepository,
+        user_repository: UserRepository,
+        doctor_patient_relationship_repository: DoctorPatientRelationshipRepository
+    ):
+        self.appointment_repository = appointment_repository
+        self.user_repository = user_repository
+        self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
 
-    @staticmethod
-    def get_by_id(db: Session, appointment_id: int) -> Appointment:
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[Appointment]:
+        return self.appointment_repository.get_all(skip=skip, limit=limit)
+
+    def get_by_id(self, appointment_id: uuid.UUID) -> Appointment:
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
         return appointment
 
-    @staticmethod
     def get_by_doctor(
-        db: Session,
-        doctor_id: int,
+        self,
+        doctor_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
         status: AppointmentStatusEnum | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         # Verify doctor exists and has doctor role
-        doctor = UserRepository.get_by_id(db, doctor_id)
+        doctor = self.user_repository.get_by_id(doctor_id)
         if not doctor:
             raise NotFoundException("Doctor not found")
-        if doctor.role != RoleEnum.doctor:
+        if doctor.role != RoleEnum.DOCTOR:
             raise BadRequestException("User is not a doctor")
 
-        return AppointmentRepository.get_by_doctor(db, doctor_id, skip, limit, status)
+        return self.appointment_repository.get_by_doctor(doctor_id, skip, limit, status)
 
-    @staticmethod
     def get_by_patient(
-        db: Session,
-        patient_id: int,
+        self,
+        patient_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
         status: AppointmentStatusEnum | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         # Verify patient exists and has patient role
-        patient = UserRepository.get_by_id(db, patient_id)
+        patient = self.user_repository.get_by_id(patient_id)
         if not patient:
             raise NotFoundException("Patient not found")
-        if patient.role != RoleEnum.patient:
+        if patient.role != RoleEnum.PATIENT:
             raise BadRequestException("User is not a patient")
 
-        return AppointmentRepository.get_by_patient(db, patient_id, skip, limit, status)
+        return self.appointment_repository.get_by_patient(patient_id, skip, limit, status)
 
-    @staticmethod
     def get_free_appointments(
-        db: Session,
+        self,
         skip: int = 0,
         limit: int = 100,
-        doctor_id: int | None = None,
+        doctor_id: uuid.UUID | None = None,
         from_datetime: datetime | None = None
     ) -> list[Appointment]:
         """Get available appointments for booking."""
         if doctor_id:
             # Verify doctor exists and has doctor role
-            doctor = UserRepository.get_by_id(db, doctor_id)
+            doctor = self.user_repository.get_by_id(doctor_id)
             if not doctor:
                 raise NotFoundException("Doctor not found")
-            if doctor.role != RoleEnum.doctor:
+            if doctor.role != RoleEnum.DOCTOR:
                 raise BadRequestException("User is not a doctor")
 
-        return AppointmentRepository.get_free_appointments(
-            db, skip=skip, limit=limit, doctor_id=doctor_id, from_datetime=from_datetime
+        return self.appointment_repository.get_free_appointments(
+            skip=skip, limit=limit, doctor_id=doctor_id, from_datetime=from_datetime
         )
 
-    @staticmethod
-    def create(db: Session, data: AppointmentCreate) -> Appointment:
+    def create(self, data: AppointmentCreate) -> Appointment:
         """Create a new free appointment slot."""
         # Validate doctor exists and has doctor role
-        doctor = UserRepository.get_by_id(db, data.doctor_id)
+        doctor = self.user_repository.get_by_id(data.doctor_id)
         if not doctor:
             raise NotFoundException(f"Doctor with id {data.doctor_id} not found")
-        if doctor.role != RoleEnum.doctor:
+        if doctor.role != RoleEnum.DOCTOR:
             raise BadRequestException(f"User with id {data.doctor_id} is not a doctor")
 
         # Validate appointment is not in the past
@@ -96,7 +100,7 @@ class AppointmentService:
             raise BadRequestException("Cannot create appointment in the past")
 
         # Check if doctor already has an appointment at this time
-        if not AppointmentRepository.check_doctor_availability(db, data.doctor_id, data.appointment_datetime):
+        if not self.appointment_repository.check_doctor_availability(data.doctor_id, data.appointment_datetime):
             raise ConflictException("Doctor already has an appointment at this time")
 
         appointment = Appointment(
@@ -106,20 +110,19 @@ class AppointmentService:
             notes=data.notes,
             status=AppointmentStatusEnum.FREE
         )
-        return AppointmentRepository.create(db, appointment)
+        return self.appointment_repository.create(appointment)
 
-    @staticmethod
-    def book(db: Session, appointment_id: int, patient_id: int, data: AppointmentBook) -> Appointment:
+    def book(self, appointment_id: uuid.UUID, patient_id: uuid.UUID, data: AppointmentBook) -> Appointment:
         """Patient books a free appointment."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
         # Validate patient exists and has patient role
-        patient = UserRepository.get_by_id(db, patient_id)
+        patient = self.user_repository.get_by_id(patient_id)
         if not patient:
             raise NotFoundException(f"Patient with id {patient_id} not found")
-        if patient.role != RoleEnum.patient:
+        if patient.role != RoleEnum.PATIENT:
             raise BadRequestException(f"User with id {patient_id} is not a patient")
 
         # Check appointment status
@@ -137,22 +140,21 @@ class AppointmentService:
             appointment.notes = data.notes
 
         # Create doctor-patient relationship if it doesn't exist
-        existing_relationship = DoctorPatientRelationshipRepository.get_by_doctor_and_patient(
-            db, appointment.doctor_id, patient_id
+        existing_relationship = self.doctor_patient_relationship_repository.get_by_doctor_and_patient(
+            appointment.doctor_id, patient_id
         )
         if not existing_relationship:
             relationship = DoctorPatientRelationship(
                 doctor_id=appointment.doctor_id,
                 patient_id=patient_id
             )
-            db.add(relationship)
+            self.doctor_patient_relationship_repository.create(relationship)
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def patient_cancel(db: Session, appointment_id: int, patient_id: int) -> Appointment:
+    def patient_cancel(self, appointment_id: uuid.UUID, patient_id: uuid.UUID) -> Appointment:
         """Patient cancels their booked appointment (reverts to free)."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
@@ -173,12 +175,11 @@ class AppointmentService:
         appointment.status = AppointmentStatusEnum.FREE
         appointment.notes = None
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def admin_cancel(db: Session, appointment_id: int) -> Appointment:
+    def admin_cancel(self, appointment_id: uuid.UUID) -> Appointment:
         """Admin or doctor cancels an appointment (permanent cancellation)."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
@@ -191,12 +192,11 @@ class AppointmentService:
 
         appointment.status = AppointmentStatusEnum.CANCELLED
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def complete(db: Session, appointment_id: int) -> Appointment:
+    def complete(self, appointment_id: uuid.UUID) -> Appointment:
         """Mark an appointment as completed."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
@@ -206,12 +206,11 @@ class AppointmentService:
 
         appointment.status = AppointmentStatusEnum.COMPLETED
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def no_show(db: Session, appointment_id: int) -> Appointment:
+    def no_show(self, appointment_id: uuid.UUID) -> Appointment:
         """Mark an appointment as no-show (patient did not attend)."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
@@ -221,12 +220,11 @@ class AppointmentService:
 
         appointment.status = AppointmentStatusEnum.NO_SHOW
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def update(db: Session, appointment_id: int, data: AppointmentUpdate) -> Appointment:
+    def update(self, appointment_id: uuid.UUID, data: AppointmentUpdate) -> Appointment:
         """Update appointment details (admin only)."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
 
@@ -241,8 +239,8 @@ class AppointmentService:
                 raise BadRequestException("Cannot set appointment time to the past")
 
             # Check availability (excluding current appointment)
-            if not AppointmentRepository.check_doctor_availability(
-                db, appointment.doctor_id, data.appointment_datetime, appointment.id
+            if not self.appointment_repository.check_doctor_availability(
+                appointment.doctor_id, data.appointment_datetime, appointment.id
             ):
                 raise ConflictException("Doctor already has an appointment at this time")
 
@@ -254,12 +252,11 @@ class AppointmentService:
         if data.notes is not None:
             appointment.notes = data.notes
 
-        return AppointmentRepository.update(db, appointment)
+        return self.appointment_repository.update(appointment)
 
-    @staticmethod
-    def delete(db: Session, appointment_id: int) -> None:
+    def delete(self, appointment_id: uuid.UUID) -> None:
         """Delete an appointment (admin only)."""
-        appointment = AppointmentRepository.get_by_id(db, appointment_id)
+        appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
             raise NotFoundException("Appointment not found")
-        AppointmentRepository.delete(db, appointment)
+        self.appointment_repository.delete(appointment)

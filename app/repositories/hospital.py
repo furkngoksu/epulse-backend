@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from app.models.hospital import Hospital
 
@@ -10,7 +11,7 @@ class HospitalRepository:
     def get_all(self, skip: int = 0, limit: int = 100) -> list[Hospital]:
         return self.db.query(Hospital).offset(skip).limit(limit).all()
 
-    def get_by_id(self, hospital_id: int) -> Hospital | None:
+    def get_by_id(self, hospital_id: uuid.UUID) -> Hospital | None:
         return self.db.query(Hospital).filter(Hospital.id == hospital_id).first()
 
     def create(self, hospital: Hospital) -> Hospital:

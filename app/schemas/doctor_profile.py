@@ -1,22 +1,23 @@
+import uuid
 from pydantic import BaseModel, Field
 
 
 class DoctorProfileBase(BaseModel):
-    hospital_id: int
+    hospital_id: uuid.UUID
     specialty: str = Field(..., min_length=1, max_length=100)
 
 
 class DoctorProfileCreate(DoctorProfileBase):
-    user_id: int
+    user_id: uuid.UUID
 
 
 class DoctorProfileUpdate(BaseModel):
-    hospital_id: int | None = None
+    hospital_id: uuid.UUID | None = None
     specialty: str | None = Field(None, min_length=1, max_length=100)
 
 
 class DoctorProfileResponse(DoctorProfileBase):
-    id: int
+    id: uuid.UUID
 
     class Config:
         from_attributes = True

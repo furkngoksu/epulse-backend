@@ -1,10 +1,11 @@
+import uuid
 from datetime import datetime
 from pydantic import BaseModel, Field
 from app.models.appointment import AppointmentStatusEnum
 
 
 class AppointmentBase(BaseModel):
-    doctor_id: int
+    doctor_id: uuid.UUID
     appointment_datetime: datetime
     facility_name: str = Field(..., min_length=1, max_length=200)
     notes: str | None = None
@@ -28,8 +29,8 @@ class AppointmentUpdate(BaseModel):
 
 
 class AppointmentResponse(AppointmentBase):
-    id: int
-    patient_id: int | None = None
+    id: uuid.UUID
+    patient_id: uuid.UUID | None = None
     status: AppointmentStatusEnum
 
     class Config:

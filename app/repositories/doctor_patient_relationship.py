@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app.models.doctor_patient_relationship import DoctorPatientRelationship
@@ -5,50 +6,46 @@ from app.models.doctor_patient_relationship import DoctorPatientRelationship
 
 class DoctorPatientRelationshipRepository:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
-        return db.query(DoctorPatientRelationship).offset(skip).limit(limit).all()
+    def __init__(self, db: Session):
+        self.db = db
 
-    @staticmethod
-    def get_by_id(db: Session, relationship_id: int) -> DoctorPatientRelationship | None:
-        return db.query(DoctorPatientRelationship).filter(
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
+        return self.db.query(DoctorPatientRelationship).offset(skip).limit(limit).all()
+
+    def get_by_id(self, relationship_id: uuid.UUID) -> DoctorPatientRelationship | None:
+        return self.db.query(DoctorPatientRelationship).filter(
             DoctorPatientRelationship.id == relationship_id
         ).first()
 
-    @staticmethod
     def get_by_doctor_and_patient(
-        db: Session, doctor_id: int, patient_id: int
+        self, doctor_id: uuid.UUID, patient_id: uuid.UUID
     ) -> DoctorPatientRelationship | None:
         """Check if a relationship already exists between a doctor and patient."""
-        return db.query(DoctorPatientRelationship).filter(
+        return self.db.query(DoctorPatientRelationship).filter(
             and_(
                 DoctorPatientRelationship.doctor_id == doctor_id,
                 DoctorPatientRelationship.patient_id == patient_id
             )
         ).first()
 
-    @staticmethod
-    def get_patients_for_doctor(db: Session, doctor_id: int, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
+    def get_patients_for_doctor(self, doctor_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
         """Get all patients for a specific doctor."""
-        return db.query(DoctorPatientRelationship).filter(
+        return self.db.query(DoctorPatientRelationship).filter(
             DoctorPatientRelationship.doctor_id == doctor_id
         ).offset(skip).limit(limit).all()
 
-    @staticmethod
-    def get_doctors_for_patient(db: Session, patient_id: int, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
+    def get_doctors_for_patient(self, patient_id: uuid.UUID, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
         """Get all doctors for a specific patient."""
-        return db.query(DoctorPatientRelationship).filter(
+        return self.db.query(DoctorPatientRelationship).filter(
             DoctorPatientRelationship.patient_id == patient_id
         ).offset(skip).limit(limit).all()
 
-    @staticmethod
-    def create(db: Session, relationship: DoctorPatientRelationship) -> DoctorPatientRelationship:
-        db.add(relationship)
-        db.commit()
-        db.refresh(relationship)
+    def create(self, relationship: DoctorPatientRelationship) -> DoctorPatientRelationship:
+        self.db.add(relationship)
+        self.db.commit()
+        self.db.refresh(relationship)
         return relationship
 
-    @staticmethod
-    def delete(db: Session, relationship: DoctorPatientRelationship) -> None:
-        db.delete(relationship)
-        db.commit()
+    def delete(self, relationship: DoctorPatientRelationship) -> None:
+        self.db.delete(relationship)
+        self.db.commit()

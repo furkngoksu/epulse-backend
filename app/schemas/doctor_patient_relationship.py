@@ -1,9 +1,10 @@
+import uuid
 from pydantic import BaseModel
 
 
 class DoctorPatientRelationshipBase(BaseModel):
-    doctor_id: int
-    patient_id: int
+    doctor_id: uuid.UUID
+    patient_id: uuid.UUID
 
 
 class DoctorPatientRelationshipCreate(DoctorPatientRelationshipBase):
@@ -11,7 +12,7 @@ class DoctorPatientRelationshipCreate(DoctorPatientRelationshipBase):
 
 
 class DoctorPatientRelationshipResponse(DoctorPatientRelationshipBase):
-    id: int
+    id: uuid.UUID
 
     class Config:
         from_attributes = True

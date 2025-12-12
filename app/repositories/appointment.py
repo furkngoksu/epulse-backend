@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -6,52 +7,50 @@ from app.models.appointment import Appointment, AppointmentStatusEnum
 
 class AppointmentRepository:
 
-    @staticmethod
-    def get_all(db: Session, skip: int = 0, limit: int = 100) -> list[Appointment]:
-        return db.query(Appointment).offset(skip).limit(limit).all()
+    def __init__(self, db: Session):
+        self.db = db
 
-    @staticmethod
-    def get_by_id(db: Session, appointment_id: int) -> Appointment | None:
-        return db.query(Appointment).filter(Appointment.id == appointment_id).first()
+    def get_all(self, skip: int = 0, limit: int = 100) -> list[Appointment]:
+        return self.db.query(Appointment).offset(skip).limit(limit).all()
 
-    @staticmethod
+    def get_by_id(self, appointment_id: uuid.UUID) -> Appointment | None:
+        return self.db.query(Appointment).filter(Appointment.id == appointment_id).first()
+
     def get_by_doctor(
-        db: Session,
-        doctor_id: int,
+        self,
+        doctor_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
         status: AppointmentStatusEnum | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
-        query = db.query(Appointment).filter(Appointment.doctor_id == doctor_id)
+        query = self.db.query(Appointment).filter(Appointment.doctor_id == doctor_id)
         if status:
             query = query.filter(Appointment.status == status)
         return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
 
-    @staticmethod
     def get_by_patient(
-        db: Session,
-        patient_id: int,
+        self,
+        patient_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
         status: AppointmentStatusEnum | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
-        query = db.query(Appointment).filter(Appointment.patient_id == patient_id)
+        query = self.db.query(Appointment).filter(Appointment.patient_id == patient_id)
         if status:
             query = query.filter(Appointment.status == status)
         return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
 
-    @staticmethod
     def get_free_appointments(
-        db: Session,
+        self,
         skip: int = 0,
         limit: int = 100,
-        doctor_id: int | None = None,
+        doctor_id: uuid.UUID | None = None,
         from_datetime: datetime | None = None
     ) -> list[Appointment]:
         """Get available (free) appointments for booking."""
-        query = db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.FREE)
+        query = self.db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.FREE)
 
         if doctor_id:
             query = query.filter(Appointment.doctor_id == doctor_id)
@@ -64,15 +63,14 @@ class AppointmentRepository:
 
         return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
 
-    @staticmethod
     def check_doctor_availability(
-        db: Session,
-        doctor_id: int,
+        self,
+        doctor_id: uuid.UUID,
         appointment_datetime: datetime,
-        exclude_appointment_id: int | None = None
+        exclude_appointment_id: uuid.UUID | None = None
     ) -> bool:
         """Check if a doctor has any overlapping appointments at the given time."""
-        query = db.query(Appointment).filter(
+        query = self.db.query(Appointment).filter(
             and_(
                 Appointment.doctor_id == doctor_id,
                 Appointment.appointment_datetime == appointment_datetime,
@@ -85,20 +83,17 @@ class AppointmentRepository:
 
         return query.first() is None
 
-    @staticmethod
-    def create(db: Session, appointment: Appointment) -> Appointment:
-        db.add(appointment)
-        db.commit()
-        db.refresh(appointment)
+    def create(self, appointment: Appointment) -> Appointment:
+        self.db.add(appointment)
+        self.db.commit()
+        self.db.refresh(appointment)
         return appointment
 
-    @staticmethod
-    def update(db: Session, appointment: Appointment) -> Appointment:
-        db.commit()
-        db.refresh(appointment)
+    def update(self, appointment: Appointment) -> Appointment:
+        self.db.commit()
+        self.db.refresh(appointment)
         return appointment
 
-    @staticmethod
-    def delete(db: Session, appointment: Appointment) -> None:
-        db.delete(appointment)
-        db.commit()
+    def delete(self, appointment: Appointment) -> None:
+        self.db.delete(appointment)
+        self.db.commit()
