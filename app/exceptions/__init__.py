@@ -1,9 +1,16 @@
-from .exceptions import NotFoundException, UnauthorizedException, ForbiddenException, ConflictException, BadRequestException
-
+from .exceptions import (
+    BadRequestException,
+    UnauthorizedException,
+    ForbiddenException,
+    NotFoundException,
+    ConflictException,
+    PermissionDeniedException
+)
 __all__ = [
-    "NotFoundException",
+    "BadRequestException",
     "UnauthorizedException",
     "ForbiddenException",
+    "NotFoundException",
     "ConflictException",
-    "BadRequestException",
+    "PermissionDeniedException"
 ]

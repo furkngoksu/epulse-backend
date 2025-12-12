@@ -4,8 +4,8 @@ from app.repositories.user import UserRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.schemas.user import User
 from app.models.user import RoleEnum
-from app.api.deps.repositories import get_user_repository
-from app.services.auth import AuthService
+from app.api.deps.user import get_user_repository
+from app.services.auth_service import AuthService
 
 
 def get_current_user(
