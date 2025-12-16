@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date, time
 
 from app.models.appointment import Appointment, AppointmentStatusEnum
 from app.models.user import RoleEnum
@@ -37,7 +37,9 @@ class AppointmentService:
         doctor_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
-        status: AppointmentStatusEnum | None = None
+        status: AppointmentStatusEnum | None = None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         # Verify doctor exists and has doctor role
@@ -47,14 +49,16 @@ class AppointmentService:
         if doctor.role != RoleEnum.DOCTOR:
             raise BadRequestException("User is not a doctor")
 
-        return self.appointment_repository.get_by_doctor(doctor_id, skip, limit, status)
+        return self.appointment_repository.get_by_doctor(doctor_id, skip, limit, status, from_date, to_date)
 
     def get_by_patient(
         self,
         patient_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
-        status: AppointmentStatusEnum | None = None
+        status: AppointmentStatusEnum | None = None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         # Verify patient exists and has patient role
@@ -64,7 +68,7 @@ class AppointmentService:
         if patient.role != RoleEnum.PATIENT:
             raise BadRequestException("User is not a patient")
 
-        return self.appointment_repository.get_by_patient(patient_id, skip, limit, status)
+        return self.appointment_repository.get_by_patient(patient_id, skip, limit, status, from_date, to_date)
 
     def get_free_appointments(
         self,
@@ -260,3 +264,56 @@ class AppointmentService:
         if not appointment:
             raise NotFoundException("Appointment not found")
         self.appointment_repository.delete(appointment)
+
+    def create_multiple_free_appointments(
+        self,
+        doctor_id: uuid.UUID,
+        dates: list[date],
+        time_slots: list[time],
+        facility_name: str
+    ) -> list[Appointment]:
+        """Create multiple free appointment slots for a doctor on specified dates and time slots."""
+        # Validate doctor exists and has doctor role
+        doctor = self.user_repository.get_by_id(doctor_id)
+        if not doctor:
+            raise NotFoundException(f"Doctor with id {doctor_id} not found")
+        if doctor.role != RoleEnum.DOCTOR:
+            raise BadRequestException(f"User with id {doctor_id} is not a doctor")
+
+        created_appointments = []
+        errors = []
+
+        # Create appointments for each date x time_slot combination
+        for appointment_date in dates:
+            for time_slot in time_slots:
+                # Combine date and time to create datetime
+                appointment_datetime = datetime.combine(appointment_date, time_slot)
+
+                # Skip appointments in the past
+                if appointment_datetime < datetime.now():
+                    errors.append(f"Skipped past appointment: {appointment_datetime}")
+                    continue
+
+                # Check if doctor already has an appointment at this time
+                if not self.appointment_repository.check_doctor_availability(doctor_id, appointment_datetime):
+                    errors.append(f"Doctor already has an appointment at {appointment_datetime}")
+                    continue
+
+                # Create the appointment
+                appointment = Appointment(
+                    doctor_id=doctor_id,
+                    appointment_datetime=appointment_datetime,
+                    facility_name=facility_name,
+                    status=AppointmentStatusEnum.FREE
+                )
+                created_appointment = self.appointment_repository.create(appointment)
+                created_appointments.append(created_appointment)
+
+        # If no appointments were created, raise an exception
+        if not created_appointments:
+            error_message = "No appointments were created. "
+            if errors:
+                error_message += "Errors: " + "; ".join(errors)
+            raise BadRequestException(error_message)
+
+        return created_appointments

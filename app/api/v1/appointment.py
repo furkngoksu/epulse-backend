@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -12,7 +12,8 @@ from app.schemas.appointment import (
     AppointmentCreate,
     AppointmentUpdate,
     AppointmentBook,
-    AppointmentResponse
+    AppointmentResponse,
+    CreateFreeAppointmentsRequest
 )
 from app.services.appointment_service import AppointmentService
 from app.exceptions.exceptions import ForbiddenException
@@ -60,12 +61,15 @@ def get_appointments_by_doctor(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     status: AppointmentStatusEnum | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
     current_user: UserModel = Depends(get_current_user)
 ):
     """
     Get all appointments for a specific doctor.
     Doctors can only view their own appointments. Admins can view any doctor's appointments.
+    Supports filtering by status, from_date (inclusive), and to_date (inclusive).
     """
     # Only admins and doctors can access this endpoint
     if current_user.role == RoleEnum.PATIENT:
@@ -75,8 +79,13 @@ def get_appointments_by_doctor(
     if current_user.role == RoleEnum.DOCTOR and current_user.id != doctor_id:
         raise ForbiddenException("You can only view your own appointments")
 
+    # Convert dates to datetime for filtering
+    from_datetime = datetime.combine(from_date, datetime.min.time()) if from_date else None
+    to_datetime = datetime.combine(to_date, datetime.min.time()) if to_date else None
+
     appointments = appointment_service.get_by_doctor(
-        doctor_id, skip=skip, limit=limit, status=status
+        doctor_id, skip=skip, limit=limit, status=status,
+        from_date=from_datetime, to_date=to_datetime
     )
     return appointments
 
@@ -87,12 +96,15 @@ def get_appointments_by_patient(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     status: AppointmentStatusEnum | None = None,
+    from_date: date | None = None,
+    to_date: date | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
     current_user: UserModel = Depends(get_current_user)
 ):
     """
     Get all appointments for a specific patient.
     Patients can only view their own appointments. Admins can view any patient's appointments.
+    Supports filtering by status, from_date (inclusive), and to_date (inclusive).
     """
     # Only admins and patients can access this endpoint
     if current_user.role == RoleEnum.DOCTOR:
@@ -102,8 +114,13 @@ def get_appointments_by_patient(
     if current_user.role == RoleEnum.PATIENT and current_user.id != patient_id:
         raise ForbiddenException("You can only view your own appointments")
 
+    # Convert dates to datetime for filtering
+    from_datetime = datetime.combine(from_date, datetime.min.time()) if from_date else None
+    to_datetime = datetime.combine(to_date, datetime.min.time()) if to_date else None
+
     appointments = appointment_service.get_by_patient(
-        patient_id, skip=skip, limit=limit, status=status
+        patient_id, skip=skip, limit=limit, status=status,
+        from_date=from_datetime, to_date=to_datetime
     )
     return appointments
 
@@ -153,6 +170,35 @@ def create_appointment(
 
     appointment = appointment_service.create(data)
     return appointment
+
+
+@router.post("/create-free-appointments", response_model=list[AppointmentResponse], status_code=201)
+def create_multiple_free_appointments(
+    data: CreateFreeAppointmentsRequest,
+    appointment_service: AppointmentService = Depends(get_appointment_service),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Create multiple free appointment slots for a doctor on specified dates and time slots.
+    - Creates appointments for all combinations of dates and time_slots.
+    - Only admin and doctor roles can access this endpoint.
+    - Doctors can only create appointments for themselves, admins can create for any doctor.
+    """
+    # Only doctors and admins can create appointments
+    if current_user.role == RoleEnum.PATIENT:
+        raise ForbiddenException("Patients cannot create appointments")
+
+    # Doctors can only create appointments for themselves
+    if current_user.role == RoleEnum.DOCTOR and current_user.id != data.doctor_id:
+        raise ForbiddenException("You can only create appointments for yourself")
+
+    appointments = appointment_service.create_multiple_free_appointments(
+        doctor_id=data.doctor_id,
+        dates=data.dates,
+        time_slots=data.time_slots,
+        facility_name=data.facility_name
+    )
+    return appointments
 
 
 @router.post("/{appointment_id}/book", response_model=AppointmentResponse)

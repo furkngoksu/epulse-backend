@@ -1,0 +1,88 @@
+import uuid
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.api.deps.services import get_catalog_service
+from app.api.deps.auth import get_current_user, get_current_admin
+from app.schemas.user import User
+from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
+from app.services.catalog_service import CatalogService
+
+router = APIRouter()
+
+
+@router.get("/medications", response_model=list[MedicationResponse])
+def get_medications(
+    name: str | None = Query(None, min_length=1),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=100),
+    catalog_service: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all medications with optional name filtering.
+    - If name is provided, searches medications by commercial name (contains query).
+    - Supports pagination with skip and limit.
+    Requires authentication.
+    """
+    if name:
+        medications = catalog_service.search_medications(name, skip=skip, limit=limit)
+    else:
+        medications = catalog_service.get_all_medications(skip=skip, limit=limit)
+    return medications
+
+
+@router.get("/medications/{medication_id}", response_model=MedicationResponse)
+def get_medication(
+    medication_id: uuid.UUID,
+    catalog_service: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get a medication by ID.
+    Requires authentication.
+    """
+    medication = catalog_service.get_medication_by_id(medication_id)
+    return medication
+
+
+@router.post("/medications", response_model=MedicationResponse, status_code=201)
+def create_medication(
+    data: MedicationCreate,
+    catalog_service: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Create a new medication.
+    Requires admin role.
+    """
+    medication = catalog_service.create_medication(data)
+    return medication
+
+
+@router.put("/medications/{medication_id}", response_model=MedicationResponse)
+def update_medication(
+    medication_id: uuid.UUID,
+    data: MedicationUpdate,
+    catalog_service: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Update a medication.
+    Requires admin role.
+    """
+    medication = catalog_service.update_medication(medication_id, data)
+    return medication
+
+
+@router.delete("/medications/{medication_id}", status_code=204)
+def delete_medication(
+    medication_id: uuid.UUID,
+    catalog_service: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin)
+):
+    """
+    Delete a medication.
+    Requires admin role.
+    """
+    catalog_service.delete_medication(medication_id)

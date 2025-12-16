@@ -21,12 +21,20 @@ class AppointmentRepository:
         doctor_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
-        status: AppointmentStatusEnum | None = None
+        status: AppointmentStatusEnum | None = None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         query = self.db.query(Appointment).filter(Appointment.doctor_id == doctor_id)
         if status:
             query = query.filter(Appointment.status == status)
+        if from_date:
+            query = query.filter(Appointment.appointment_datetime >= from_date)
+        if to_date:
+            # Include the entire day by adding 23:59:59
+            to_datetime = datetime.combine(to_date.date() if isinstance(to_date, datetime) else to_date, datetime.max.time())
+            query = query.filter(Appointment.appointment_datetime <= to_datetime)
         return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
 
     def get_by_patient(
@@ -34,12 +42,20 @@ class AppointmentRepository:
         patient_id: uuid.UUID,
         skip: int = 0,
         limit: int = 100,
-        status: AppointmentStatusEnum | None = None
+        status: AppointmentStatusEnum | None = None,
+        from_date: datetime | None = None,
+        to_date: datetime | None = None
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         query = self.db.query(Appointment).filter(Appointment.patient_id == patient_id)
         if status:
             query = query.filter(Appointment.status == status)
+        if from_date:
+            query = query.filter(Appointment.appointment_datetime >= from_date)
+        if to_date:
+            # Include the entire day by adding 23:59:59
+            to_datetime = datetime.combine(to_date.date() if isinstance(to_date, datetime) else to_date, datetime.max.time())
+            query = query.filter(Appointment.appointment_datetime <= to_datetime)
         return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
 
     def get_free_appointments(
