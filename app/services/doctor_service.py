@@ -101,7 +101,7 @@ class DoctorService:
         if not user:
             raise NotFoundException("User not found")
 
-        if user.role != RoleEnum.DOCTOR:
+        if user.role != RoleEnum.doctor:
             raise BadRequestException("User must have doctor role")
 
         # Check if profile already exists for this user
@@ -164,7 +164,7 @@ class DoctorService:
         doctor = self.user_repository.get_by_id(doctor_id)
         if not doctor:
             raise NotFoundException("Doctor not found")
-        if doctor.role != RoleEnum.DOCTOR:
+        if doctor.role != RoleEnum.doctor:
             raise BadRequestException("User is not a doctor")
 
         return self.doctor_patient_relationship_repository.get_patients_for_doctor(doctor_id, skip, limit)
@@ -177,7 +177,7 @@ class DoctorService:
         patient = self.user_repository.get_by_id(patient_id)
         if not patient:
             raise NotFoundException("Patient not found")
-        if patient.role != RoleEnum.PATIENT:
+        if patient.role != RoleEnum.patient:
             raise BadRequestException("User is not a patient")
 
         return self.doctor_patient_relationship_repository.get_doctors_for_patient(patient_id, skip, limit)
@@ -187,14 +187,14 @@ class DoctorService:
         doctor = self.user_repository.get_by_id(data.doctor_id)
         if not doctor:
             raise NotFoundException(f"Doctor with id {data.doctor_id} not found")
-        if doctor.role != RoleEnum.DOCTOR:
+        if doctor.role != RoleEnum.doctor:
             raise BadRequestException(f"User with id {data.doctor_id} is not a doctor")
 
         # Validate patient exists and has patient role
         patient = self.user_repository.get_by_id(data.patient_id)
         if not patient:
             raise NotFoundException(f"Patient with id {data.patient_id} not found")
-        if patient.role != RoleEnum.PATIENT:
+        if patient.role != RoleEnum.patient:
             raise BadRequestException(f"User with id {data.patient_id} is not a patient")
 
         # Check if relationship already exists

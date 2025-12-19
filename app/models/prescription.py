@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from app.models.prescription_item import PrescriptionItemModel
 
 class Status(str, Enum):
-    ACTIVE = "ACTIVE"
-    INACTIVE = "INACTIVE"
+    active = "active"
+    inactive = "inactive"
 
 class PrescriptionModel(Base):
     __tablename__ = "prescriptions"
@@ -28,7 +28,7 @@ class PrescriptionModel(Base):
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     status: Mapped[Status] = mapped_column(
-        SAEnum(Status), nullable=False, default=Status.INACTIVE
+        SAEnum(Status), nullable=False, default=Status.inactive
     )
 
     items: Mapped[list["PrescriptionItemModel"]] = relationship(

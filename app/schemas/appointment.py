@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date, time
 from pydantic import BaseModel, Field
 from app.models.appointment import AppointmentStatusEnum
 
@@ -26,6 +26,14 @@ class AppointmentUpdate(BaseModel):
     appointment_datetime: datetime | None = None
     facility_name: str | None = Field(None, min_length=1, max_length=200)
     notes: str | None = None
+
+
+class CreateFreeAppointmentsRequest(BaseModel):
+    """Schema for creating multiple free appointment slots."""
+    doctor_id: uuid.UUID
+    dates: list[date] = Field(..., min_length=1)
+    time_slots: list[time] = Field(..., min_length=1)
+    facility_name: str = Field(..., min_length=1, max_length=200)
 
 
 class AppointmentResponse(AppointmentBase):
