@@ -45,11 +45,11 @@ def get_patients_for_doctor(
     Patients cannot access this endpoint.
     """
     # Only admins and doctors can access this endpoint
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot view doctor patient lists")
 
     # Doctors can only view their own patients, admins can view any
-    if current_user.role == RoleEnum.DOCTOR and current_user.id != doctor_id:
+    if current_user.role == RoleEnum.doctor and current_user.id != doctor_id:
         raise ForbiddenException("You can only view your own patients")
 
     relationships = doctor_service.get_doctor_patients(
@@ -72,11 +72,11 @@ def get_doctors_for_patient(
     Doctors cannot access this endpoint.
     """
     # Only admins and patients can access this endpoint
-    if current_user.role == RoleEnum.DOCTOR:
+    if current_user.role == RoleEnum.doctor:
         raise ForbiddenException("Doctors cannot view patient doctor lists")
 
     # Patients can only view their own doctors, admins can view any
-    if current_user.role == RoleEnum.PATIENT and current_user.id != patient_id:
+    if current_user.role == RoleEnum.patient and current_user.id != patient_id:
         raise ForbiddenException("You can only view your own doctors")
 
     relationships = doctor_service.get_patient_doctors(
@@ -111,11 +111,11 @@ def create_relationship(
     Admins can create any relationship.
     """
     # Doctors can only create relationships for themselves
-    if current_user.role == RoleEnum.DOCTOR and current_user.id != data.doctor_id:
+    if current_user.role == RoleEnum.doctor and current_user.id != data.doctor_id:
         raise ForbiddenException("You can only create relationships for yourself")
 
     # Patients cannot create relationships
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot create doctor-patient relationships")
 
     relationship = doctor_service.create_doctor_patient_relationship(data)

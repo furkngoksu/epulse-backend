@@ -72,11 +72,11 @@ def get_appointments_by_doctor(
     Supports filtering by status, from_date (inclusive), and to_date (inclusive).
     """
     # Only admins and doctors can access this endpoint
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot view doctor appointment lists")
 
     # Doctors can only view their own appointments
-    if current_user.role == RoleEnum.DOCTOR and current_user.id != doctor_id:
+    if current_user.role == RoleEnum.doctor and current_user.id != doctor_id:
         raise ForbiddenException("You can only view your own appointments")
 
     # Convert dates to datetime for filtering
@@ -107,11 +107,11 @@ def get_appointments_by_patient(
     Supports filtering by status, from_date (inclusive), and to_date (inclusive).
     """
     # Only admins and patients can access this endpoint
-    if current_user.role == RoleEnum.DOCTOR:
+    if current_user.role == RoleEnum.doctor:
         raise ForbiddenException("Doctors cannot view patient appointment lists")
 
     # Patients can only view their own appointments
-    if current_user.role == RoleEnum.PATIENT and current_user.id != patient_id:
+    if current_user.role == RoleEnum.patient and current_user.id != patient_id:
         raise ForbiddenException("You can only view your own appointments")
 
     # Convert dates to datetime for filtering
@@ -138,12 +138,12 @@ def get_appointment(
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Check access - patients can only see their own appointments
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         if appointment.patient_id != current_user.id:
             raise ForbiddenException("You can only view your own appointments")
 
     # Doctors can only see their own appointments
-    if current_user.role == RoleEnum.DOCTOR:
+    if current_user.role == RoleEnum.doctor:
         if appointment.doctor_id != current_user.id:
             raise ForbiddenException("You can only view your own appointments")
 
@@ -161,11 +161,11 @@ def create_appointment(
     Doctors can create appointments for themselves. Admins can create for any doctor.
     """
     # Only doctors and admins can create appointments
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot create appointments")
 
     # Doctors can only create appointments for themselves
-    if current_user.role == RoleEnum.DOCTOR and current_user.id != data.doctor_id:
+    if current_user.role == RoleEnum.doctor and current_user.id != data.doctor_id:
         raise ForbiddenException("You can only create appointments for yourself")
 
     appointment = appointment_service.create(data)
@@ -185,11 +185,11 @@ def create_multiple_free_appointments(
     - Doctors can only create appointments for themselves, admins can create for any doctor.
     """
     # Only doctors and admins can create appointments
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot create appointments")
 
     # Doctors can only create appointments for themselves
-    if current_user.role == RoleEnum.DOCTOR and current_user.id != data.doctor_id:
+    if current_user.role == RoleEnum.doctor and current_user.id != data.doctor_id:
         raise ForbiddenException("You can only create appointments for yourself")
 
     appointments = appointment_service.create_multiple_free_appointments(
@@ -213,7 +213,7 @@ def book_appointment(
     Only patients can book appointments.
     """
     # Only patients can book appointments
-    if current_user.role != RoleEnum.PATIENT:
+    if current_user.role != RoleEnum.patient:
         raise ForbiddenException("Only patients can book appointments")
 
     appointment = appointment_service.book(appointment_id, current_user.id, data)
@@ -235,13 +235,13 @@ def cancel_appointment(
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Patient cancellation - reverts to free
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         if appointment.patient_id != current_user.id:
             raise ForbiddenException("You can only cancel your own appointments")
         return appointment_service.patient_cancel(appointment_id, current_user.id)
 
     # Doctor cancellation - permanent
-    if current_user.role == RoleEnum.DOCTOR:
+    if current_user.role == RoleEnum.doctor:
         if appointment.doctor_id != current_user.id:
             raise ForbiddenException("You can only cancel your own appointments")
         return appointment_service.admin_cancel(appointment_id)
@@ -261,13 +261,13 @@ def complete_appointment(
     Doctors can complete their own appointments. Admins can complete any appointment.
     """
     # Only doctors and admins can complete appointments
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot mark appointments as completed")
 
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Doctors can only complete their own appointments
-    if current_user.role == RoleEnum.DOCTOR and appointment.doctor_id != current_user.id:
+    if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
         raise ForbiddenException("You can only complete your own appointments")
 
     return appointment_service.complete(appointment_id)
@@ -284,13 +284,13 @@ def mark_no_show(
     Doctors can mark their own appointments. Admins can mark any appointment.
     """
     # Only doctors and admins can mark as no-show
-    if current_user.role == RoleEnum.PATIENT:
+    if current_user.role == RoleEnum.patient:
         raise ForbiddenException("Patients cannot mark appointments as no-show")
 
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Doctors can only mark their own appointments
-    if current_user.role == RoleEnum.DOCTOR and appointment.doctor_id != current_user.id:
+    if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
         raise ForbiddenException("You can only mark your own appointments as no-show")
 
     return appointment_service.no_show(appointment_id)

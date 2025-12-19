@@ -46,7 +46,7 @@ class AppointmentService:
         doctor = self.user_repository.get_by_id(doctor_id)
         if not doctor:
             raise NotFoundException("Doctor not found")
-        if doctor.role != RoleEnum.DOCTOR:
+        if doctor.role != RoleEnum.doctor:
             raise BadRequestException("User is not a doctor")
 
         return self.appointment_repository.get_by_doctor(doctor_id, skip, limit, status, from_date, to_date)
@@ -65,7 +65,7 @@ class AppointmentService:
         patient = self.user_repository.get_by_id(patient_id)
         if not patient:
             raise NotFoundException("Patient not found")
-        if patient.role != RoleEnum.PATIENT:
+        if patient.role != RoleEnum.patient:
             raise BadRequestException("User is not a patient")
 
         return self.appointment_repository.get_by_patient(patient_id, skip, limit, status, from_date, to_date)
@@ -83,7 +83,7 @@ class AppointmentService:
             doctor = self.user_repository.get_by_id(doctor_id)
             if not doctor:
                 raise NotFoundException("Doctor not found")
-            if doctor.role != RoleEnum.DOCTOR:
+            if doctor.role != RoleEnum.doctor:
                 raise BadRequestException("User is not a doctor")
 
         return self.appointment_repository.get_free_appointments(
@@ -96,7 +96,7 @@ class AppointmentService:
         doctor = self.user_repository.get_by_id(data.doctor_id)
         if not doctor:
             raise NotFoundException(f"Doctor with id {data.doctor_id} not found")
-        if doctor.role != RoleEnum.DOCTOR:
+        if doctor.role != RoleEnum.doctor:
             raise BadRequestException(f"User with id {data.doctor_id} is not a doctor")
 
         # Validate appointment is not in the past
@@ -112,7 +112,7 @@ class AppointmentService:
             appointment_datetime=data.appointment_datetime,
             facility_name=data.facility_name,
             notes=data.notes,
-            status=AppointmentStatusEnum.FREE
+            status=AppointmentStatusEnum.free
         )
         return self.appointment_repository.create(appointment)
 
@@ -126,11 +126,11 @@ class AppointmentService:
         patient = self.user_repository.get_by_id(patient_id)
         if not patient:
             raise NotFoundException(f"Patient with id {patient_id} not found")
-        if patient.role != RoleEnum.PATIENT:
+        if patient.role != RoleEnum.patient:
             raise BadRequestException(f"User with id {patient_id} is not a patient")
 
         # Check appointment status
-        if appointment.status != AppointmentStatusEnum.FREE:
+        if appointment.status != AppointmentStatusEnum.free:
             raise BadRequestException(f"Appointment is not available for booking (status: {appointment.status.value})")
 
         # Validate appointment is not in the past
@@ -139,7 +139,7 @@ class AppointmentService:
 
         # Book the appointment
         appointment.patient_id = patient_id
-        appointment.status = AppointmentStatusEnum.BOOKED
+        appointment.status = AppointmentStatusEnum.booked
         if data.notes:
             appointment.notes = data.notes
 
@@ -167,7 +167,7 @@ class AppointmentService:
             raise BadRequestException("This appointment does not belong to you")
 
         # Check if appointment can be cancelled by patient
-        if appointment.status != AppointmentStatusEnum.BOOKED:
+        if appointment.status != AppointmentStatusEnum.booked:
             raise BadRequestException(f"Cannot cancel appointment with status: {appointment.status.value}")
 
         # Validate appointment is not in the past
@@ -176,7 +176,7 @@ class AppointmentService:
 
         # Revert to free status
         appointment.patient_id = None
-        appointment.status = AppointmentStatusEnum.FREE
+        appointment.status = AppointmentStatusEnum.free
         appointment.notes = None
 
         return self.appointment_repository.update(appointment)
@@ -188,13 +188,13 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Check if appointment can be cancelled
-        if appointment.status in [AppointmentStatusEnum.COMPLETED, AppointmentStatusEnum.NO_SHOW]:
+        if appointment.status in [AppointmentStatusEnum.completed, AppointmentStatusEnum.no_show]:
             raise BadRequestException(f"Cannot cancel appointment with status: {appointment.status.value}")
 
-        if appointment.status == AppointmentStatusEnum.CANCELLED:
+        if appointment.status == AppointmentStatusEnum.cancelled:
             raise BadRequestException("Appointment is already cancelled")
 
-        appointment.status = AppointmentStatusEnum.CANCELLED
+        appointment.status = AppointmentStatusEnum.cancelled
 
         return self.appointment_repository.update(appointment)
 
@@ -205,10 +205,10 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Check if appointment can be completed
-        if appointment.status != AppointmentStatusEnum.BOOKED:
+        if appointment.status != AppointmentStatusEnum.booked:
             raise BadRequestException(f"Only booked appointments can be completed (current status: {appointment.status.value})")
 
-        appointment.status = AppointmentStatusEnum.COMPLETED
+        appointment.status = AppointmentStatusEnum.completed
 
         return self.appointment_repository.update(appointment)
 
@@ -219,10 +219,10 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Check if appointment can be marked as no-show
-        if appointment.status != AppointmentStatusEnum.BOOKED:
+        if appointment.status != AppointmentStatusEnum.booked:
             raise BadRequestException(f"Only booked appointments can be marked as no-show (current status: {appointment.status.value})")
 
-        appointment.status = AppointmentStatusEnum.NO_SHOW
+        appointment.status = AppointmentStatusEnum.no_show
 
         return self.appointment_repository.update(appointment)
 
@@ -233,7 +233,7 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Cannot update cancelled, completed, or no_show appointments
-        if appointment.status in [AppointmentStatusEnum.CANCELLED, AppointmentStatusEnum.COMPLETED, AppointmentStatusEnum.NO_SHOW]:
+        if appointment.status in [AppointmentStatusEnum.cancelled, AppointmentStatusEnum.completed, AppointmentStatusEnum.no_show]:
             raise BadRequestException(f"Cannot update appointment with status: {appointment.status.value}")
 
         # Update datetime if provided
@@ -277,7 +277,7 @@ class AppointmentService:
         doctor = self.user_repository.get_by_id(doctor_id)
         if not doctor:
             raise NotFoundException(f"Doctor with id {doctor_id} not found")
-        if doctor.role != RoleEnum.DOCTOR:
+        if doctor.role != RoleEnum.doctor:
             raise BadRequestException(f"User with id {doctor_id} is not a doctor")
 
         created_appointments = []
@@ -304,7 +304,7 @@ class AppointmentService:
                     doctor_id=doctor_id,
                     appointment_datetime=appointment_datetime,
                     facility_name=facility_name,
-                    status=AppointmentStatusEnum.FREE
+                    status=AppointmentStatusEnum.free
                 )
                 created_appointment = self.appointment_repository.create(appointment)
                 created_appointments.append(created_appointment)

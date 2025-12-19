@@ -49,7 +49,7 @@ class DoseLogRepository:
                 DoseLogModel.patient_medication_id == PatientMedicationModel.id
             )
             .filter(PatientMedicationModel.user_id == patient_id)
-            .filter(DoseLogModel.status == DoseStatusEnum.MISSED)
+            .filter(DoseLogModel.status == DoseStatusEnum.missed)
             .filter(DoseLogModel.scheduled_time.between(start, end))
             .all()
         )

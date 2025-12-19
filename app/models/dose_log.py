@@ -12,9 +12,9 @@ if TYPE_CHECKING:
     from app.models.patient_medication import PatientMedicationModel
 
 class  DoseStatusEnum(str, enum.Enum):
-    TAKEN = "TAKEN"
-    MISSED = "MISSED"
-    SKIPPED = "SKIPPED"
+    taken = "taken"
+    missed = "missed"
+    skipped = "skipped"
 
 class DoseLogModel(Base):
     __tablename__ = "dose_logs"

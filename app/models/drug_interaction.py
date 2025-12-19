@@ -11,9 +11,9 @@ if TYPE_CHECKING:
 
 
 class SeverityEnum(str, enum.Enum):
-    MINOR = "MINOR"
-    MODERATE = "MODERATE"
-    SEVERE = "SEVERE"
+    minor = "minor"
+    moderate = "moderate"
+    severe = "severe"
 
 
 class DrugInteraction(Base):

@@ -66,7 +66,7 @@ class AppointmentRepository:
         from_datetime: datetime | None = None
     ) -> list[Appointment]:
         """Get available (free) appointments for booking."""
-        query = self.db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.FREE)
+        query = self.db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.free)
 
         if doctor_id:
             query = query.filter(Appointment.doctor_id == doctor_id)
@@ -90,7 +90,7 @@ class AppointmentRepository:
             and_(
                 Appointment.doctor_id == doctor_id,
                 Appointment.appointment_datetime == appointment_datetime,
-                Appointment.status.notin_([AppointmentStatusEnum.CANCELLED])
+                Appointment.status.notin_([AppointmentStatusEnum.cancelled])
             )
         )
 

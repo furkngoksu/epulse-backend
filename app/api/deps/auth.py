@@ -31,7 +31,7 @@ def get_current_user(
 def get_current_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if current_user.role != RoleEnum.ADMIN:
+    if current_user.role != RoleEnum.admin:
         raise ForbiddenException("Admin access required")
     return current_user
 
@@ -39,7 +39,7 @@ def get_current_admin(
 def get_current_doctor(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if current_user.role != RoleEnum.DOCTOR:
+    if current_user.role != RoleEnum.doctor:
         raise ForbiddenException("Doctor access required")
     return current_user
 
@@ -47,7 +47,7 @@ def get_current_doctor(
 def get_current_doctor_or_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
-    if current_user.role not in (RoleEnum.DOCTOR, RoleEnum.ADMIN):
+    if current_user.role not in (RoleEnum.doctor, RoleEnum.admin):
         raise ForbiddenException("Doctor or admin access required")
     return current_user
 

@@ -42,7 +42,7 @@ class PrescriptionService:
             doctor_id=self.current_user.id,
             patient_id=data.patient_id,
             notes=data.notes,
-            status=Status.INACTIVE
+            status=Status.inactive
         )
 
         created = self.prescription_repository.create(prescription=new_prescription)
@@ -68,7 +68,7 @@ class PrescriptionService:
         if not prescription:
             raise NotFoundException("Prescription not found.")
         
-        if self.current_user.role == RoleEnum.DOCTOR and prescription.doctor_id != self.current_user.id:
+        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
             raise ForbiddenException("Doctors can only modify their own prescriptions.")
 
         self.prescription_repository.delete(prescription)
@@ -94,7 +94,7 @@ class PrescriptionService:
         if not prescription:
             raise NotFoundException("Prescription not found.")
 
-        if self.current_user.role == RoleEnum.DOCTOR and prescription.doctor_id != self.current_user.id:
+        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
             raise ForbiddenException("Doctors can only modify their own prescriptions.")
 
         new_item = PrescriptionItemModel(
@@ -117,7 +117,7 @@ class PrescriptionService:
         if not prescription:
             raise NotFoundException("Prescription not found.")
 
-        if self.current_user.role == RoleEnum.DOCTOR and prescription.doctor_id != self.current_user.id:
+        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
             raise ForbiddenException("Doctors can only modify their own prescriptions.")
 
         if data.dosage is not None:
@@ -138,7 +138,7 @@ class PrescriptionService:
         if not prescription:
             raise NotFoundException("Prescription not found.")
 
-        if self.current_user.role == RoleEnum.DOCTOR and prescription.doctor_id != self.current_user.id:
+        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
             raise ForbiddenException("Doctors can only delete items from their own prescriptions.")
 
         self.prescription_item_repository.delete(prescription_item=item)

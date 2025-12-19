@@ -15,15 +15,15 @@ if TYPE_CHECKING:
     from app.models.doctor_patient_relationship import DoctorPatientRelationship
 
 class GenderEnum(str, Enum):
-    MALE = "MALE"
-    FEMALE = "FEMALE"
-    OTHER = "OTHER"
+    male = "male"
+    female = "female"
+    other = "other"
 
 
 class RoleEnum(str, Enum):
-    ADMIN = "ADMIN"
-    DOCTOR = "DOCTOR"
-    PATIENT = "PATIENT"
+    admin = "admin"
+    doctor = "doctor"
+    patient = "patient"
 
 
 class UserModel(Base):
@@ -43,7 +43,7 @@ class UserModel(Base):
 
     gender: Mapped[GenderEnum] = mapped_column(SAEnum(GenderEnum), nullable=False)
     role: Mapped[RoleEnum] = mapped_column(
-        SAEnum(RoleEnum), default=RoleEnum.PATIENT, nullable=False
+        SAEnum(RoleEnum), default=RoleEnum.patient, nullable=False
     )
 
     # Relationships

@@ -12,12 +12,11 @@ if TYPE_CHECKING:
 
 
 class AppointmentStatusEnum(str, enum.Enum):
-    FREE = "FREE"
-    BOOKED = "BOOKED"
-    CANCELLED = "CANCELLED"
-    COMPLETED = "COMPLETED"
-    NO_SHOW = "NO_SHOW"
-
+    free = "free"
+    booked = "booked"
+    cancelled = "cancelled"
+    completed = "completed"
+    no_show = "no_show"
 
 class Appointment(Base):
     __tablename__ = "appointments"
@@ -33,7 +32,7 @@ class Appointment(Base):
     )
     appointment_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[AppointmentStatusEnum] = mapped_column(
-        SAEnum(AppointmentStatusEnum), nullable=False, default=AppointmentStatusEnum.FREE
+        SAEnum(AppointmentStatusEnum), nullable=False, default=AppointmentStatusEnum.free
     )
     facility_name: Mapped[str] = mapped_column(String(200), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

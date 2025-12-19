@@ -50,7 +50,7 @@ class UserService:
 
     def admin_update_user(self, admin_id: UUID, user_id: UUID, data: UserUpdate):
         admin = self.user_repo.get_by_id(admin_id)
-        if not admin or admin.role != RoleEnum.ADMIN:
+        if not admin or admin.role != RoleEnum.admin:
             raise ForbiddenException("Only admin can modify these fields")
 
         user = self.user_repo.get_by_id(user_id)
