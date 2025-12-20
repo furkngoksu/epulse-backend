@@ -6,6 +6,7 @@ from .patient_medication_repository import PatientMedicationRepository
 from .schedule_repository import ScheduleRepository, ScheduleTimeRepository
 from .doctor_profile_repository import DoctorProfileRepository
 from .hospital import HospitalRepository
+from .clinic import ClinicRepository
 from .user import UserRepository
 from .doctor_patient_relationship import DoctorPatientRelationshipRepository
 from .appointment import AppointmentRepository
@@ -20,6 +21,7 @@ __all__ = [
     "ScheduleTimeRepository",
     "DoctorProfileRepository",
     "HospitalRepository",
+    "ClinicRepository",
     "UserRepository",
     "DoctorPatientRelationshipRepository",
     "AppointmentRepository",

@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from app.api.deps.repositories import (
     get_appointment_repository,
+    get_clinic_repository,
     get_doctor_patient_relationship_repository,
     get_doctor_profile_repository,
     get_drug_interaction_repository,
@@ -15,17 +16,18 @@ from app.api.deps.repositories import (
     get_user_repository,
 )
 
-from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService
+from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService, UserService
 from app.repositories import (
-    PrescriptionRepository, 
-    PrescriptionItemRepository, 
-    DrugInteractionRepository, 
-    MedicationRepository, 
-    PatientMedicationRepository, 
-    ScheduleRepository, 
-    ScheduleTimeRepository, 
-    DoctorProfileRepository, 
-    HospitalRepository, 
+    PrescriptionRepository,
+    PrescriptionItemRepository,
+    DrugInteractionRepository,
+    MedicationRepository,
+    PatientMedicationRepository,
+    ScheduleRepository,
+    ScheduleTimeRepository,
+    DoctorProfileRepository,
+    HospitalRepository,
+    ClinicRepository,
     UserRepository,
     AppointmentRepository,
     DoctorPatientRelationshipRepository,
@@ -47,12 +49,14 @@ def get_appointment_service(
 # Doctor Service
 def get_doctor_service(
     hospital_repository: HospitalRepository = Depends(get_hospital_repository),
+    clinic_repository: ClinicRepository = Depends(get_clinic_repository),
     doctor_profile_repository: DoctorProfileRepository = Depends(get_doctor_profile_repository),
     doctor_patient_relationship_repository: DoctorPatientRelationshipRepository = Depends(get_doctor_patient_relationship_repository),
     user_repository: UserRepository = Depends(get_user_repository),
 ) -> DoctorService:
     return DoctorService(
         hospital_repository=hospital_repository,
+        clinic_repository=clinic_repository,
         doctor_profile_repository=doctor_profile_repository,
         doctor_patient_relationship_repository=doctor_patient_relationship_repository,
         user_repository=user_repository,
@@ -95,3 +99,9 @@ def get_prescription_service(
         drug_interaction_repository=drug_interaction_repository,
         medication_repository=medication_repository,
     )
+
+# User Service
+def get_user_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> UserService:
+    return UserService(user_repo=user_repository)

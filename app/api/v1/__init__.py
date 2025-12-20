@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1.auth import router as auth_router
 from app.api.v1.user import router as user_router
 from app.api.v1.hospital import router as hospital_router
+from app.api.v1.clinic import router as clinic_router
 from app.api.v1.doctor_profile import router as doctor_profile_router
 from app.api.v1.patient_medications import router as medication_router
 from app.api.v1.catalog import router as catalog_router
@@ -16,6 +17,7 @@ app_router = APIRouter(prefix="/api/v1")
 app_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app_router.include_router(user_router)
 app_router.include_router(hospital_router, prefix="/hospitals", tags=["Hospitals"])
+app_router.include_router(clinic_router, prefix="/clinics", tags=["Clinics"])
 app_router.include_router(doctor_profile_router, prefix="/doctor-profiles", tags=["Doctor Profiles"])
 app_router.include_router(catalog_router)
 app_router.include_router(doctor_patient_relationship_router, prefix="/doctor-patient-relationships", tags=["Doctor-Patient Relationships"])

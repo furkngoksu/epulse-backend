@@ -15,6 +15,24 @@ class UserService:
             raise NotFoundException("User not found")
         return UserResponse.model_validate(user)
 
+    def get_user_profile(self, current_user_id: UUID, current_user_role: RoleEnum, requested_user_id: UUID) -> UserResponse:
+        """
+        Get user profile with authorization checks.
+        - Admin users can access any profile
+        - Non-admin users (doctor/patient) can only access their own profile
+        """
+        # Authorization check
+        if current_user_role != RoleEnum.admin:
+            if current_user_id != requested_user_id:
+                raise ForbiddenException("You can only access your own profile")
+
+        # Fetch the requested user
+        user = self.user_repo.get_by_id(requested_user_id)
+        if not user:
+            raise NotFoundException("User not found")
+
+        return UserResponse.model_validate(user)
+
     def get_users(self, skip=0, limit=100):
         users = self.user_repo.get_users(skip, limit)
         return [UserResponse.model_validate(u) for u in users]

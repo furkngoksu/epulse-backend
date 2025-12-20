@@ -7,7 +7,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.user import UserModel
-    from app.models.hospital import Hospital
+    from app.models.clinic import Clinic
 
 
 class DoctorProfile(Base):
@@ -16,11 +16,11 @@ class DoctorProfile(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), primary_key=True
     )
-    hospital_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("hospitals.id"), nullable=False
+    clinic_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("clinics.id"), nullable=False
     )
     specialty: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Relationships
     user: Mapped["UserModel"] = relationship("UserModel", back_populates="doctor_profile")
-    hospital: Mapped["Hospital"] = relationship("Hospital", back_populates="doctor_profiles")
+    clinic: Mapped["Clinic"] = relationship("Clinic", back_populates="doctor_profiles")

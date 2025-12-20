@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 
 
 class DoctorProfileBase(BaseModel):
-    hospital_id: uuid.UUID
+    clinic_id: uuid.UUID
     specialty: str = Field(..., min_length=1, max_length=100)
 
 
@@ -12,7 +12,7 @@ class DoctorProfileCreate(DoctorProfileBase):
 
 
 class DoctorProfileUpdate(BaseModel):
-    hospital_id: uuid.UUID | None = None
+    clinic_id: uuid.UUID | None = None
     specialty: str | None = Field(None, min_length=1, max_length=100)
 
 
@@ -24,9 +24,9 @@ class DoctorProfileResponse(DoctorProfileBase):
 
 
 class DoctorProfileDetailResponse(DoctorProfileResponse):
-    """Detailed response with user and hospital information"""
+    """Detailed response with user and clinic information"""
     user: dict | None = None
-    hospital: dict | None = None
+    clinic: dict | None = None
 
     class Config:
         from_attributes = True
