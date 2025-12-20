@@ -2,18 +2,20 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.api.deps.db import get_db
-from app.repositories.appointment import AppointmentRepository
-from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
-from app.repositories.doctor_profile_repository import DoctorProfileRepository
-from app.repositories.drug_interaction import DrugInteractionRepository
-from app.repositories.hospital import HospitalRepository
-from app.repositories.medication_repository import MedicationRepository
-from app.repositories.patient_medication_repository import PatientMedicationRepository
-from app.repositories.prescription_item_repository import PrescriptionItemRepository
-from app.repositories.prescription_repository import PrescriptionRepository
-from app.repositories.schedule_repository import ScheduleRepository, ScheduleTimeRepository
-from app.repositories.user import UserRepository
-
+from app.repositories import (
+    AppointmentRepository,
+    DoctorPatientRelationshipRepository,
+    DoctorProfileRepository,
+    DrugInteractionRepository,
+    HospitalRepository,
+    MedicationRepository,
+    PatientMedicationRepository,
+    PrescriptionItemRepository,
+    PrescriptionRepository,
+    ScheduleRepository,
+    ScheduleTimeRepository,
+    UserRepository,
+)
 
 # User Repository
 def get_user_repository(

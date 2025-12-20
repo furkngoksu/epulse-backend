@@ -1,88 +1,146 @@
 import uuid
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
 
 from app.api.deps.services import get_catalog_service
+from app.schemas.drug_interaction import (
+    DrugInteractionCreate,
+    DrugInteractionUpdate,
+    DrugInteractionResponse,
+)
 from app.api.deps.auth import get_current_user, get_current_admin
+from app.schemas.base import SuccessResponse
 from app.schemas.user import User
 from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
 from app.services.catalog_service import CatalogService
 
-router = APIRouter()
+router = APIRouter(prefix="/catalog", tags=["Catalog"])
 
-
-@router.get("/medications", response_model=list[MedicationResponse])
-def get_medications(
-    name: str | None = Query(None, min_length=1),
+@router.get("/medications", response_model=SuccessResponse[list[MedicationResponse]])
+def list_medications(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
-    catalog_service: CatalogService = Depends(get_catalog_service),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get all medications with optional name filtering.
-    - If name is provided, searches medications by commercial name (contains query).
-    - Supports pagination with skip and limit.
-    Requires authentication.
-    """
-    if name:
-        medications = catalog_service.search_medications(name, skip=skip, limit=limit)
-    else:
-        medications = catalog_service.get_all_medications(skip=skip, limit=limit)
-    return medications
+    limit: int = Query(100, ge=1, le=200),
+    q: str | None = Query(None, min_length=1),
+    svc: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user),
+) -> SuccessResponse[list[MedicationResponse]]:
+    rows = svc.list_medications(skip=skip, limit=limit, query=q)
+    return SuccessResponse(content=rows)
 
 
-@router.get("/medications/{medication_id}", response_model=MedicationResponse)
+@router.get("/medications/{medication_id}", response_model=SuccessResponse[MedicationResponse])
 def get_medication(
     medication_id: uuid.UUID,
-    catalog_service: CatalogService = Depends(get_catalog_service),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get a medication by ID.
-    Requires authentication.
-    """
-    medication = catalog_service.get_medication_by_id(medication_id)
-    return medication
+    svc: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user),
+) -> SuccessResponse[MedicationResponse]:
+    row = svc.get_medication_by_id(medication_id)
+    return SuccessResponse(content=row)
 
+# -------------------------
+# Medications (Admin)
+# -------------------------
 
-@router.post("/medications", response_model=MedicationResponse, status_code=201)
+@router.post("/medications", response_model=SuccessResponse[MedicationResponse], status_code=201)
 def create_medication(
-    data: MedicationCreate,
-    catalog_service: CatalogService = Depends(get_catalog_service),
-    current_admin: User = Depends(get_current_admin)
-):
-    """
-    Create a new medication.
-    Requires admin role.
-    """
-    medication = catalog_service.create_medication(data)
-    return medication
+    payload: MedicationCreate,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[MedicationResponse]:
+    row = svc.create_medication(payload)
+    return SuccessResponse(content=row)
 
-
-@router.put("/medications/{medication_id}", response_model=MedicationResponse)
+@router.patch("/medications/{medication_id}", response_model=SuccessResponse[MedicationResponse])
 def update_medication(
     medication_id: uuid.UUID,
-    data: MedicationUpdate,
-    catalog_service: CatalogService = Depends(get_catalog_service),
-    current_admin: User = Depends(get_current_admin)
-):
-    """
-    Update a medication.
-    Requires admin role.
-    """
-    medication = catalog_service.update_medication(medication_id, data)
-    return medication
+    payload: MedicationUpdate,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[MedicationResponse]:
+    row = svc.update_medication(medication_id, payload)
+    return SuccessResponse(content=row)
 
-
-@router.delete("/medications/{medication_id}", status_code=204)
+@router.delete("/medications/{medication_id}", response_model=SuccessResponse)
 def delete_medication(
     medication_id: uuid.UUID,
-    catalog_service: CatalogService = Depends(get_catalog_service),
-    current_admin: User = Depends(get_current_admin)
-):
-    """
-    Delete a medication.
-    Requires admin role.
-    """
-    catalog_service.delete_medication(medication_id)
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[dict]:
+    svc.delete_medication(medication_id)
+    return SuccessResponse(success=True)
+
+# -------------------------
+# Drug Interactions (User)
+# -------------------------
+
+@router.get("/drug-interactions/check", response_model=SuccessResponse[DrugInteractionResponse | None])
+def check_interaction(
+    med_id_1: uuid.UUID = Query(...),
+    med_id_2: uuid.UUID = Query(...),
+    svc: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user),
+) -> SuccessResponse[DrugInteractionResponse | None]:
+    row = svc.check_interaction(med_id_1, med_id_2)
+    return SuccessResponse(content=row)
+
+@router.get("/drug-interactions/for-medication/{medication_id}", response_model=SuccessResponse[list[DrugInteractionResponse]])
+def get_interactions_for_medication(
+    medication_id: uuid.UUID,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_user: User = Depends(get_current_user),
+) -> SuccessResponse[list[DrugInteractionResponse]]:
+    rows = svc.get_interactions_for_medication(medication_id)
+    return SuccessResponse(content=rows)
+
+# -------------------------
+# Drug Interactions (Admin)
+# -------------------------
+
+@router.get("/drug-interactions", response_model=SuccessResponse[list[DrugInteractionResponse]])
+def get_all_interactions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[list[DrugInteractionResponse]]:
+    rows = svc.get_all_interactions(skip=skip, limit=limit)
+    return SuccessResponse(content=rows)
+
+
+@router.get("/drug-interactions/{interaction_id}", response_model=SuccessResponse[DrugInteractionResponse])
+def get_interaction(
+    interaction_id: uuid.UUID,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[DrugInteractionResponse]:
+    row = svc.get_interaction_by_id(interaction_id)
+    return SuccessResponse(content=row)
+
+
+@router.post("/drug-interactions", response_model=SuccessResponse[DrugInteractionResponse], status_code=201)
+def create_interaction(
+    payload: DrugInteractionCreate,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[DrugInteractionResponse]:
+    row = svc.create_interaction(payload)
+    return SuccessResponse(content=row)
+
+
+@router.patch("/drug-interactions/{interaction_id}", response_model=SuccessResponse[DrugInteractionResponse])
+def update_interaction(
+    interaction_id: uuid.UUID,
+    payload: DrugInteractionUpdate,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[DrugInteractionResponse]:
+    row = svc.update_interaction(interaction_id, payload)
+    return SuccessResponse(content=row)
+
+@router.delete("/drug-interactions/{interaction_id}", response_model=SuccessResponse)
+def delete_interaction(
+    interaction_id: uuid.UUID,
+    svc: CatalogService = Depends(get_catalog_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[dict]:
+    svc.delete_interaction(interaction_id)
+    return SuccessResponse(success=True)

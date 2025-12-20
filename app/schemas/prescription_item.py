@@ -9,7 +9,6 @@ class PrescriptionItemBase(BaseModel):
 
 
 class PrescriptionItemCreate(PrescriptionItemBase):
-    prescription_id: uuid.UUID
     medication_id: uuid.UUID
 
 

@@ -1,29 +1,23 @@
-from datetime import datetime
-from pydantic import BaseModel
 import uuid
+from datetime import date
+from pydantic import BaseModel
 
 from app.schemas.schedule_time import ScheduleTimeResponse
-from app.models.schedule import FrequencyTypeEnum
+
 
 class ScheduleBase(BaseModel):
     patient_medication_id: uuid.UUID
-    start_date: datetime
-    end_date: datetime
-    frequency_type: FrequencyTypeEnum | None = None
-    specific_days: dict | None = None
+    start_date: date
+    end_date: date
 
 
 class ScheduleCreate(ScheduleBase):
     pass
 
-class ScheduleUpdate(ScheduleBase):
-    id: uuid.UUID
 
 class ScheduleResponse(ScheduleBase):
     id: uuid.UUID
-
-    schedule_times  : list[ScheduleTimeResponse] | None = None
+    schedule_times: list[ScheduleTimeResponse] | None = None
 
     class Config:
         from_attributes = True
-

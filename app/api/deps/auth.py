@@ -7,7 +7,6 @@ from app.models.user import RoleEnum
 from app.api.deps.user import get_user_repository
 from app.services.auth_service import AuthService
 
-
 def get_current_user(
     user_repo: UserRepository = Depends(get_user_repository),
     authorization: str = Header(None),
@@ -35,12 +34,16 @@ def get_current_admin(
         raise ForbiddenException("Admin access required")
     return current_user
 
-
 def get_current_doctor(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if current_user.role != RoleEnum.doctor:
         raise ForbiddenException("Doctor access required")
+    return current_user
+
+def get_current_patient(current_user: User = Depends(get_current_user)) -> User:
+    if current_user.role != RoleEnum.patient:
+        raise ForbiddenException("Patient access required")
     return current_user
 
 
