@@ -112,7 +112,7 @@ class ScheduleTimeRepository:
             )
             .filter(PatientMedicationModel.user_id == patient_id)
             .filter(PatientMedicationModel.is_active.is_(True))
-            .filter(ScheduleTimeModel.status == DoseStatusEnum.PENDING)
+            .filter(ScheduleTimeModel.status == DoseStatusEnum.pending)
             .filter(ScheduleTimeModel.dose_datetime >= now)
             .order_by(asc(ScheduleTimeModel.dose_datetime))
             .first()
@@ -123,13 +123,13 @@ class ScheduleTimeRepository:
         schedule_time: ScheduleTimeModel,
         taken_at: datetime | None = None,
     ) -> ScheduleTimeModel:
-        schedule_time.status = DoseStatusEnum.TAKEN
+        schedule_time.status = DoseStatusEnum.taken
         schedule_time.taken_at = taken_at or datetime.now(tz=schedule_time.dose_datetime.tzinfo)
         schedule_time.skip_reason = None
         return self.update(schedule_time)
 
     def mark_missed(self, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
-        schedule_time.status = DoseStatusEnum.MISSED
+        schedule_time.status = DoseStatusEnum.missed
         schedule_time.taken_at = None
         schedule_time.skip_reason = None
         return self.update(schedule_time)
@@ -139,13 +139,13 @@ class ScheduleTimeRepository:
         schedule_time: ScheduleTimeModel,
         skip_reason: str | None = None,
     ) -> ScheduleTimeModel:
-        schedule_time.status = DoseStatusEnum.SKIPPED
+        schedule_time.status = DoseStatusEnum.skipped
         schedule_time.taken_at = None
         schedule_time.skip_reason = skip_reason
         return self.update(schedule_time)
 
     def reset_to_pending(self, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
-        schedule_time.status = DoseStatusEnum.PENDING
+        schedule_time.status = DoseStatusEnum.pending
         schedule_time.taken_at = None
         schedule_time.skip_reason = None
         return self.update(schedule_time)
@@ -161,13 +161,13 @@ class ScheduleTimeRepository:
             .join(PatientMedicationModel, ScheduleModel.patient_medication_id == PatientMedicationModel.id)
             .filter(PatientMedicationModel.user_id == patient_id)
             .filter(PatientMedicationModel.is_active.is_(True))
-            .filter(ScheduleTimeModel.status == DoseStatusEnum.PENDING)
+            .filter(ScheduleTimeModel.status == DoseStatusEnum.pending)
             .filter(ScheduleTimeModel.dose_datetime < now)
             .all()
         )
 
         for st in rows:
-            st.status = DoseStatusEnum.MISSED
+            st.status = DoseStatusEnum.missed
             st.taken_at = None
             st.skip_reason = None
 

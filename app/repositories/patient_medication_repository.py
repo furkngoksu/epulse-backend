@@ -97,7 +97,7 @@ class PatientMedicationRepository:
             for st in schedule_times:
                 st.schedule_id = schedule.id
                 if st.status is None:
-                    st.status = DoseStatusEnum.PENDING
+                    st.status = DoseStatusEnum.pending
 
             self.db_session.add_all(schedule_times)
 

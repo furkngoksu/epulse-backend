@@ -13,18 +13,17 @@ if TYPE_CHECKING:
     from app.models.schedule_time import ScheduleTimeModel
 
 class FrequencyTypeEnum(str, Enum):
-    CUSTOM = "CUSTOM"
+    custom = "custom"
 
-    DAILY = "DAILY"
-    TWICE_DAILY = "TWICE_DAILY"
-    THREE_TIMES_DAILY = "THREE_TIMES_DAILY"
+    daily = "daily"
+    twice_daily = "twice_daily"
+    three_times_daily = "three_times_daily"
+    every_6_hours = "every_6_hours"
+    every_8_hours = "every_8_hours"
+    every_12_hours = "every_12_hours"
 
-    EVERY_6_HOURS = "EVERY_6_HOURS"
-    EVERY_8_HOURS = "EVERY_8_HOURS"
-    EVERY_12_HOURS = "EVERY_12_HOURS"
-
-    WEEKLY = "WEEKLY"
-    MONTHLY = "MONTHLY"
+    weekly = "weekly"
+    monthly = "monthly"
 
 class ScheduleModel(Base):
     __tablename__ = "schedules"
