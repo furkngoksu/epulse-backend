@@ -4,6 +4,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.user import router as user_router
 from app.api.v1.hospital import router as hospital_router
 from app.api.v1.doctor_profile import router as doctor_profile_router
+from app.api.v1.patient_medications import router as medication_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.doctor_patient_relationship import router as doctor_patient_relationship_router
 from app.api.v1.appointment import router as appointment_router
