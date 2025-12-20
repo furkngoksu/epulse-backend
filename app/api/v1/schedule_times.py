@@ -8,7 +8,7 @@ from app.schemas.schedule_time import MarkDoseTakenRequest, MarkDoseSkippedReque
 from app.schemas.user import User
 from app.services.medication_service import MedicationService
 
-router = APIRouter(prefix="/me/schedule-times", tags=["ScheduleTimes"])
+router = APIRouter(prefix="/schedule-times", tags=["Schedule Times"])
 
 @router.patch("/{schedule_time_id}/take", response_model=SuccessResponse[ScheduleTimeResponse])
 def take_dose(
