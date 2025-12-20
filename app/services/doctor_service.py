@@ -169,6 +169,19 @@ class DoctorService:
 
         return self.doctor_patient_relationship_repository.get_patients_for_doctor(doctor_id, skip, limit)
 
+    def get_doctor_patient_summaries(
+        self, doctor_id: uuid.UUID, skip: int = 0, limit: int = 100
+    ) -> list[dict]:
+        """Get patient summaries with basic info for a specific doctor."""
+        # Verify doctor exists and has doctor role
+        doctor = self.user_repository.get_by_id(doctor_id)
+        if not doctor:
+            raise NotFoundException("Doctor not found")
+        if doctor.role != RoleEnum.doctor:
+            raise BadRequestException("User is not a doctor")
+
+        return self.doctor_patient_relationship_repository.get_patient_summaries_for_doctor(doctor_id, skip, limit)
+
     def get_patient_doctors(
         self, patient_id: uuid.UUID, skip: int = 0, limit: int = 100
     ) -> list[DoctorPatientRelationship]:

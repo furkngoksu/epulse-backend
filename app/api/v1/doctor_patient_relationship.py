@@ -7,7 +7,8 @@ from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.user import User, RoleEnum
 from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
-    DoctorPatientRelationshipResponse
+    DoctorPatientRelationshipResponse,
+    PatientSummary
 )
 from app.services.doctor_service import DoctorService
 from app.api.deps.services import get_doctor_service
@@ -31,7 +32,7 @@ def get_all_relationships(
     return relationships
 
 
-@router.get("/doctor/{doctor_id}/patients", response_model=List[DoctorPatientRelationshipResponse])
+@router.get("/doctor/{doctor_id}/patients", response_model=List[PatientSummary])
 def get_patients_for_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -40,7 +41,7 @@ def get_patients_for_doctor(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get all patients for a specific doctor.
+    Get all patients for a specific doctor with basic patient information.
     Doctors can only see their own patients. Admins can see any doctor's patients.
     Patients cannot access this endpoint.
     """
@@ -52,10 +53,10 @@ def get_patients_for_doctor(
     if current_user.role == RoleEnum.doctor and current_user.id != doctor_id:
         raise ForbiddenException("You can only view your own patients")
 
-    relationships = doctor_service.get_doctor_patients(
+    patient_summaries = doctor_service.get_doctor_patient_summaries(
         doctor_id, skip=skip, limit=limit
     )
-    return relationships
+    return patient_summaries
 
 
 @router.get("/patient/{patient_id}/doctors", response_model=List[DoctorPatientRelationshipResponse])
