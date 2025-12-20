@@ -1,13 +1,16 @@
 import uuid
 from app.models.hospital import Hospital
+from app.models.clinic import Clinic
 from app.models.doctor_profile import DoctorProfile
 from app.models.doctor_patient_relationship import DoctorPatientRelationship
 from app.models.user import RoleEnum
 from app.repositories.hospital import HospitalRepository
+from app.repositories.clinic import ClinicRepository
 from app.repositories.doctor_profile_repository import DoctorProfileRepository
 from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
 from app.repositories.user import UserRepository
 from app.schemas.hospital import HospitalCreate, HospitalUpdate
+from app.schemas.clinic import ClinicCreate, ClinicUpdate
 from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate
 from app.schemas.doctor_patient_relationship import DoctorPatientRelationshipCreate
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
@@ -15,17 +18,19 @@ from app.exceptions.exceptions import NotFoundException, BadRequestException, Co
 
 class DoctorService:
     """
-    Consolidated service for managing hospitals, doctor profiles, and doctor-patient relationships.
+    Consolidated service for managing hospitals, clinics, doctor profiles, and doctor-patient relationships.
     """
 
     def __init__(
         self,
         hospital_repository: HospitalRepository,
+        clinic_repository: ClinicRepository,
         doctor_profile_repository: DoctorProfileRepository,
         doctor_patient_relationship_repository: DoctorPatientRelationshipRepository,
         user_repository: UserRepository
     ):
         self.hospital_repository = hospital_repository
+        self.clinic_repository = clinic_repository
         self.doctor_profile_repository = doctor_profile_repository
         self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
         self.user_repository = user_repository
@@ -76,6 +81,60 @@ class DoctorService:
             raise NotFoundException("Hospital not found")
         self.hospital_repository.delete(hospital)
 
+    # ==================== Clinic Methods ====================
+
+    def get_all_clinics(self, skip: int = 0, limit: int = 100) -> list[Clinic]:
+        return self.clinic_repository.get_all(skip=skip, limit=limit)
+
+    def get_clinic_by_id(self, clinic_id: uuid.UUID) -> Clinic:
+        clinic = self.clinic_repository.get_by_id(clinic_id)
+        if not clinic:
+            raise NotFoundException("Clinic not found")
+        return clinic
+
+    def get_clinics_by_hospital(self, hospital_id: uuid.UUID) -> list[Clinic]:
+        # Verify hospital exists
+        hospital = self.hospital_repository.get_by_id(hospital_id)
+        if not hospital:
+            raise NotFoundException("Hospital not found")
+
+        return self.clinic_repository.get_by_hospital_id(hospital_id)
+
+    def create_clinic(self, data: ClinicCreate) -> Clinic:
+        # Verify hospital exists
+        hospital = self.hospital_repository.get_by_id(data.hospital_id)
+        if not hospital:
+            raise NotFoundException("Hospital not found")
+
+        clinic = Clinic(
+            name=data.name,
+            hospital_id=data.hospital_id
+        )
+        return self.clinic_repository.create(clinic)
+
+    def update_clinic(self, clinic_id: uuid.UUID, data: ClinicUpdate) -> Clinic:
+        clinic = self.clinic_repository.get_by_id(clinic_id)
+        if not clinic:
+            raise NotFoundException("Clinic not found")
+
+        # Update only provided fields
+        if data.name is not None:
+            clinic.name = data.name
+        if data.hospital_id is not None:
+            # Verify hospital exists
+            hospital = self.hospital_repository.get_by_id(data.hospital_id)
+            if not hospital:
+                raise NotFoundException("Hospital not found")
+            clinic.hospital_id = data.hospital_id
+
+        return self.clinic_repository.update(clinic)
+
+    def delete_clinic(self, clinic_id: uuid.UUID) -> None:
+        clinic = self.clinic_repository.get_by_id(clinic_id)
+        if not clinic:
+            raise NotFoundException("Clinic not found")
+        self.clinic_repository.delete(clinic)
+
     # ==================== Doctor Profile Methods ====================
 
     def get_all_doctor_profiles(self, skip: int = 0, limit: int = 100) -> list[DoctorProfile]:
@@ -87,13 +146,13 @@ class DoctorService:
             raise NotFoundException("Doctor profile not found")
         return profile
 
-    def get_doctors_by_hospital(self, hospital_id: uuid.UUID) -> list[DoctorProfile]:
-        # Verify hospital exists
-        hospital = self.hospital_repository.get_by_id(hospital_id)
-        if not hospital:
-            raise NotFoundException("Hospital not found")
+    def get_doctors_by_clinic(self, clinic_id: uuid.UUID) -> list[DoctorProfile]:
+        # Verify clinic exists
+        clinic = self.clinic_repository.get_by_id(clinic_id)
+        if not clinic:
+            raise NotFoundException("Clinic not found")
 
-        return self.doctor_profile_repository.get_by_hospital_id(hospital_id)
+        return self.doctor_profile_repository.get_by_clinic_id(clinic_id)
 
     def create_doctor_profile(self, data: DoctorProfileCreate) -> DoctorProfile:
         # Verify user exists and is a doctor
@@ -109,14 +168,14 @@ class DoctorService:
         if existing_profile:
             raise ConflictException("Doctor profile already exists for this user")
 
-        # Verify hospital exists
-        hospital = self.hospital_repository.get_by_id(data.hospital_id)
-        if not hospital:
-            raise NotFoundException("Hospital not found")
+        # Verify clinic exists
+        clinic = self.clinic_repository.get_by_id(data.clinic_id)
+        if not clinic:
+            raise NotFoundException("Clinic not found")
 
         profile = DoctorProfile(
             id=data.user_id,
-            hospital_id=data.hospital_id,
+            clinic_id=data.clinic_id,
             specialty=data.specialty
         )
         return self.doctor_profile_repository.create(profile)
@@ -127,12 +186,12 @@ class DoctorService:
             raise NotFoundException("Doctor profile not found")
 
         # Update only provided fields
-        if data.hospital_id is not None:
-            # Verify hospital exists
-            hospital = self.hospital_repository.get_by_id(data.hospital_id)
-            if not hospital:
-                raise NotFoundException("Hospital not found")
-            profile.hospital_id = data.hospital_id
+        if data.clinic_id is not None:
+            # Verify clinic exists
+            clinic = self.clinic_repository.get_by_id(data.clinic_id)
+            if not clinic:
+                raise NotFoundException("Clinic not found")
+            profile.clinic_id = data.clinic_id
 
         if data.specialty is not None:
             profile.specialty = data.specialty

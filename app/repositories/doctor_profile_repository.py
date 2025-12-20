@@ -17,7 +17,7 @@ class DoctorProfileRepository:
     def get_by_id_with_relations(self, profile_id: uuid.UUID) -> DoctorProfile | None:
         return (
             self.db.query(DoctorProfile)
-            .options(joinedload(DoctorProfile.user), joinedload(DoctorProfile.hospital))
+            .options(joinedload(DoctorProfile.user), joinedload(DoctorProfile.clinic))
             .filter(DoctorProfile.id == profile_id)
             .first()
         )
@@ -25,8 +25,8 @@ class DoctorProfileRepository:
     def get_by_user_id(self, user_id: uuid.UUID) -> DoctorProfile | None:
         return self.db.query(DoctorProfile).filter(DoctorProfile.id == user_id).first()
 
-    def get_by_hospital_id(self, hospital_id: uuid.UUID) -> list[DoctorProfile]:
-        return self.db.query(DoctorProfile).filter(DoctorProfile.hospital_id == hospital_id).all()
+    def get_by_clinic_id(self, clinic_id: uuid.UUID) -> list[DoctorProfile]:
+        return self.db.query(DoctorProfile).filter(DoctorProfile.clinic_id == clinic_id).all()
 
     def create(self, profile: DoctorProfile) -> DoctorProfile:
         self.db.add(profile)

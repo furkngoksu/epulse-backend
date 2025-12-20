@@ -29,9 +29,9 @@ def get_doctor_profiles(
     return profiles
 
 
-@router.get("/hospital/{hospital_id}", response_model=list[DoctorProfileResponse])
-def get_doctors_by_hospital(
-    hospital_id: uuid.UUID,
+@router.get("/clinic/{clinic_id}", response_model=list[DoctorProfileResponse])
+def get_doctors_by_clinic(
+    clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
     current_user: User = Depends(get_current_user)
 ):
@@ -39,7 +39,7 @@ def get_doctors_by_hospital(
     Get all doctors at a specific hospital.
     Requires authentication.
     """
-    profiles = service.get_doctors_by_hospital(hospital_id)
+    profiles = service.get_doctors_by_clinic(clinic_id)
     return profiles
 
 

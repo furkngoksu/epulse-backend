@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps.db import get_db
 from app.repositories import (
     AppointmentRepository,
+    ClinicRepository,
     DoctorPatientRelationshipRepository,
     DoctorProfileRepository,
     DrugInteractionRepository,
@@ -75,6 +76,13 @@ def get_hospital_repository(
     db: Session = Depends(get_db),
 ) -> HospitalRepository:
     return HospitalRepository(db)
+
+
+# Clinic Repository
+def get_clinic_repository(
+    db: Session = Depends(get_db),
+) -> ClinicRepository:
+    return ClinicRepository(db)
 
 
 # Drug Interaction Repository

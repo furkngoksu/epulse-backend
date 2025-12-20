@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.doctor_profile import DoctorProfile
+    from app.models.clinic import Clinic
 
 
 class Hospital(Base):
@@ -22,6 +22,6 @@ class Hospital(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Relationships
-    doctor_profiles: Mapped[list["DoctorProfile"]] = relationship(
-        "DoctorProfile", back_populates="hospital"
+    clinics: Mapped[list["Clinic"]] = relationship(
+        "Clinic", back_populates="hospital"
     )
