@@ -1,6 +1,6 @@
 from .prescription_item_repository import PrescriptionItemRepository
 from .prescription_repository import PrescriptionRepository
-from .drug_interaction import DrugInteractionRepository
+from .drug_interaction_repository import DrugInteractionRepository
 from .medication_repository import MedicationRepository
 from .patient_medication_repository import PatientMedicationRepository
 from .schedule_repository import ScheduleRepository, ScheduleTimeRepository

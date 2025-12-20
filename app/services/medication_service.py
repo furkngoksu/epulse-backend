@@ -1,6 +1,7 @@
 import uuid
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, timezone, date, time
 import math
+from zoneinfo import ZoneInfo
 
 from app.exceptions.exceptions import NotFoundException, BadRequestException
 from app.models.medication import MedicationModel
@@ -12,16 +13,12 @@ from app.repositories.patient_medication_repository import PatientMedicationRepo
 from app.repositories.schedule_repository import ScheduleRepository, ScheduleTimeRepository
 from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
 from app.schemas.patient_medication import (
-    PatientMedicationCreate,
-    PatientMedicationCreatedResponse,
     PatientMedicationUpdate,
     PatientMedicationResponse,
     PatientMedicationWithScheduleCreate,
 )
 from app.schemas.schedule import ScheduleCreate, ScheduleResponse
 from app.schemas.schedule_time import ScheduleTimeCreate, ScheduleTimeResponse
-from app.schemas.user import User
-
 
 class MedicationService:
     def __init__(
@@ -36,6 +33,10 @@ class MedicationService:
         self.schedule_repo = schedule_repo
         self.st_repo = schedule_time_repo
 
+    # -------- #
+    # Catalog
+    # -------- #
+
     def list_catalog(self, skip: int = 0, limit: int = 100) -> list[MedicationResponse]:
         meds = self.med_repo.get_all(skip=skip, limit=limit)
         return [MedicationResponse.model_validate(m) for m in meds]
@@ -45,10 +46,6 @@ class MedicationService:
         if not med:
             raise NotFoundException("Medication not found")
         return MedicationResponse.model_validate(med)
-
-    def search_catalog(self, name: str, skip: int = 0, limit: int = 100) -> list[MedicationResponse]:
-        meds = self.med_repo.search_by_name(name=name, skip=skip, limit=limit)
-        return [MedicationResponse.model_validate(m) for m in meds]
 
     def create_catalog_medication(self, data: MedicationCreate) -> MedicationResponse:
         model = MedicationModel(**data.model_dump())
@@ -72,6 +69,9 @@ class MedicationService:
             raise NotFoundException("Medication not found")
         self.med_repo.delete(med)
 
+    # -------- #
+    # Patient Medications
+    # -------- #
 
     def list_patient_medications(
         self,
@@ -80,38 +80,47 @@ class MedicationService:
         skip: int = 0,
         limit: int = 100,
     ) -> list[PatientMedicationResponse]:
-        
+
         if status == "active":
-            rows = self.pm_repo.get_active_by_user_id(user_id)
+            is_active = True
         elif status == "paused":
-            # paused = is_active False
-            rows = self.pm_repo.get_by_patient_id(user_id)
-            rows = [r for r in rows if not r.is_active]
+            is_active = False
         elif status == "all":
-            rows = self.pm_repo.get_by_patient_id(user_id)
+            is_active = None
         else:
             raise BadRequestException("Invalid status. Use active|paused|all")
 
-        rows = rows[skip : skip + limit]
+        rows = self.pm_repo.list_by_user(
+            user_id=user_id,
+            is_active=is_active,
+            skip=skip,
+            limit=limit,
+        )
         return [PatientMedicationResponse.model_validate(pm) for pm in rows]
 
-    def get_patient_medication(self, patient_medication_id: uuid.UUID) -> PatientMedicationResponse:
-        pm = self.pm_repo.get_by_id(patient_medication_id)
+    def get_patient_medication(
+        self,
+        patient_medication_id: uuid.UUID,
+        current_user_id: uuid.UUID,
+    ) -> PatientMedicationResponse:
+        pm = self.pm_repo.get_by_id_for_user(
+            patient_medication_id=patient_medication_id,
+            user_id=current_user_id,
+        )
         if not pm:
             raise NotFoundException("Patient medication not found")
         return PatientMedicationResponse.model_validate(pm)
-
-    def create_patient_medication(self, data: PatientMedicationCreate) -> PatientMedicationResponse:
-        pm = PatientMedicationModel(**data.model_dump())
-        created = self.pm_repo.create(pm)
-        return PatientMedicationResponse.model_validate(created)
 
     def update_patient_medication(
         self,
         patient_medication_id: uuid.UUID,
         data: PatientMedicationUpdate,
+        current_user_id: uuid.UUID,
     ) -> PatientMedicationResponse:
-        pm = self.pm_repo.get_by_id(patient_medication_id)
+        pm = self.pm_repo.get_by_id_for_user(
+            patient_medication_id=patient_medication_id,
+            user_id=current_user_id,
+        )
         if not pm:
             raise NotFoundException("Patient medication not found")
 
@@ -121,11 +130,119 @@ class MedicationService:
         pm = self.pm_repo.update(pm)
         return PatientMedicationResponse.model_validate(pm)
 
-    def delete_patient_medication(self, patient_medication_id: uuid.UUID) -> None:
-        pm = self.pm_repo.get_by_id(patient_medication_id)
+
+    def delete_patient_medication(
+        self,
+        patient_medication_id: uuid.UUID,
+        current_user_id: uuid.UUID,
+    ) -> None:
+        pm = self.pm_repo.get_by_id_for_user(
+            patient_medication_id=patient_medication_id,
+            user_id=current_user_id,
+        )
         if not pm:
             raise NotFoundException("Patient medication not found")
+
         self.pm_repo.delete(pm)
+
+    
+    def get_upcoming_patient_medications(self, patient_id: uuid.UUID, hours: int) -> list[PatientMedicationResponse]:
+        now = datetime.now(timezone.utc)
+        end = now + timedelta(hours=hours)
+        meds = self.pm_repo.get_upcoming_medications(patient_id=patient_id, now=now, end=end)
+        return [PatientMedicationResponse.model_validate(m) for m in meds]
+
+    def get_patient_medications_between(
+        self, patient_id: uuid.UUID, range_start: date, range_end: date
+    ) -> list[PatientMedicationResponse]:
+        rows = self.pm_repo.get_medications_for_date_range(patient_id, range_start, range_end)
+        return [PatientMedicationResponse.model_validate(pm) for pm in rows]
+    
+    def _iter_dates(self, start: date, end: date):
+        d = start
+        while d <= end:
+            yield d
+            d += timedelta(days=1)
+    
+    def create_patient_medication_with_schedule(
+        self,
+        patient_id: uuid.UUID,
+        data: PatientMedicationWithScheduleCreate,
+    ) -> PatientMedicationResponse:
+        
+        med = self.med_repo.get_by_id(data.medication_id)
+        if not med:
+            raise NotFoundException("Medication not found")
+
+        initial_stock = data.initial_stock
+        if initial_stock < 1:
+            raise BadRequestException("initial_stock must be >= 1")
+
+        if data.tablets_per_use < 1:
+            raise BadRequestException("tablets_per_use must be >= 1")
+
+        if initial_stock < data.tablets_per_use:
+            raise BadRequestException("initial_stock must be >= tablets_per_use")
+
+        stock_warning_threshold = max(1, math.ceil(initial_stock * 0.10))
+
+        if data.end_date < data.start_date:
+            raise BadRequestException("end_date cannot be earlier than start_date")
+
+        times: list[time] = data.schedule.times
+        if not times:
+            raise BadRequestException("schedule.times cannot be empty")
+
+        tz = ZoneInfo("Europe/Istanbul")
+
+        schedule_times: list[ScheduleTimeModel] = []
+        seen: set[datetime] = set()
+
+        for day in self._iter_dates(data.start_date, data.end_date):
+            for t in times:
+                dt_local = datetime.combine(day, t, tzinfo=tz)
+                if dt_local in seen:
+                    continue
+                seen.add(dt_local)
+
+                schedule_times.append(
+                    ScheduleTimeModel(
+                        dose_datetime=dt_local,
+                        status=DoseStatusEnum.pending,
+                    )
+                )
+
+        if not schedule_times:
+            raise BadRequestException("Schedule times cannot be empty")
+
+        custom_name = data.custom_name or getattr(med, "commercial_name", None) or "Medication"
+
+        schedule = ScheduleModel(
+            start_date=data.start_date,
+            end_date=data.end_date,
+            schedule_times=schedule_times,
+        )
+
+        pm = PatientMedicationModel(
+            user_id=patient_id,
+            medication_id=data.medication_id,
+            custom_name=custom_name,
+            initial_stock=initial_stock,
+            current_stock=initial_stock,
+            stock_warning_threshold=stock_warning_threshold,
+            is_active=True,
+            tablets_per_use=data.tablets_per_use,
+            schedules=[schedule],
+        )
+
+        created = self.pm_repo.create(pm)
+
+        return PatientMedicationResponse.model_validate(created)
+
+
+    # -------- #
+    # Schedules and Schedule Times
+    # -------- #
 
     def create_schedule(self, data: ScheduleCreate) -> ScheduleResponse:
         pm = self.pm_repo.get_by_id(data.patient_medication_id)
@@ -210,68 +327,3 @@ class MedicationService:
 
         st = self.st_repo.update(st)
         return ScheduleTimeResponse.model_validate(st)
-
-    def get_upcoming_patient_medications(self, patient_id: uuid.UUID, hours: int) -> list[PatientMedicationResponse]:
-        now = datetime.now(timezone.utc)
-        end = now + timedelta(hours=hours)
-        meds = self.pm_repo.get_upcoming_medications(patient_id=patient_id, now=now, end=end)
-        return [PatientMedicationResponse.model_validate(m) for m in meds]
-
-    def get_patient_medications_between(
-        self, patient_id: uuid.UUID, range_start: date, range_end: date
-    ) -> list[PatientMedicationResponse]:
-        rows = self.pm_repo.get_medications_for_date_range(patient_id, range_start, range_end)
-        return [PatientMedicationResponse.model_validate(pm) for pm in rows]
-    
-    def create_patient_medication_with_schedule(
-        self,
-        current_user_id: uuid.UUID,
-        data: PatientMedicationWithScheduleCreate,
-    ) -> PatientMedicationCreatedResponse:
-        med = self.med_repo.get_by_id(data.medication_id)
-        if not med:
-            raise NotFoundException("Medication not found")
-
-        initial_stock = data.initial_stock
-        if initial_stock < data.tablets_per_use:
-            raise BadRequestException("initial_stock must be >= tablets_per_use")
-
-
-        stock_warning_threshold = max(1, math.ceil(initial_stock * 0.10))
-
-        for dt in data.schedule.times:
-            if not (data.start_date <= dt <= data.end_date):
-                raise BadRequestException("All schedule times must be between start_date and end_date")
-
-        custom_name = data.custom_name or med.commercial_name
-
-        schedule_times = [
-            ScheduleTimeModel(
-                dose_datetime=dt,
-                status=DoseStatusEnum.pending,
-            )
-            for dt in data.schedule.times
-        ]
-
-        schedule = ScheduleModel(
-            start_date=data.start_date,
-            end_date=data.end_date,
-            frequency_type=data.frequency_type,
-            specific_days=data.specific_days,
-            schedule_times=schedule_times,  # cascade
-        )
-
-        pm = PatientMedicationModel(
-            user_id=current_user_id,
-            medication_id=data.medication_id,
-            custom_name=custom_name,
-            initial_stock=initial_stock,
-            current_stock=initial_stock,
-            stock_warning_threshold=stock_warning_threshold,
-            is_active=True,
-            tablets_per_use=data.tablets_per_use,
-            schedules=[schedule],  # cascade
-        )
-
-        created = self.pm_repo.create(pm)  # TEK commit burada
-        return PatientMedicationCreatedResponse(patient_medication_id=created.id)

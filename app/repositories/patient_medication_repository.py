@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy import literal
 from app.models.patient_medication import PatientMedicationModel
 import uuid
@@ -29,9 +30,10 @@ class PatientMedicationRepository:
         return patient_medication
 
     def update(self, patient_medication: PatientMedicationModel) -> PatientMedicationModel:
-        self.db_session.merge(patient_medication)
+        obj = self.db_session.merge(patient_medication)
         self.db_session.commit()
-        return patient_medication
+        self.db_session.refresh(obj)
+        return obj
 
     def delete(self, patient_medication: PatientMedicationModel) -> None:
         self.db_session.delete(patient_medication)
@@ -103,4 +105,30 @@ class PatientMedicationRepository:
 
         self.db_session.refresh(pm)
         return pm
+    
+    def list_by_user(
+        self,
+        user_id: uuid.UUID,
+        is_active: Optional[bool] = None,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[PatientMedicationModel]:
+        q = self.db_session.query(PatientMedicationModel).filter(PatientMedicationModel.user_id == user_id)
+
+        if is_active is not None:
+            q = q.filter(PatientMedicationModel.is_active.is_(is_active))
+
+        return q.offset(skip).limit(limit).all()
+    
+    def get_by_id_for_user(
+        self,
+        patient_medication_id: uuid.UUID,
+        user_id: uuid.UUID,
+    ) -> PatientMedicationModel | None:
+        return (
+            self.db_session.query(PatientMedicationModel)
+            .filter(PatientMedicationModel.id == patient_medication_id)
+            .filter(PatientMedicationModel.user_id == user_id)
+            .first()
+        )
 
