@@ -5,7 +5,6 @@ from app.api.deps.db import get_db
 from app.repositories.appointment import AppointmentRepository
 from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
 from app.repositories.doctor_profile_repository import DoctorProfileRepository
-from app.repositories.dose_log_repository import DoseLogRepository
 from app.repositories.drug_interaction import DrugInteractionRepository
 from app.repositories.hospital import HospitalRepository
 from app.repositories.medication_repository import MedicationRepository
@@ -81,13 +80,6 @@ def get_drug_interaction_repository(
     db: Session = Depends(get_db),
 ) -> DrugInteractionRepository:
     return DrugInteractionRepository(db)
-
-
-# Dose Log Repository
-def get_dose_log_repository(
-    db: Session = Depends(get_db),
-) -> DoseLogRepository:
-    return DoseLogRepository(db)
 
 
 # Schedule Repositories

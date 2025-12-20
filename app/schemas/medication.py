@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 import uuid
+
 class MedicationBase(BaseModel):
     commercial_name: str = Field(..., min_length=1, max_length=200)
     active_ingredients: str = Field(..., min_length=1, max_length=500)

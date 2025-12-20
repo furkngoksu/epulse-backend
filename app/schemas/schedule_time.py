@@ -1,20 +1,26 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from datetime import datetime
 import uuid
+from app.models.schedule_time import DoseStatusEnum
+    
 
-class ScheduleTimeBase(BaseModel):
-    schedule_id:  uuid.UUID
-    start_time: str
-    end_time: str
-
-class ScheduleTimeUpdate(ScheduleTimeBase):
-    pass
-
-class ScheduleTimeCreate(ScheduleTimeBase):
-    pass
+class ScheduleTimeCreate(BaseModel):
+    dose_datetime: datetime
 
 
-class ScheduleTimeResponse(ScheduleTimeBase):
+class ScheduleTimeResponse(BaseModel):
     id: uuid.UUID
+    dose_datetime: datetime
+    status: DoseStatusEnum
+    taken_at: datetime | None
+    skip_reason: str | None
 
     class Config:
         from_attributes = True
+
+
+class MarkDoseTakenRequest(BaseModel):
+    taken_at: datetime | None = None
+
+class MarkDoseSkippedRequest(BaseModel):
+    reason: str | None = Field(default=None, max_length=255)
