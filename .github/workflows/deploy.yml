@@ -18,5 +18,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd epulse-backend
-            git pull origin main
+            git pull origin main --rebase
             sudo systemctl restart epulse
