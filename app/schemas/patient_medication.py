@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, time
+from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.medication import MedicationResponse
@@ -32,14 +32,18 @@ class PatientMedicationResponse(PatientMedicationFields):
     schedules: list[ScheduleResponse] | None = None
 
 
-class ScheduleTimesPayload(BaseModel):
-    times: list[time] = Field(..., min_length=1)
+class ScheduleDateTimesPayload(BaseModel):
+    times: list[datetime] = Field(..., min_length=1)
 
     @field_validator("times")
     @classmethod
-    def validate_times(cls, v: list[time]):
+    def validate_times(cls, v: list[datetime]):
+        if any(dt.tzinfo is None for dt in v):
+            raise ValueError("All times must be timezone-aware datetimes")
+
         if len(set(v)) != len(v):
-            raise ValueError("Duplicate times are not allowed")
+            raise ValueError("Duplicate datetimes are not allowed")
+
         return v
 
 
@@ -50,15 +54,4 @@ class PatientMedicationWithScheduleCreate(BaseModel):
     tablets_per_use: int = Field(1, ge=1)
     initial_stock: int = Field(..., ge=1)
 
-    start_date: date
-    end_date: date
-
-    schedule: ScheduleTimesPayload
-
-    @field_validator("end_date")
-    @classmethod
-    def validate_range(cls, end_date: date, info):
-        start_date = info.data.get("start_date")
-        if start_date and end_date < start_date:
-            raise ValueError("end_date cannot be earlier than start_date")
-        return end_date
+    schedule: ScheduleDateTimesPayload
