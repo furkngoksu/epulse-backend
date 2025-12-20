@@ -60,7 +60,7 @@ class PrescriptionService:
         # active alanı yok -> status ile filtrele
         rows = self.prescription_repo.get_by_patient_and_status(
             patient_id=patient_id,
-            status=Status.ACTIVE,
+            status=Status.active,
             skip=skip,
             limit=limit,
         )
@@ -78,7 +78,6 @@ class PrescriptionService:
             patient_id=patient_id,
             notes=data.notes,
             status=Status.inactive
-            status=Status.INACTIVE,
         )
         created = self.prescription_repo.create(prescription=rx)
         return Prescription.model_validate(created)

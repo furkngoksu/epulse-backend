@@ -11,10 +11,10 @@ if TYPE_CHECKING:
     from app.models.schedule import ScheduleModel
 
 class DoseStatusEnum(str, Enum):
-    PENDING = "PENDING"
-    TAKEN = "TAKEN"
-    MISSED = "MISSED"
-    SKIPPED = "SKIPPED"
+    pending = "pending"
+    taken = "taken"
+    missed = "missed"
+    skipped = "skipped"
 
 class ScheduleTimeModel(Base):
     __tablename__ = "schedule_times"
@@ -33,7 +33,7 @@ class ScheduleTimeModel(Base):
 
     status: Mapped[DoseStatusEnum] = mapped_column(
         SQLEnum(DoseStatusEnum),
-        default=DoseStatusEnum.PENDING,
+        default=DoseStatusEnum.pending,
         nullable=False
     )
 

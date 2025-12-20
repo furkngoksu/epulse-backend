@@ -144,7 +144,7 @@ class MedicationService:
         st = ScheduleTimeModel(
             schedule_id=schedule_id,
             dose_datetime=data.dose_datetime,
-            status=DoseStatusEnum.PENDING,
+            status=DoseStatusEnum.pending,
         )
         st = self.st_repo.create(st)
         return ScheduleTimeResponse.model_validate(st)
@@ -158,10 +158,10 @@ class MedicationService:
         if pm.user_id != current_user_id:
             raise BadRequestException("User does not own this schedule time")
 
-        if st.status == DoseStatusEnum.TAKEN:
+        if st.status == DoseStatusEnum.taken:
             return ScheduleTimeResponse.model_validate(st)
 
-        if st.status != DoseStatusEnum.PENDING:
+        if st.status != DoseStatusEnum.pending:
             raise BadRequestException("Only PENDING doses can be marked as TAKEN")
 
         pm = st.schedule.patient_medication
@@ -172,7 +172,7 @@ class MedicationService:
 
         pm.current_stock -= need
 
-        st.status = DoseStatusEnum.TAKEN
+        st.status = DoseStatusEnum.taken
         st.taken_at = taken_at or datetime.now(timezone.utc)
         st.skip_reason = None
 
@@ -188,7 +188,7 @@ class MedicationService:
         if pm.user_id != current_user_id:
             raise BadRequestException("User does not own this schedule time")
 
-        st.status = DoseStatusEnum.SKIPPED
+        st.status = DoseStatusEnum.skipped
         st.taken_at = None
         st.skip_reason = reason
 
@@ -204,7 +204,7 @@ class MedicationService:
         if pm.user_id != current_user_id:
             raise BadRequestException("User does not own this schedule time")
 
-        st.status = DoseStatusEnum.MISSED
+        st.status = DoseStatusEnum.missed
         st.taken_at = None
         st.skip_reason = None
 
@@ -248,7 +248,7 @@ class MedicationService:
         schedule_times = [
             ScheduleTimeModel(
                 dose_datetime=dt,
-                status=DoseStatusEnum.PENDING,
+                status=DoseStatusEnum.pending,
             )
             for dt in data.schedule.times
         ]
