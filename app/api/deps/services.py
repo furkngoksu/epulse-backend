@@ -15,7 +15,7 @@ from app.api.deps.repositories import (
     get_user_repository,
 )
 
-from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService
+from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService, UserService
 from app.repositories import (
     PrescriptionRepository, 
     PrescriptionItemRepository, 
@@ -95,3 +95,9 @@ def get_prescription_service(
         drug_interaction_repository=drug_interaction_repository,
         medication_repository=medication_repository,
     )
+
+# User Service
+def get_user_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+) -> UserService:
+    return UserService(user_repo=user_repository)
