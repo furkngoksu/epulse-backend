@@ -3,3 +3,5 @@ pydantic-settings
 sqlalchemy
 fastapi
 sqlalchemy-orm
+bcrypt<4
+passlib[bcrypt]>=1.7.4
