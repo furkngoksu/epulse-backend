@@ -13,7 +13,6 @@ from app.api.deps.repositories import (
     get_appointment_repository,
     get_hospital_repository,
     get_drug_interaction_repository,
-    get_dose_log_repository,
     get_schedule_repository,
     get_schedule_time_repository,
 )
@@ -49,7 +48,6 @@ __all__ = [
     "get_appointment_repository",
     "get_hospital_repository",
     "get_drug_interaction_repository",
-    "get_dose_log_repository",
     "get_schedule_repository",
     "get_schedule_time_repository",
     # Services

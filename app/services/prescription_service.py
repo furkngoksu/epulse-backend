@@ -1,160 +1,215 @@
+import uuid
+from itertools import combinations
+
+from app.exceptions.exceptions import NotFoundException, BadRequestException
+from app.models import PrescriptionModel, PrescriptionItemModel
+from app.repositories import (
+    PrescriptionRepository,
+    PrescriptionItemRepository,
+    DrugInteractionRepository,
+    MedicationRepository,
+)
 from app.models.prescription import Status
-from app.models.prescription_item import PrescriptionItemModel
-from app.models.user import RoleEnum
-from app.repositories import PrescriptionRepository, PrescriptionItemRepository
-from app.schemas import User
-from app.schemas.prescription_item import PrescriptionItem, PrescriptionItemCreate, PrescriptionItemUpdate
-from app.models import PrescriptionModel
-import uuid  
+
 from app.schemas.prescription import PrescriptionCreate, PrescriptionUpdate, Prescription
-from app.exceptions import ForbiddenException, NotFoundException
+from app.schemas.prescription_item import (
+    PrescriptionItem,
+    PrescriptionItemCreate,
+    PrescriptionItemUpdate,
+)
+from app.schemas.drug_interaction import DrugInteractionResponse
+
 
 class PrescriptionService:
-    def __init__(self, 
+    def __init__(
+        self,
         prescription_repository: PrescriptionRepository,
         prescription_item_repository: PrescriptionItemRepository,
-        current_user: User
+        drug_interaction_repository: DrugInteractionRepository,
+        medication_repository: MedicationRepository,
     ):
-        self.current_user = current_user
-        self.prescription_repository = prescription_repository
-        self.prescription_item_repository = prescription_item_repository
+        self.prescription_repo = prescription_repository
+        self.item_repo = prescription_item_repository
+        self.interaction_repo = drug_interaction_repository
+        self.med_repo = medication_repository
 
+    # -------------------------
+    # Prescriptions
+    # -------------------------
 
-    def get_all_prescriptions(self) -> list[Prescription]:
-        prescriptions = self.prescription_repository.get_all()
-        return [Prescription.model_validate(p) for p in prescriptions]
+    def _ensure_medication_exists(self, medication_id: uuid.UUID) -> None:
+        med = self.med_repo.get_by_id(medication_id)
+        if not med:
+            raise NotFoundException("Medication not found")
 
-    def get_prescription_by_id(self, prescription_id: uuid.UUID) -> Prescription | None:
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        return Prescription.model_validate(prescription) if prescription else None
+    def get_prescription_by_id(self, prescription_id: uuid.UUID) -> Prescription:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
+            raise NotFoundException("Prescription not found.")
+        return Prescription.model_validate(rx)
 
     def get_prescriptions_by_doctor(self, doctor_id: uuid.UUID, skip: int = 0, limit: int = 50) -> list[Prescription]:
-        prescriptions = self.prescription_repository.get_by_doctor_id(doctor_id=doctor_id, skip=skip, limit=limit)
-        return [Prescription.model_validate(p) for p in prescriptions]
+        rows = self.prescription_repo.get_by_doctor_id(doctor_id=doctor_id, skip=skip, limit=limit)
+        return [Prescription.model_validate(r) for r in rows]
 
     def get_prescriptions_by_patient(self, patient_id: uuid.UUID, skip: int = 0, limit: int = 50) -> list[Prescription]:
-        prescriptions = self.prescription_repository.get_by_patient_id(patient_id=patient_id, skip=skip, limit=limit)
-        return [Prescription.model_validate(p) for p in prescriptions]
+        rows = self.prescription_repo.get_by_patient_id(patient_id=patient_id, skip=skip, limit=limit)
+        return [Prescription.model_validate(r) for r in rows]
 
-    def create_prescription(self, data: PrescriptionCreate) -> Prescription:
+    def get_active_prescriptions(self, patient_id: uuid.UUID, skip: int = 0, limit: int = 50) -> list[Prescription]:
+        # active alanı yok -> status ile filtrele
+        rows = self.prescription_repo.get_by_patient_and_status(
+            patient_id=patient_id,
+            status=Status.ACTIVE,
+            skip=skip,
+            limit=limit,
+        )
+        return [Prescription.model_validate(r) for r in rows]
 
-        new_prescription = PrescriptionModel(
-            doctor_id=self.current_user.id,
-            patient_id=data.patient_id,
+    def create_prescription(self, doctor_id: uuid.UUID, data: PrescriptionCreate) -> Prescription:
+        # schema patient_id: str -> uuid’a çevir
+        try:
+            patient_id = uuid.UUID(str(data.patient_id))
+        except ValueError:
+            raise BadRequestException("Invalid patient_id")
+
+        rx = PrescriptionModel(
+            doctor_id=doctor_id,
+            patient_id=patient_id,
             notes=data.notes,
             status=Status.inactive
+            status=Status.INACTIVE,
         )
-
-        created = self.prescription_repository.create(prescription=new_prescription)
+        created = self.prescription_repo.create(prescription=rx)
         return Prescription.model_validate(created)
 
     def update_prescription(self, prescription_id: uuid.UUID, data: PrescriptionUpdate) -> Prescription:
-
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        if not prescription:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
             raise NotFoundException("Prescription not found.")
 
-        if data.notes is not None:
-            prescription.notes = data.notes
-        if data.status is not None:
-            prescription.status = data.status
+        for k, v in data.model_dump(exclude_unset=True).items():
+            setattr(rx, k, v)
 
-        updated = self.prescription_repository.update(prescription=prescription)
+        updated = self.prescription_repo.update(prescription=rx)
         return Prescription.model_validate(updated)
 
     def delete_prescription(self, prescription_id: uuid.UUID) -> None:
-
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        if not prescription:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
             raise NotFoundException("Prescription not found.")
-        
-        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
-            raise ForbiddenException("Doctors can only modify their own prescriptions.")
+        self.prescription_repo.delete(rx)
 
-        self.prescription_repository.delete(prescription)
-
-    # Prescription Item Methods
-
-    def get_prescription_item_by_id(self, item_id: uuid.UUID) -> PrescriptionItem | None:
-        item = self.prescription_item_repository.get_by_id(prescription_item_id=item_id)
-        return PrescriptionItem.model_validate(item) if item else None
-
-    def get_all_prescription_items(self, prescription_id: uuid.UUID) -> list[PrescriptionItem]:
-
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        if not prescription:
+    def validate_prescription(self, prescription_id: uuid.UUID) -> bool:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
             raise NotFoundException("Prescription not found.")
+        return bool(rx.items) and all(i.medication_id for i in rx.items)
 
-        items = prescription.items
-        return [PrescriptionItem.model_validate(i) for i in items]
+    # -------------------------
+    # Prescription Items
+    # -------------------------
 
-    def add_prescription_item(self, prescription_id: uuid.UUID, data: PrescriptionItemCreate) -> PrescriptionItem:
+    def get_prescription_item_by_id(self, item_id: uuid.UUID) -> PrescriptionItem:
+        item = self.item_repo.get_by_id(prescription_item_id=item_id)
+        if not item:
+            raise NotFoundException("Prescription item not found.")
+        return PrescriptionItem.model_validate(item)
 
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        if not prescription:
-            raise NotFoundException("Prescription not found.")
-
-        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
-            raise ForbiddenException("Doctors can only modify their own prescriptions.")
-
-        new_item = PrescriptionItemModel(
-            prescription_id=prescription_id,
-            medication_id=data.medication_id,
-            dosage=data.dosage,
-            duration=data.duration
-        )
-
-        created = self.prescription_item_repository.create(prescription_item=new_item)
-        return PrescriptionItem.model_validate(created)
 
     def update_prescription_item(self, item_id: uuid.UUID, data: PrescriptionItemUpdate) -> PrescriptionItem:
-
-        item = self.prescription_item_repository.get_by_id(prescription_item_id=item_id)
+        item = self.item_repo.get_by_id(prescription_item_id=item_id)
         if not item:
             raise NotFoundException("Prescription item not found.")
 
-        prescription = self.prescription_repository.get_by_id(prescription_id=item.prescription_id)
-        if not prescription:
-            raise NotFoundException("Prescription not found.")
+        for k, v in data.model_dump(exclude_unset=True).items():
+            setattr(item, k, v)
 
-        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
-            raise ForbiddenException("Doctors can only modify their own prescriptions.")
-
-        if data.dosage is not None:
-            item.dosage = data.dosage
-        if data.duration is not None:
-            item.duration = data.duration
-
-        updated = self.prescription_item_repository.update(prescription_item=item)
+        updated = self.item_repo.update(prescription_item=item)
         return PrescriptionItem.model_validate(updated)
 
     def delete_prescription_item(self, item_id: uuid.UUID) -> None:
-
-        item = self.prescription_item_repository.get_by_id(prescription_item_id=item_id)
+        item = self.item_repo.get_by_id(prescription_item_id=item_id)
         if not item:
             raise NotFoundException("Prescription item not found.")
+        self.item_repo.delete(prescription_item=item)
 
-        prescription = self.prescription_repository.get_by_id(prescription_id=item.prescription_id)
-        if not prescription:
+    def check_prescription_interactions(self, prescription_id: uuid.UUID) -> list[DrugInteractionResponse]:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
             raise NotFoundException("Prescription not found.")
 
-        if self.current_user.role == RoleEnum.doctor and prescription.doctor_id != self.current_user.id:
-            raise ForbiddenException("Doctors can only delete items from their own prescriptions.")
+        med_ids = [i.medication_id for i in rx.items if i.medication_id]
+        # uniq
+        med_ids = list(dict.fromkeys(med_ids))
 
-        self.prescription_item_repository.delete(prescription_item=item)
+        if len(med_ids) < 2:
+            return []
 
-    def validate_prescription(self, prescription_id: uuid.UUID) -> bool:
-        prescription = self.prescription_repository.get_by_id(prescription_id=prescription_id)
-        if not prescription:
+        interactions = []
+        for a, b in combinations(med_ids, 2):
+            found = self.interaction_repo.get_by_medication_ids(a, b)
+            if found:
+                interactions.append(found)
+
+        return [DrugInteractionResponse.model_validate(x) for x in interactions]
+    
+    def get_all_prescription_items(self, prescription_id: uuid.UUID) -> list[PrescriptionItem]:
+        rx = self.prescription_repo.get_by_id(prescription_id=prescription_id)
+        if not rx:
             raise NotFoundException("Prescription not found.")
 
-        items = prescription.items
+        # istersen repo ile:
+        items = self.item_repo.get_by_prescription_id(prescription_id)
+        return [PrescriptionItem.model_validate(i) for i in items]
 
+    def add_prescription_item(self, data: PrescriptionItemCreate) -> PrescriptionItem:
+        rx = self.prescription_repo.get_by_id(prescription_id=data.prescription_id)
+        if not rx:
+            raise NotFoundException("Prescription not found.")
+
+        self._ensure_medication_exists(data.medication_id)
+
+        item = PrescriptionItemModel(
+            prescription_id=data.prescription_id,
+            medication_id=data.medication_id,
+            dosage=data.dosage,
+            duration=data.duration,
+        )
+        created = self.item_repo.create(item)
+        return PrescriptionItem.model_validate(created)
+
+
+    def add_prescription_items(self, items: list[PrescriptionItemCreate]) -> list[PrescriptionItem]:
         if not items:
-            return False
+            raise BadRequestException("items cannot be empty")
 
-        for item in items:
-            if item.medication_id is None:
-                return False
+        # hepsi aynı prescription_id mi kontrol (istersen)
+        pid = items[0].prescription_id
+        if any(i.prescription_id != pid for i in items):
+            raise BadRequestException("All items must have same prescription_id")
 
-        return True
+        rx = self.prescription_repo.get_by_id(prescription_id=pid)
+        if not rx:
+            raise NotFoundException("Prescription not found.")
+        
+        med_ids = list({i.medication_id for i in items})
+        for mid in med_ids:
+            self._ensure_medication_exists(mid)
+
+        models = [
+            PrescriptionItemModel(
+                prescription_id=i.prescription_id,
+                medication_id=i.medication_id,
+                dosage=i.dosage,
+                duration=i.duration,
+            )
+            for i in items
+        ]
+
+        created = self.item_repo.create_many(models)
+        return [PrescriptionItem.model_validate(x) for x in created]
+    
+    def list_all_prescriptions(self, skip: int = 0, limit: int = 50) -> list[Prescription]:
+        rows = self.prescription_repo.get_all(skip=skip, limit=limit)
+        return [Prescription.model_validate(r) for r in rows]

@@ -1,11 +1,10 @@
 from sqlalchemy import literal
-from app.models.medication import MedicationModel
 from app.models.patient_medication import PatientMedicationModel
 import uuid
 from sqlalchemy.orm import Session
 
 from app.models.schedule import ScheduleModel
-from app.models.schedule_time import ScheduleTimeModel
+from app.models.schedule_time import DoseStatusEnum, ScheduleTimeModel
 from sqlalchemy.orm import selectinload
 from datetime import date, datetime
 
@@ -57,12 +56,15 @@ class PatientMedicationRepository:
             .all()
         )
 
-    # def get_upcoming_medications(self, patient_id: uuid.UUID, today: date, now: datetime, end: datetime):
-
-        scheduled_dt = literal(now) + ScheduleTimeModel.dose_time
-
+    def get_upcoming_medications(
+        self,
+        patient_id: uuid.UUID,
+        now: datetime,
+        end: datetime,
+    ) -> list[PatientMedicationModel]:
         return (
             self.db_session.query(PatientMedicationModel)
+            .distinct(PatientMedicationModel.id)
             .options(
                 selectinload(PatientMedicationModel.medication),
                 selectinload(PatientMedicationModel.schedules)
@@ -72,9 +74,33 @@ class PatientMedicationRepository:
             .join(ScheduleTimeModel, ScheduleModel.id == ScheduleTimeModel.schedule_id)
             .filter(PatientMedicationModel.user_id == patient_id)
             .filter(PatientMedicationModel.is_active.is_(True))
-            .filter(ScheduleModel.start_date <= today)
-            .filter(ScheduleModel.end_date >= today)
-            .filter(scheduled_dt.between(now, end))
+            .filter(ScheduleTimeModel.dose_datetime.between(now, end))
             .all()
         )
+
+    
+    def create_with_schedule(
+        self,
+        pm: PatientMedicationModel,
+        schedule: ScheduleModel,
+        schedule_times: list[ScheduleTimeModel],
+    ) -> PatientMedicationModel:
+
+        with self.db_session.begin():
+            self.db_session.add(pm)
+            self.db_session.flush()
+
+            schedule.patient_medication_id = pm.id
+            self.db_session.add(schedule)
+            self.db_session.flush()
+
+            for st in schedule_times:
+                st.schedule_id = schedule.id
+                if st.status is None:
+                    st.status = DoseStatusEnum.PENDING
+
+            self.db_session.add_all(schedule_times)
+
+        self.db_session.refresh(pm)
+        return pm
 

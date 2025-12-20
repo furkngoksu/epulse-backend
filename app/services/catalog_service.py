@@ -1,168 +1,156 @@
 import uuid
-from app.models.medication import MedicationModel as Medication
-from app.models.drug_interaction import DrugInteraction
-from app.repositories.drug_interaction import DrugInteractionRepository
-from app.repositories.medication_repository import MedicationRepository
-from app.schemas.medication import MedicationCreate, MedicationUpdate
-from app.schemas.drug_interaction import DrugInteractionCreate, DrugInteractionUpdate
-from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
+from typing import Optional
+
+from app.exceptions import NotFoundException, BadRequestException, ConflictException
+from app.models import DrugInteractionModel, MedicationModel
+from app.repositories import DrugInteractionRepository, MedicationRepository
+
+from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
+from app.schemas.drug_interaction import (
+    DrugInteractionCreate,
+    DrugInteractionUpdate,
+    DrugInteractionResponse,
+)
 
 
 class CatalogService:
-    """
-    Consolidated service for managing medications and drug interactions.
-    """
-
+    
     def __init__(
         self,
         medication_repository: MedicationRepository,
-        drug_interaction_repository: DrugInteractionRepository
+        drug_interaction_repository: DrugInteractionRepository,
     ):
-        self.medication_repository = medication_repository
-        self.drug_interaction_repository = drug_interaction_repository
+        self.med_repo = medication_repository
+        self.di_repo = drug_interaction_repository
 
-    # ==================== Medication Methods ====================
+    # =========================
+    # Medications
+    # =========================
 
-    def get_all_medications(self, skip: int = 0, limit: int = 100) -> list[Medication]:
-        return self.medication_repository.get_all(skip=skip, limit=limit)
+    def list_medications(self, skip: int = 0, limit: int = 100) -> list[MedicationResponse]:
+        rows = self.med_repo.get_all(skip=skip, limit=limit)
+        return [MedicationResponse.model_validate(x) for x in rows]
 
-    def get_medication_by_id(self, medication_id: uuid.UUID) -> Medication:
-        medication = self.medication_repository.get_by_id(medication_id)
-        if not medication:
+    def search_medications(self, query: str, skip: int = 0, limit: int = 100) -> list[MedicationResponse]:
+        rows = self.med_repo.search_by_name(name=query, skip=skip, limit=limit)
+        return [MedicationResponse.model_validate(x) for x in rows]
+
+    def get_medication(self, medication_id: uuid.UUID) -> MedicationResponse:
+        row = self.med_repo.get_by_id(medication_id)
+        if not row:
             raise NotFoundException("Medication not found")
-        return medication
+        return MedicationResponse.model_validate(row)
 
-    def search_medications(self, name: str, skip: int = 0, limit: int = 100) -> list[Medication]:
-        return self.medication_repository.search_by_name(name, skip=skip, limit=limit)
+    def create_medication(self, data: MedicationCreate) -> MedicationResponse:
+        model = MedicationModel(**data.model_dump())
+        created = self.med_repo.create(model)
+        return MedicationResponse.model_validate(created)
 
-    def create_medication(self, data: MedicationCreate) -> Medication:
-        medication = Medication(
-            commercial_name=data.commercial_name,
-            active_ingredients=data.active_ingredients,
-            dosage_form=data.dosage_form,
-            strength=data.strength,
-            manufacturer=data.manufacturer,
-            description=data.description
-        )
-        return self.medication_repository.create(medication)
-
-    def update_medication(self, medication_id: uuid.UUID, data: MedicationUpdate) -> Medication:
-        medication = self.medication_repository.get_by_id(medication_id)
-        if not medication:
+    def update_medication(self, medication_id: uuid.UUID, data: MedicationUpdate) -> MedicationResponse:
+        row = self.med_repo.get_by_id(medication_id)
+        if not row:
             raise NotFoundException("Medication not found")
 
-        # Update only provided fields
-        if data.commercial_name is not None:
-            medication.commercial_name = data.commercial_name
-        if data.active_ingredients is not None:
-            medication.active_ingredients = data.active_ingredients
-        if data.dosage_form is not None:
-            medication.dosage_form = data.dosage_form
-        if data.strength is not None:
-            medication.strength = data.strength
-        if data.manufacturer is not None:
-            medication.manufacturer = data.manufacturer
-        if data.description is not None:
-            medication.description = data.description
+        for k, v in data.model_dump(exclude_unset=True).items():
+            setattr(row, k, v)
 
-        return self.medication_repository.update(medication)
+        updated = self.med_repo.update(row)
+        return MedicationResponse.model_validate(updated)
 
     def delete_medication(self, medication_id: uuid.UUID) -> None:
-        medication = self.medication_repository.get_by_id(medication_id)
-        if not medication:
+        row = self.med_repo.get_by_id(medication_id)
+        if not row:
             raise NotFoundException("Medication not found")
-        self.medication_repository.delete(medication)
+        self.med_repo.delete(row)
 
-    # ==================== Drug Interaction Methods ====================
+    # =========================
+    # Drug Interactions
+    # =========================
 
-    def get_all_interactions(self, skip: int = 0, limit: int = 100) -> list[DrugInteraction]:
-        return self.drug_interaction_repository.get_all(skip=skip, limit=limit)
+    def list_interactions(self, skip: int = 0, limit: int = 100) -> list[DrugInteractionResponse]:
+        rows = self.di_repo.get_all(skip=skip, limit=limit)
+        return [DrugInteractionResponse.model_validate(x) for x in rows]
 
-    def get_interaction_by_id(self, interaction_id: uuid.UUID) -> DrugInteraction:
-        interaction = self.drug_interaction_repository.get_by_id(interaction_id)
-        if not interaction:
+    def get_interaction(self, interaction_id: uuid.UUID) -> DrugInteractionResponse:
+        row = self.di_repo.get_by_id(interaction_id)
+        if not row:
             raise NotFoundException("Drug interaction not found")
-        return interaction
+        return DrugInteractionResponse.model_validate(row)
 
-    def check_drug_interaction(self, med_id_1: uuid.UUID, med_id_2: uuid.UUID) -> DrugInteraction | None:
-        """Check if there's an interaction between two medications."""
+    def check_interaction(
+        self,
+        med_id_1: uuid.UUID,
+        med_id_2: uuid.UUID,
+    ) -> Optional[DrugInteractionResponse]:
         if med_id_1 == med_id_2:
             raise BadRequestException("Cannot check interaction of a medication with itself")
 
-        return self.drug_interaction_repository.get_by_medication_ids(med_id_1, med_id_2)
+        found = self.di_repo.get_by_medication_ids(med_id_1, med_id_2)
+        return DrugInteractionResponse.model_validate(found) if found else None
 
-    def get_medication_interactions(self, medication_id: uuid.UUID) -> list[DrugInteraction]:
-        """Get all interactions for a specific medication."""
-        # Verify medication exists
-        medication = self.medication_repository.get_by_id(medication_id)
-        if not medication:
+    def list_interactions_for_medication(self, medication_id: uuid.UUID) -> list[DrugInteractionResponse]:
+        # medication exists?
+        med = self.med_repo.get_by_id(medication_id)
+        if not med:
             raise NotFoundException("Medication not found")
 
-        return self.drug_interaction_repository.get_interactions_for_medication(medication_id)
+        rows = self.di_repo.get_interactions_for_medication(medication_id)
+        return [DrugInteractionResponse.model_validate(x) for x in rows]
 
-    def create_interaction(self, data: DrugInteractionCreate) -> DrugInteraction:
-        # Validate medications exist
-        med_1 = self.medication_repository.get_by_id(data.medication_id_1)
-        if not med_1:
-            raise NotFoundException(f"Medication with id {data.medication_id_1} not found")
-
-        med_2 = self.medication_repository.get_by_id(data.medication_id_2)
-        if not med_2:
-            raise NotFoundException(f"Medication with id {data.medication_id_2} not found")
-
-        # Validate not same medication
+    def create_interaction(self, data: DrugInteractionCreate) -> DrugInteractionResponse:
         if data.medication_id_1 == data.medication_id_2:
             raise BadRequestException("Cannot create interaction for a medication with itself")
 
-        # Check if interaction already exists
-        existing = self.drug_interaction_repository.get_by_medication_ids(
-            data.medication_id_1, data.medication_id_2
-        )
+        # validate both meds exist
+        if not self.med_repo.get_by_id(data.medication_id_1):
+            raise NotFoundException(f"Medication with id {data.medication_id_1} not found")
+        if not self.med_repo.get_by_id(data.medication_id_2):
+            raise NotFoundException(f"Medication with id {data.medication_id_2} not found")
+
+        existing = self.di_repo.get_by_medication_ids(data.medication_id_1, data.medication_id_2)
         if existing:
             raise ConflictException("Interaction between these medications already exists")
 
-        interaction = DrugInteraction(
-            medication_id_1=data.medication_id_1,
-            medication_id_2=data.medication_id_2,
-            severity=data.severity,
-            interaction_description=data.interaction_description
-        )
-        return self.drug_interaction_repository.create(interaction)
+        model = DrugInteractionModel(**data.model_dump())
+        created = self.di_repo.create(model)
+        return DrugInteractionResponse.model_validate(created)
 
-    def update_interaction(self, interaction_id: uuid.UUID, data: DrugInteractionUpdate) -> DrugInteraction:
-        interaction = self.drug_interaction_repository.get_by_id(interaction_id)
-        if not interaction:
+    def update_interaction(self, interaction_id: uuid.UUID, data: DrugInteractionUpdate) -> DrugInteractionResponse:
+        row = self.di_repo.get_by_id(interaction_id)
+        if not row:
             raise NotFoundException("Drug interaction not found")
 
-        # Update only provided fields
-        if data.medication_id_1 is not None:
-            # Verify medication exists
-            med = self.medication_repository.get_by_id(data.medication_id_1)
-            if not med:
-                raise NotFoundException(f"Medication with id {data.medication_id_1} not found")
-            interaction.medication_id_1 = data.medication_id_1
+        patch = data.model_dump(exclude_unset=True)
 
-        if data.medication_id_2 is not None:
-            # Verify medication exists
-            med = self.medication_repository.get_by_id(data.medication_id_2)
-            if not med:
-                raise NotFoundException(f"Medication with id {data.medication_id_2} not found")
-            interaction.medication_id_2 = data.medication_id_2
+        if "medication_id_1" in patch and patch["medication_id_1"] is not None:
+            if not self.med_repo.get_by_id(patch["medication_id_1"]):
+                raise NotFoundException(f"Medication with id {patch['medication_id_1']} not found")
+            row.medication_id_1 = patch["medication_id_1"]
 
-        # Validate not same medication after update
-        if interaction.medication_id_1 == interaction.medication_id_2:
+        if "medication_id_2" in patch and patch["medication_id_2"] is not None:
+            if not self.med_repo.get_by_id(patch["medication_id_2"]):
+                raise NotFoundException(f"Medication with id {patch['medication_id_2']} not found")
+            row.medication_id_2 = patch["medication_id_2"]
+
+        if row.medication_id_1 == row.medication_id_2:
             raise BadRequestException("Cannot create interaction for a medication with itself")
 
-        if data.severity is not None:
-            interaction.severity = data.severity
+        # Check for duplicate interaction
+        existing = self.di_repo.get_by_medication_ids(row.medication_id_1, row.medication_id_2)
+        if existing and existing.id != row.id:
+            raise ConflictException("Interaction between these medications already exists")
 
-        if data.interaction_description is not None:
-            interaction.interaction_description = data.interaction_description
+        # rest fields
+        if "severity" in patch and patch["severity"] is not None:
+            row.severity = patch["severity"]
+        if "interaction_description" in patch:
+            row.interaction_description = patch["interaction_description"]
 
-        return self.drug_interaction_repository.update(interaction)
+        updated = self.di_repo.update(row)
+        return DrugInteractionResponse.model_validate(updated)
 
     def delete_interaction(self, interaction_id: uuid.UUID) -> None:
-        interaction = self.drug_interaction_repository.get_by_id(interaction_id)
-        if not interaction:
+        row = self.di_repo.get_by_id(interaction_id)
+        if not row:
             raise NotFoundException("Drug interaction not found")
-        self.drug_interaction_repository.delete(interaction)
+        self.di_repo.delete(row)

@@ -16,7 +16,7 @@ class SeverityEnum(str, enum.Enum):
     severe = "severe"
 
 
-class DrugInteraction(Base):
+class DrugInteractionModel(Base):
     __tablename__ = "drug_interactions"
 
     id: Mapped[uuid.UUID] = mapped_column(

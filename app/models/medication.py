@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 class MedicationModel(Base):
     __tablename__ = "medications"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID, primary_key=True, default=uuid.uuid4, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     commercial_name: Mapped[str] = mapped_column(String(200), nullable=False)
     active_ingredients: Mapped[str] = mapped_column(String(500), nullable=False)
     dosage_form: Mapped[str] = mapped_column(String(100), nullable=False)
