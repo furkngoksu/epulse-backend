@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.api.deps.services import get_appointment_service
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.user import User, RoleEnum
+from app.schemas.base import SuccessResponse
 from app.models.appointment import AppointmentStatusEnum
 from app.models.user import UserModel
 from app.schemas.appointment import (
@@ -21,7 +22,7 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get("/", response_model=list[AppointmentResponse])
+@router.get("/", response_model=SuccessResponse[list[AppointmentResponse]])
 def get_all_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -33,10 +34,10 @@ def get_all_appointments(
     Requires admin role.
     """
     appointments = appointment_service.get_all(skip=skip, limit=limit)
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.get("/free", response_model=list[AppointmentResponse])
+@router.get("/free", response_model=SuccessResponse[list[AppointmentResponse]])
 def get_free_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -52,10 +53,10 @@ def get_free_appointments(
     appointments = appointment_service.get_free_appointments(
         skip=skip, limit=limit, doctor_id=doctor_id, from_datetime=from_datetime
     )
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.get("/search", response_model=list[AppointmentResponse])
+@router.get("/search", response_model=SuccessResponse[list[AppointmentResponse]])
 def search_free_appointments(
     city: str = Query(..., min_length=1, max_length=50),
     clinic: str = Query(..., min_length=1, max_length=100),
@@ -99,10 +100,10 @@ def search_free_appointments(
         skip=skip,
         limit=limit
     )
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.get("/doctor/{doctor_id}", response_model=list[AppointmentResponse])
+@router.get("/doctor/{doctor_id}", response_model=SuccessResponse[list[AppointmentResponse]])
 def get_appointments_by_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -134,10 +135,10 @@ def get_appointments_by_doctor(
         doctor_id, skip=skip, limit=limit, status=status,
         from_date=from_datetime, to_date=to_datetime
     )
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.get("/patient/{patient_id}", response_model=list[AppointmentResponse])
+@router.get("/patient/{patient_id}", response_model=SuccessResponse[list[AppointmentResponse]])
 def get_appointments_by_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -169,10 +170,10 @@ def get_appointments_by_patient(
         patient_id, skip=skip, limit=limit, status=status,
         from_date=from_datetime, to_date=to_datetime
     )
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.get("/{appointment_id}", response_model=AppointmentResponse)
+@router.get("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse])
 def get_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -194,10 +195,10 @@ def get_appointment(
         if appointment.doctor_id != current_user.id:
             raise ForbiddenException("You can only view your own appointments")
 
-    return appointment
+    return SuccessResponse(content=appointment)
 
 
-@router.post("/", response_model=AppointmentResponse, status_code=201)
+@router.post("/", response_model=SuccessResponse[AppointmentResponse], status_code=201)
 def create_appointment(
     data: AppointmentCreate,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -216,10 +217,10 @@ def create_appointment(
         raise ForbiddenException("You can only create appointments for yourself")
 
     appointment = appointment_service.create(data)
-    return appointment
+    return SuccessResponse(content=appointment)
 
 
-@router.post("/create-free-appointments", response_model=list[AppointmentResponse], status_code=201)
+@router.post("/create-free-appointments", response_model=SuccessResponse[list[AppointmentResponse]], status_code=201)
 def create_multiple_free_appointments(
     data: CreateFreeAppointmentsRequest,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -244,10 +245,10 @@ def create_multiple_free_appointments(
         dates=data.dates,
         time_slots=data.time_slots
     )
-    return appointments
+    return SuccessResponse(content=appointments)
 
 
-@router.post("/{appointment_id}/book", response_model=AppointmentResponse)
+@router.post("/{appointment_id}/book", response_model=SuccessResponse[AppointmentResponse])
 def book_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentBook,
@@ -263,10 +264,10 @@ def book_appointment(
         raise ForbiddenException("Only patients can book appointments")
 
     appointment = appointment_service.book(appointment_id, current_user.id, data)
-    return appointment
+    return SuccessResponse(content=appointment)
 
 
-@router.post("/{appointment_id}/cancel", response_model=AppointmentResponse)
+@router.post("/{appointment_id}/cancel", response_model=SuccessResponse[AppointmentResponse])
 def cancel_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -284,19 +285,19 @@ def cancel_appointment(
     if current_user.role == RoleEnum.patient:
         if appointment.patient_id != current_user.id:
             raise ForbiddenException("You can only cancel your own appointments")
-        return appointment_service.patient_cancel(appointment_id, current_user.id)
+        return SuccessResponse(content=appointment_service.patient_cancel(appointment_id, current_user.id))
 
     # Doctor cancellation - permanent
     if current_user.role == RoleEnum.doctor:
         if appointment.doctor_id != current_user.id:
             raise ForbiddenException("You can only cancel your own appointments")
-        return appointment_service.admin_cancel(appointment_id)
+        return SuccessResponse(content=appointment_service.admin_cancel(appointment_id))
 
     # Admin cancellation - permanent
-    return appointment_service.admin_cancel(appointment_id)
+    return SuccessResponse(content=appointment_service.admin_cancel(appointment_id))
 
 
-@router.post("/{appointment_id}/complete", response_model=AppointmentResponse)
+@router.post("/{appointment_id}/complete", response_model=SuccessResponse[AppointmentResponse])
 def complete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -316,10 +317,10 @@ def complete_appointment(
     if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
         raise ForbiddenException("You can only complete your own appointments")
 
-    return appointment_service.complete(appointment_id)
+    return SuccessResponse(content=appointment_service.complete(appointment_id))
 
 
-@router.post("/{appointment_id}/no-show", response_model=AppointmentResponse)
+@router.post("/{appointment_id}/no-show", response_model=SuccessResponse[AppointmentResponse])
 def mark_no_show(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -339,10 +340,10 @@ def mark_no_show(
     if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
         raise ForbiddenException("You can only mark your own appointments as no-show")
 
-    return appointment_service.no_show(appointment_id)
+    return SuccessResponse(content=appointment_service.no_show(appointment_id))
 
 
-@router.put("/{appointment_id}", response_model=AppointmentResponse)
+@router.put("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse])
 def update_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentUpdate,
@@ -354,10 +355,10 @@ def update_appointment(
     Requires admin role.
     """
     appointment = appointment_service.update(appointment_id, data)
-    return appointment
+    return SuccessResponse(content=appointment)
 
 
-@router.delete("/{appointment_id}", status_code=204)
+@router.delete("/{appointment_id}", response_model=SuccessResponse[None])
 def delete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -368,3 +369,4 @@ def delete_appointment(
     Requires admin role.
     """
     appointment_service.delete(appointment_id)
+    return SuccessResponse(content=None)
