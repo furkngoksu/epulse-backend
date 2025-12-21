@@ -16,8 +16,15 @@ class DoctorProfileUpdate(BaseModel):
     specialty: str | None = Field(None, min_length=1, max_length=100)
 
 
-class DoctorProfileResponse(DoctorProfileBase):
+class DoctorProfileResponse(BaseModel):
     id: uuid.UUID
+    first_name: str
+    last_name: str
+    specialty: str
+    hospital_id: uuid.UUID
+    hospital_name: str
+    clinic_id: uuid.UUID
+    clinic_name: str
 
     class Config:
         from_attributes = True

@@ -12,7 +12,7 @@ from app.repositories.doctor_patient_relationship import DoctorPatientRelationsh
 from app.repositories.user import UserRepository
 from app.schemas.hospital import HospitalCreate, HospitalUpdate
 from app.schemas.clinic import ClinicCreate, ClinicUpdate
-from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate
+from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate, DoctorProfileResponse
 from app.schemas.doctor_patient_relationship import DoctorPatientRelationshipCreate
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
 
@@ -40,6 +40,20 @@ class DoctorService:
         self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
         self.user_repository = user_repository
         self.report_service = report_service
+
+    @staticmethod
+    def _to_doctor_profile_response(profile: DoctorProfile) -> DoctorProfileResponse:
+        """Convert DoctorProfile model to DoctorProfileResponse schema."""
+        return DoctorProfileResponse(
+            id=profile.id,
+            first_name=profile.user.first_name,
+            last_name=profile.user.last_name,
+            specialty=profile.specialty,
+            hospital_id=profile.clinic.hospital_id,
+            hospital_name=profile.clinic.hospital.name,
+            clinic_id=profile.clinic_id,
+            clinic_name=profile.clinic.name
+        )
 
     # ==================== Hospital Methods ====================
 
@@ -143,24 +157,26 @@ class DoctorService:
 
     # ==================== Doctor Profile Methods ====================
 
-    def get_all_doctor_profiles(self, skip: int = 0, limit: int = 100) -> list[DoctorProfile]:
-        return self.doctor_profile_repository.get_all(skip=skip, limit=limit)
+    def get_all_doctor_profiles(self, skip: int = 0, limit: int = 100) -> list[DoctorProfileResponse]:
+        profiles = self.doctor_profile_repository.get_all(skip=skip, limit=limit)
+        return [self._to_doctor_profile_response(profile) for profile in profiles]
 
-    def get_doctor_profile_by_id(self, profile_id: uuid.UUID) -> DoctorProfile:
+    def get_doctor_profile_by_id(self, profile_id: uuid.UUID) -> DoctorProfileResponse:
         profile = self.doctor_profile_repository.get_by_id(profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")
-        return profile
+        return self._to_doctor_profile_response(profile)
 
-    def get_doctors_by_clinic(self, clinic_id: uuid.UUID) -> list[DoctorProfile]:
+    def get_doctors_by_clinic(self, clinic_id: uuid.UUID) -> list[DoctorProfileResponse]:
         # Verify clinic exists
         clinic = self.clinic_repository.get_by_id(clinic_id)
         if not clinic:
             raise NotFoundException("Clinic not found")
 
-        return self.doctor_profile_repository.get_by_clinic_id(clinic_id)
+        profiles = self.doctor_profile_repository.get_by_clinic_id(clinic_id)
+        return [self._to_doctor_profile_response(profile) for profile in profiles]
 
-    def create_doctor_profile(self, data: DoctorProfileCreate) -> DoctorProfile:
+    def create_doctor_profile(self, data: DoctorProfileCreate) -> DoctorProfileResponse:
         # Verify user exists and is a doctor
         user = self.user_repository.get_by_id(data.user_id)
         if not user:
@@ -184,9 +200,13 @@ class DoctorService:
             clinic_id=data.clinic_id,
             specialty=data.specialty
         )
-        return self.doctor_profile_repository.create(profile)
+        created_profile = self.doctor_profile_repository.create(profile)
 
-    def update_doctor_profile(self, profile_id: uuid.UUID, data: DoctorProfileUpdate) -> DoctorProfile:
+        # Fetch the profile with all relations to return proper response
+        profile_with_relations = self.doctor_profile_repository.get_by_id(created_profile.id)
+        return self._to_doctor_profile_response(profile_with_relations)
+
+    def update_doctor_profile(self, profile_id: uuid.UUID, data: DoctorProfileUpdate) -> DoctorProfileResponse:
         profile = self.doctor_profile_repository.get_by_id(profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")
@@ -202,7 +222,11 @@ class DoctorService:
         if data.specialty is not None:
             profile.specialty = data.specialty
 
-        return self.doctor_profile_repository.update(profile)
+        updated_profile = self.doctor_profile_repository.update(profile)
+
+        # Fetch the profile with all relations to return proper response
+        profile_with_relations = self.doctor_profile_repository.get_by_id(updated_profile.id)
+        return self._to_doctor_profile_response(profile_with_relations)
 
     def delete_doctor_profile(self, profile_id: uuid.UUID) -> None:
         profile = self.doctor_profile_repository.get_by_id(profile_id)
