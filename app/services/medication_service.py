@@ -169,74 +169,58 @@ class MedicationService:
         patient_id: uuid.UUID,
         data: PatientMedicationWithScheduleCreate,
     ) -> PatientMedicationResponse:
-        
         med = self.med_repo.get_by_id(data.medication_id)
         if not med:
             raise NotFoundException("Medication not found")
 
-        initial_stock = data.initial_stock
-        if initial_stock < 1:
-            raise BadRequestException("initial_stock must be >= 1")
-
-        if data.tablets_per_use < 1:
-            raise BadRequestException("tablets_per_use must be >= 1")
-
-        if initial_stock < data.tablets_per_use:
+        if data.initial_stock < data.tablets_per_use:
             raise BadRequestException("initial_stock must be >= tablets_per_use")
 
-        stock_warning_threshold = max(1, math.ceil(initial_stock * 0.10))
-
-        if data.end_date < data.start_date:
-            raise BadRequestException("end_date cannot be earlier than start_date")
-
-        times: list[time] = data.schedule.times
+        times = data.schedule.times
         if not times:
             raise BadRequestException("schedule.times cannot be empty")
 
-        tz = ZoneInfo("Europe/Istanbul")
+        if any(dt.tzinfo is None for dt in times):
+            raise BadRequestException("All schedule times must be timezone-aware")
 
-        schedule_times: list[ScheduleTimeModel] = []
-        seen: set[datetime] = set()
-
-        for day in self._iter_dates(data.start_date, data.end_date):
-            for t in times:
-                dt_local = datetime.combine(day, t, tzinfo=tz)
-                if dt_local in seen:
-                    continue
-                seen.add(dt_local)
-
-                schedule_times.append(
-                    ScheduleTimeModel(
-                        dose_datetime=dt_local,
-                        status=DoseStatusEnum.pending,
-                    )
-                )
-
-        if not schedule_times:
+        times_utc = sorted({dt.astimezone(timezone.utc) for dt in times})
+        if not times_utc:
             raise BadRequestException("Schedule times cannot be empty")
+
+        start_date: date = times_utc[0].date()
+        end_date: date = times_utc[-1].date()
+
+        stock_warning_threshold = max(1, math.ceil(data.initial_stock * 0.10))
+
+        schedule_times = [
+            ScheduleTimeModel(
+                dose_datetime=dt,  # UTC
+                status=DoseStatusEnum.pending,
+            )
+            for dt in times_utc
+        ]
 
         custom_name = data.custom_name or getattr(med, "commercial_name", None) or "Medication"
 
         schedule = ScheduleModel(
-            start_date=data.start_date,
-            end_date=data.end_date,
-            schedule_times=schedule_times,
+            start_date=start_date,
+            end_date=end_date,
+            schedule_times=schedule_times,  # cascade
         )
 
         pm = PatientMedicationModel(
             user_id=patient_id,
             medication_id=data.medication_id,
             custom_name=custom_name,
-            initial_stock=initial_stock,
-            current_stock=initial_stock,
+            initial_stock=data.initial_stock,
+            current_stock=data.initial_stock,
             stock_warning_threshold=stock_warning_threshold,
             is_active=True,
             tablets_per_use=data.tablets_per_use,
-            schedules=[schedule],
+            schedules=[schedule],  # cascade
         )
 
         created = self.pm_repo.create(pm)
-
         return PatientMedicationResponse.model_validate(created)
 
 

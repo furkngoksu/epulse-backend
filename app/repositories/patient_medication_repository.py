@@ -79,32 +79,6 @@ class PatientMedicationRepository:
             .filter(ScheduleTimeModel.dose_datetime.between(now, end))
             .all()
         )
-
-    
-    def create_with_schedule(
-        self,
-        pm: PatientMedicationModel,
-        schedule: ScheduleModel,
-        schedule_times: list[ScheduleTimeModel],
-    ) -> PatientMedicationModel:
-
-        with self.db_session.begin():
-            self.db_session.add(pm)
-            self.db_session.flush()
-
-            schedule.patient_medication_id = pm.id
-            self.db_session.add(schedule)
-            self.db_session.flush()
-
-            for st in schedule_times:
-                st.schedule_id = schedule.id
-                if st.status is None:
-                    st.status = DoseStatusEnum.pending
-
-            self.db_session.add_all(schedule_times)
-
-        self.db_session.refresh(pm)
-        return pm
     
     def list_by_user(
         self,
