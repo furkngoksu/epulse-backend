@@ -1,4 +1,5 @@
 import uuid
+from typing import TYPE_CHECKING
 from app.models.hospital import Hospital
 from app.models.clinic import Clinic
 from app.models.doctor_profile import DoctorProfile
@@ -15,6 +16,9 @@ from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate
 from app.schemas.doctor_patient_relationship import DoctorPatientRelationshipCreate
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
 
+if TYPE_CHECKING:
+    from app.services.report_service import ReportService
+
 
 class DoctorService:
     """
@@ -27,13 +31,15 @@ class DoctorService:
         clinic_repository: ClinicRepository,
         doctor_profile_repository: DoctorProfileRepository,
         doctor_patient_relationship_repository: DoctorPatientRelationshipRepository,
-        user_repository: UserRepository
+        user_repository: UserRepository,
+        report_service: "ReportService"
     ):
         self.hospital_repository = hospital_repository
         self.clinic_repository = clinic_repository
         self.doctor_profile_repository = doctor_profile_repository
         self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
         self.user_repository = user_repository
+        self.report_service = report_service
 
     # ==================== Hospital Methods ====================
 
@@ -231,7 +237,7 @@ class DoctorService:
     def get_doctor_patient_summaries(
         self, doctor_id: uuid.UUID, skip: int = 0, limit: int = 100
     ) -> list[dict]:
-        """Get patient summaries with basic info for a specific doctor."""
+        """Get patient summaries with basic info and statistics for a specific doctor."""
         # Verify doctor exists and has doctor role
         doctor = self.user_repository.get_by_id(doctor_id)
         if not doctor:
@@ -239,7 +245,33 @@ class DoctorService:
         if doctor.role != RoleEnum.doctor:
             raise BadRequestException("User is not a doctor")
 
-        return self.doctor_patient_relationship_repository.get_patient_summaries_for_doctor(doctor_id, skip, limit)
+        # Get basic patient list from repository
+        relationships = self.doctor_patient_relationship_repository.get_patients_for_doctor(
+            doctor_id, skip, limit
+        )
+
+        # Use ReportService to get statistics for each patient
+        patient_summaries = []
+        for relationship in relationships:
+            patient_id = relationship.patient_id
+
+            # Get basic stats from ReportService
+            try:
+                stats = self.report_service.get_basic_stats(patient_id=patient_id)
+                patient_summaries.append({
+                    "patient_id": stats.patient_id,
+                    "first_name": stats.first_name,
+                    "last_name": stats.last_name,
+                    "age": stats.age,
+                    "active_prescriptions": stats.active_medications_count,
+                    "adherence_rate": stats.overall_adherence_rate,
+                    "pending_doses_today": stats.pending_doses_today,
+                })
+            except Exception:
+                # If stats fail for a patient, skip them
+                continue
+
+        return patient_summaries
 
     def get_patient_doctors(
         self, patient_id: uuid.UUID, skip: int = 0, limit: int = 100

@@ -1,5 +1,7 @@
 from fastapi import Depends
+from sqlalchemy.orm import Session
 
+from app.api.deps.db import get_db
 from app.api.deps.repositories import (
     get_appointment_repository,
     get_clinic_repository,
@@ -16,7 +18,7 @@ from app.api.deps.repositories import (
     get_user_repository,
 )
 
-from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService, UserService
+from app.services import DoctorService, MedicationService, CatalogService, PrescriptionService, AppointmentService, UserService, ReportService
 from app.repositories import (
     PrescriptionRepository,
     PrescriptionItemRepository,
@@ -32,6 +34,21 @@ from app.repositories import (
     AppointmentRepository,
     DoctorPatientRelationshipRepository,
 )
+
+# Report Service (defined early to avoid circular dependencies)
+def get_report_service(
+    user_repository: UserRepository = Depends(get_user_repository),
+    patient_medication_repository: PatientMedicationRepository = Depends(get_patient_medication_repository),
+    schedule_time_repository: ScheduleTimeRepository = Depends(get_schedule_time_repository),
+    db: Session = Depends(get_db),
+) -> ReportService:
+    return ReportService(
+        user_repo=user_repository,
+        patient_medication_repo=patient_medication_repository,
+        schedule_time_repo=schedule_time_repository,
+        db_session=db,
+    )
+
 
 # Appointment Service
 def get_appointment_service(
@@ -53,6 +70,7 @@ def get_doctor_service(
     doctor_profile_repository: DoctorProfileRepository = Depends(get_doctor_profile_repository),
     doctor_patient_relationship_repository: DoctorPatientRelationshipRepository = Depends(get_doctor_patient_relationship_repository),
     user_repository: UserRepository = Depends(get_user_repository),
+    report_service: ReportService = Depends(get_report_service),
 ) -> DoctorService:
     return DoctorService(
         hospital_repository=hospital_repository,
@@ -60,6 +78,7 @@ def get_doctor_service(
         doctor_profile_repository=doctor_profile_repository,
         doctor_patient_relationship_repository=doctor_patient_relationship_repository,
         user_repository=user_repository,
+        report_service=report_service,
     )
 
 
