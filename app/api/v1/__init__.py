@@ -12,6 +12,7 @@ from app.api.v1.appointment import router as appointment_router
 from app.api.v1.prescription import router as prescription_router
 from app.api.v1.schedule_times import router as schedule_time_router
 from app.api.v1.test import router as test_router
+from app.api.v1.reports import router as reports_router
 
 app_router = APIRouter(prefix="/api/v1")
 
@@ -27,3 +28,4 @@ app_router.include_router(prescription_router)
 app_router.include_router(schedule_time_router)
 app_router.include_router(medication_router)
 app_router.include_router(test_router, tags=["Test"])
+app_router.include_router(reports_router)

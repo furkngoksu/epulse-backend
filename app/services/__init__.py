@@ -5,6 +5,7 @@ from .doctor_service import DoctorService
 from .catalog_service import CatalogService
 from .user_service import UserService
 from .medication_service import MedicationService
+from .report_service import ReportService
 
 # Doctor patient relationship servisleri domain bazlıya çeviririz sonra burayı düzenleriz kod sadeleşsin diye yapıyom
 
@@ -17,4 +18,5 @@ __all__ = [
     "CatalogService",
     "UserService",
     "MedicationService",
+    "ReportService",
 ]
