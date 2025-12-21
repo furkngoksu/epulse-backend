@@ -55,6 +55,53 @@ def get_free_appointments(
     return appointments
 
 
+@router.get("/search", response_model=list[AppointmentResponse])
+def search_free_appointments(
+    city: str = Query(..., min_length=1, max_length=50),
+    clinic: str = Query(..., min_length=1, max_length=100),
+    district: str | None = Query(None, max_length=50),
+    hospital_id: uuid.UUID | None = Query(None),
+    doctor_id: uuid.UUID | None = Query(None),
+    from_date: date | None = Query(None),
+    to_date: date | None = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    appointment_service: AppointmentService = Depends(get_appointment_service),
+    current_user: UserModel = Depends(get_current_user)
+):
+    """
+    Search for free appointments with advanced filtering.
+    Returns only free appointments sorted by appointment_datetime ascending (earliest first).
+
+    Mandatory query parameters:
+    - city: City where the hospital is located
+    - clinic: Name of the clinic
+
+    Optional query parameters:
+    - district: District within the city
+    - hospital_id: Filter by specific hospital
+    - doctor_id: Filter by specific doctor
+    - from_date: Start date for appointment search (inclusive)
+    - to_date: End date for appointment search (inclusive)
+    - skip: Number of records to skip for pagination (default: 0)
+    - limit: Maximum number of records to return (default: 20, max: 100)
+
+    Requires authentication.
+    """
+    appointments = appointment_service.search_free_appointments(
+        city=city,
+        clinic_name=clinic,
+        district=district,
+        hospital_id=hospital_id,
+        doctor_id=doctor_id,
+        from_date=from_date,
+        to_date=to_date,
+        skip=skip,
+        limit=limit
+    )
+    return appointments
+
+
 @router.get("/doctor/{doctor_id}", response_model=list[AppointmentResponse])
 def get_appointments_by_doctor(
     doctor_id: uuid.UUID,
@@ -195,8 +242,7 @@ def create_multiple_free_appointments(
     appointments = appointment_service.create_multiple_free_appointments(
         doctor_id=data.doctor_id,
         dates=data.dates,
-        time_slots=data.time_slots,
-        facility_name=data.facility_name
+        time_slots=data.time_slots
     )
     return appointments
 

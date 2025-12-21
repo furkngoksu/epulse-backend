@@ -110,7 +110,6 @@ class AppointmentService:
         appointment = Appointment(
             doctor_id=data.doctor_id,
             appointment_datetime=data.appointment_datetime,
-            facility_name=data.facility_name,
             notes=data.notes,
             status=AppointmentStatusEnum.free
         )
@@ -250,9 +249,6 @@ class AppointmentService:
 
             appointment.appointment_datetime = data.appointment_datetime
 
-        if data.facility_name is not None:
-            appointment.facility_name = data.facility_name
-
         if data.notes is not None:
             appointment.notes = data.notes
 
@@ -269,8 +265,7 @@ class AppointmentService:
         self,
         doctor_id: uuid.UUID,
         dates: list[date],
-        time_slots: list[time],
-        facility_name: str
+        time_slots: list[time]
     ) -> list[Appointment]:
         """Create multiple free appointment slots for a doctor on specified dates and time slots."""
         # Validate doctor exists and has doctor role
@@ -303,7 +298,6 @@ class AppointmentService:
                 appointment = Appointment(
                     doctor_id=doctor_id,
                     appointment_datetime=appointment_datetime,
-                    facility_name=facility_name,
                     status=AppointmentStatusEnum.free
                 )
                 created_appointment = self.appointment_repository.create(appointment)
@@ -317,3 +311,28 @@ class AppointmentService:
             raise BadRequestException(error_message)
 
         return created_appointments
+
+    def search_free_appointments(
+        self,
+        city: str,
+        clinic_name: str,
+        district: str | None = None,
+        hospital_id: uuid.UUID | None = None,
+        doctor_id: uuid.UUID | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
+        skip: int = 0,
+        limit: int = 20
+    ) -> list[Appointment]:
+        """Search for free appointments with advanced filtering."""
+        return self.appointment_repository.search_free_appointments(
+            city=city,
+            clinic_name=clinic_name,
+            district=district,
+            hospital_id=hospital_id,
+            doctor_id=doctor_id,
+            from_date=from_date,
+            to_date=to_date,
+            skip=skip,
+            limit=limit
+        )
