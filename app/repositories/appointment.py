@@ -1,8 +1,12 @@
 import uuid
-from datetime import datetime
-from sqlalchemy.orm import Session
+from datetime import datetime, date
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_
 from app.models.appointment import Appointment, AppointmentStatusEnum
+from app.models.user import UserModel
+from app.models.doctor_profile import DoctorProfile
+from app.models.clinic import Clinic
+from app.models.hospital import Hospital
 
 
 class AppointmentRepository:
@@ -10,11 +14,25 @@ class AppointmentRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def _apply_eager_loading(self, query):
+        """Apply eager loading for all appointment relationships."""
+        return query.options(
+            joinedload(Appointment.doctor)
+                .joinedload(UserModel.doctor_profile)
+                .joinedload(DoctorProfile.clinic)
+                .joinedload(Clinic.hospital),
+            joinedload(Appointment.patient)
+        )
+
     def get_all(self, skip: int = 0, limit: int = 100) -> list[Appointment]:
-        return self.db.query(Appointment).offset(skip).limit(limit).all()
+        query = self.db.query(Appointment)
+        query = self._apply_eager_loading(query)
+        return query.offset(skip).limit(limit).all()
 
     def get_by_id(self, appointment_id: uuid.UUID) -> Appointment | None:
-        return self.db.query(Appointment).filter(Appointment.id == appointment_id).first()
+        query = self.db.query(Appointment).filter(Appointment.id == appointment_id)
+        query = self._apply_eager_loading(query)
+        return query.first()
 
     def get_by_doctor(
         self,
@@ -27,6 +45,7 @@ class AppointmentRepository:
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         query = self.db.query(Appointment).filter(Appointment.doctor_id == doctor_id)
+        query = self._apply_eager_loading(query)
         if status:
             query = query.filter(Appointment.status == status)
         if from_date:
@@ -48,6 +67,7 @@ class AppointmentRepository:
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         query = self.db.query(Appointment).filter(Appointment.patient_id == patient_id)
+        query = self._apply_eager_loading(query)
         if status:
             query = query.filter(Appointment.status == status)
         if from_date:
@@ -67,6 +87,7 @@ class AppointmentRepository:
     ) -> list[Appointment]:
         """Get available (free) appointments for booking."""
         query = self.db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.free)
+        query = self._apply_eager_loading(query)
 
         if doctor_id:
             query = query.filter(Appointment.doctor_id == doctor_id)
@@ -113,3 +134,56 @@ class AppointmentRepository:
     def delete(self, appointment: Appointment) -> None:
         self.db.delete(appointment)
         self.db.commit()
+
+    def search_free_appointments(
+        self,
+        city: str,
+        clinic_name: str,
+        district: str | None = None,
+        hospital_id: uuid.UUID | None = None,
+        doctor_id: uuid.UUID | None = None,
+        from_date: date | None = None,
+        to_date: date | None = None,
+        skip: int = 0,
+        limit: int = 20
+    ) -> list[Appointment]:
+        """Search for free appointments with advanced filtering."""
+        # Build query with joins (joins are already done for filtering, now add eager loading)
+        query = (
+            self.db.query(Appointment)
+            .join(UserModel, Appointment.doctor_id == UserModel.id)
+            .join(DoctorProfile, UserModel.id == DoctorProfile.id)
+            .join(Clinic, DoctorProfile.clinic_id == Clinic.id)
+            .join(Hospital, Clinic.hospital_id == Hospital.id)
+            .filter(
+                Appointment.status == AppointmentStatusEnum.free,
+                Hospital.city.ilike(f"%{city}%"),
+                Clinic.name.ilike(f"%{clinic_name}%")
+            )
+        )
+        # Apply eager loading for relationships
+        query = self._apply_eager_loading(query)
+
+        # Optional filters
+        if district:
+            query = query.filter(Hospital.district.ilike(f"%{district}%"))
+
+        if hospital_id:
+            query = query.filter(Hospital.id == hospital_id)
+
+        if doctor_id:
+            query = query.filter(Appointment.doctor_id == doctor_id)
+
+        if from_date:
+            from_datetime = datetime.combine(from_date, datetime.min.time())
+            query = query.filter(Appointment.appointment_datetime >= from_datetime)
+        else:
+            # By default, only show future appointments
+            query = query.filter(Appointment.appointment_datetime >= datetime.now())
+
+        if to_date:
+            to_datetime = datetime.combine(to_date, datetime.max.time())
+            query = query.filter(Appointment.appointment_datetime <= to_datetime)
+
+        # Order by appointment_datetime ascending (earliest first)
+        return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()

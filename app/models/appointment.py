@@ -34,7 +34,6 @@ class Appointment(Base):
     status: Mapped[AppointmentStatusEnum] = mapped_column(
         SAEnum(AppointmentStatusEnum), nullable=False, default=AppointmentStatusEnum.free
     )
-    facility_name: Mapped[str] = mapped_column(String(200), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Relationships
