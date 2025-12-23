@@ -10,6 +10,7 @@ from .clinic import ClinicRepository
 from .user import UserRepository
 from .doctor_patient_relationship import DoctorPatientRelationshipRepository
 from .appointment import AppointmentRepository
+from .medication_alias_repository import MedicationAliasRepository
 
 __all__ = [
     "PrescriptionRepository",
@@ -25,4 +26,5 @@ __all__ = [
     "UserRepository",
     "DoctorPatientRelationshipRepository",
     "AppointmentRepository",
+    "MedicationAliasRepository",
 ]

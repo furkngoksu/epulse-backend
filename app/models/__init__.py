@@ -10,6 +10,7 @@ from .doctor_profile import DoctorProfile
 from .hospital import Hospital
 from .doctor_patient_relationship import DoctorPatientRelationship
 from .drug_interaction import DrugInteractionModel
+from .medication_alias import MedicationAliasModel
 
 __all__ = [
     "UserModel",
@@ -24,4 +25,5 @@ __all__ = [
     "Hospital",
     "DoctorPatientRelationship",
     "DrugInteractionModel",
+    "MedicationAliasModel",
 ]
