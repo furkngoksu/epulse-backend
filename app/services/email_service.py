@@ -13,7 +13,7 @@ class EmailService:
             logger.warning("Email service disabled: MAILEROO_API_KEY not set")
             return
         
-        self.api_url = "https://smtp.maileroo.com/send"
+        self.api_url = "https://smtp.maileroo.com/api/v2/emails"
         self.api_key = settings.MAILEROO_API_KEY
         self.from_email = settings.FROM_EMAIL
         self.from_name = settings.FROM_NAME
@@ -25,10 +25,13 @@ class EmailService:
         
         try:
             payload = {
-                'from': f'{self.from_name} <{self.from_email}>',
-                'to': to_email,
-                'subject': 'E-Pulse - Password Reset Code',
-                'html': f"""
+                "from": {
+                    "address": self.from_email,
+                    "display_name": self.from_name
+                },
+                "to": [{"address": to_email}],
+                "subject": "E-Pulse - Password Reset Code",
+                "html": f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2>Password Reset Request</h2>
                     <p>Your verification code:</p>
@@ -43,16 +46,25 @@ class EmailService:
             
             response = requests.post(
                 self.api_url,
-                headers={'X-API-Key': self.api_key},
-                data=payload
+                headers={
+                    "X-API-Key": self.api_key,
+                    "Content-Type": "application/json"
+                },
+                json=payload
             )
             
-            if response.status_code == 200 and response.json().get('success'):
-                logger.info("OTP email sent successfully", extra={"to": to_email})
-                return True
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    reference_id = result.get("data", {}).get("reference_id", "N/A")
+                    logger.info(f"OTP email sent successfully (ref: {reference_id})", extra={"to": to_email})
+                    return True
+                else:
+                    error_message = result.get("message", "Unknown error")
+                    logger.error(f"Failed to send OTP: {error_message}")
+                    return False
             else:
-                error_message = response.json().get('message', 'Unknown error')
-                logger.error(f"Failed to send OTP: {error_message}")
+                logger.error(f"Failed to send OTP: HTTP {response.status_code}")
                 return False
                 
         except Exception as e:
@@ -66,10 +78,13 @@ class EmailService:
         
         try:
             payload = {
-                'from': f'{self.from_name} <{self.from_email}>',
-                'to': to_email,
-                'subject': 'E-Pulse - Password Changed',
-                'html': """
+                "from": {
+                    "address": self.from_email,
+                    "display_name": self.from_name
+                },
+                "to": [{"address": to_email}],
+                "subject": "E-Pulse - Password Changed",
+                "html": """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2>Password Changed Successfully</h2>
                     <p>Your password has been changed.</p>
@@ -80,16 +95,25 @@ class EmailService:
             
             response = requests.post(
                 self.api_url,
-                headers={'X-API-Key': self.api_key},
-                data=payload
+                headers={
+                    "X-API-Key": self.api_key,
+                    "Content-Type": "application/json"
+                },
+                json=payload
             )
             
-            if response.status_code == 200 and response.json().get('success'):
-                logger.info("Password changed notification sent successfully", extra={"to": to_email})
-                return True
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    reference_id = result.get("data", {}).get("reference_id", "N/A")
+                    logger.info(f"Password changed notification sent successfully (ref: {reference_id})", extra={"to": to_email})
+                    return True
+                else:
+                    error_message = result.get("message", "Unknown error")
+                    logger.error(f"Failed to send notification: {error_message}")
+                    return False
             else:
-                error_message = response.json().get('message', 'Unknown error')
-                logger.error(f"Failed to send notification: {error_message}")
+                logger.error(f"Failed to send notification: HTTP {response.status_code}")
                 return False
                 
         except Exception as e:

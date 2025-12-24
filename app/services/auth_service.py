@@ -123,7 +123,7 @@ class AuthService:
         otp_code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
         otp_hash = hash_password(otp_code)
         
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
         reset_request = PasswordResetRequestModel(
             user_id=user.id,
             otp_hash=otp_hash,
@@ -150,14 +150,14 @@ class AuthService:
         if reset_request.used_at:
             raise BadRequestException("This reset request has already been used")
         
-        if reset_request.expires_at < datetime.now(timezone.utc):
+        if reset_request.expires_at < datetime.utcnow():
             raise BadRequestException("OTP has expired")
         
         if reset_request.locked_at:
             raise BadRequestException("Too many failed attempts. Request a new OTP.")
         
         if reset_request.attempt_count >= 5:
-            reset_request.locked_at = datetime.now(timezone.utc)
+            reset_request.locked_at = datetime.utcnow()
             self.reset_request_repository.update(reset_request)
             logger.warning("OTP locked: Too many failed attempts", extra={"request_id": str(request.request_id)})
             raise BadRequestException("Too many failed attempts. Request a new OTP.")
@@ -174,7 +174,7 @@ class AuthService:
         reset_token_hash = hash_password(reset_token)
         
         reset_request.reset_token_hash = reset_token_hash
-        reset_request.verified_at = datetime.now(timezone.utc)
+        reset_request.verified_at = datetime.utcnow()
         self.reset_request_repository.update(reset_request)
 
         logger.info("OTP verified successfully", extra={
