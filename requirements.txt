@@ -6,3 +6,4 @@ sqlalchemy-orm
 bcrypt<4
 passlib[bcrypt]>=1.7.4
 sib-api-v3-sdk
+openai>=1.52.0
