@@ -35,3 +35,7 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(user)
         return user
+    
+    def get_total_count(self) -> int:
+        """Get total number of users in the system"""
+        return self.db.query(UserModel).count()

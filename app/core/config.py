@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    BREVO_API_KEY: str | None = None
+    FROM_EMAIL: str = "noreply@epulse.app"
+    FROM_NAME: str = "E-Pulse"
 
     class Config:
         env_file = ".env"

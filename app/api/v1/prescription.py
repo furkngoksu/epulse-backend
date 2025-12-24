@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import (
     get_current_user,
@@ -20,7 +20,7 @@ from app.models.prescription import Status
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 
 
-@router.get("", response_model=SuccessResponse[list[Prescription]])
+@router.get("", response_model=SuccessResponse[list[Prescription]], status_code=status.HTTP_200_OK)
 def admin_list_prescriptions(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -32,7 +32,7 @@ def admin_list_prescriptions(
     return SuccessResponse(content=data)
 
 
-@router.get("/doctor", response_model=SuccessResponse[list[Prescription]])
+@router.get("/doctor", response_model=SuccessResponse[list[Prescription]], status_code=status.HTTP_200_OK)
 def doctor_list_prescriptions(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -44,7 +44,7 @@ def doctor_list_prescriptions(
     return SuccessResponse(content=data)
 
 
-@router.get("/patient", response_model=SuccessResponse[list[Prescription]])
+@router.get("/patient", response_model=SuccessResponse[list[Prescription]], status_code=status.HTTP_200_OK)
 def patient_list_prescriptions(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
@@ -56,7 +56,7 @@ def patient_list_prescriptions(
     return SuccessResponse(content=data)
 
 
-@router.post("", response_model=SuccessResponse[Prescription], status_code=201)
+@router.post("", response_model=SuccessResponse[Prescription], status_code=status.HTTP_201_CREATED)
 def create_prescription_doctor(
     payload: PrescriptionCreate,
     svc: PrescriptionService = Depends(get_prescription_service),
@@ -66,7 +66,7 @@ def create_prescription_doctor(
     return SuccessResponse(content=created)
 
 
-@router.get("/{prescription_id}", response_model=SuccessResponse[Prescription])
+@router.get("/{prescription_id}", response_model=SuccessResponse[Prescription], status_code=status.HTTP_200_OK)
 def get_prescription(
     prescription_id: uuid.UUID,
     svc: PrescriptionService = Depends(get_prescription_service),
@@ -76,7 +76,7 @@ def get_prescription(
     return SuccessResponse(content=rx)
 
 
-@router.patch("/{prescription_id}", response_model=SuccessResponse[Prescription])
+@router.patch("/{prescription_id}", response_model=SuccessResponse[Prescription], status_code=status.HTTP_200_OK)
 def update_prescription(
     prescription_id: uuid.UUID,
     payload: PrescriptionUpdate,
@@ -87,21 +87,21 @@ def update_prescription(
     return SuccessResponse(content=updated)
 
 
-@router.delete("/{prescription_id}", response_model=SuccessResponse)
+@router.delete("/{prescription_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_prescription_doctor(
     prescription_id: uuid.UUID,
     svc: PrescriptionService = Depends(get_prescription_service),
     current_doctor: User = Depends(get_current_doctor),
-) -> SuccessResponse[dict]:
+):
     svc.delete_prescription(prescription_id=prescription_id, current_user=current_doctor)
-    return SuccessResponse(success=True)
+    return None
 
 
 # -------------------------
 # Prescription Items
 # -------------------------
 
-@router.get("/{prescription_id}/items", response_model=SuccessResponse[list[PrescriptionItem]])
+@router.get("/{prescription_id}/items", response_model=SuccessResponse[list[PrescriptionItem]], status_code=status.HTTP_200_OK)
 def list_prescription_items(
     prescription_id: uuid.UUID,
     svc: PrescriptionService = Depends(get_prescription_service),
@@ -111,7 +111,7 @@ def list_prescription_items(
     return SuccessResponse(content=items)
 
 
-@router.post("/{prescription_id}/items", response_model=SuccessResponse[PrescriptionItem], status_code=201)
+@router.post("/{prescription_id}/items", response_model=SuccessResponse[PrescriptionItem], status_code=status.HTTP_201_CREATED)
 def add_item(
     prescription_id: uuid.UUID,
     payload: PrescriptionItemCreate,
@@ -122,7 +122,7 @@ def add_item(
     return SuccessResponse(content=item)
 
 
-@router.post("/{prescription_id}/items/bulk", response_model=SuccessResponse[list[PrescriptionItem]], status_code=201)
+@router.post("/{prescription_id}/items/bulk", response_model=SuccessResponse[list[PrescriptionItem]], status_code=status.HTTP_201_CREATED)
 def add_items_bulk(
     prescription_id: uuid.UUID,
     payload: list[PrescriptionItemCreate],
@@ -133,7 +133,7 @@ def add_items_bulk(
     return SuccessResponse(content=items)
 
 
-@router.patch("/items/{item_id}", response_model=SuccessResponse[PrescriptionItem])
+@router.patch("/items/{item_id}", response_model=SuccessResponse[PrescriptionItem], status_code=status.HTTP_200_OK)
 def update_item(
     item_id: uuid.UUID,
     payload: PrescriptionItemUpdate,
@@ -144,21 +144,21 @@ def update_item(
     return SuccessResponse(content=updated)
 
 
-@router.delete("/items/{item_id}", response_model=SuccessResponse)
+@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(
     item_id: uuid.UUID,
     svc: PrescriptionService = Depends(get_prescription_service),
     current_doctor: User = Depends(get_current_doctor),
-) -> SuccessResponse[dict]:
+):
     svc.delete_prescription_item(item_id=item_id, current_user=current_doctor)
-    return SuccessResponse(success=True)
+    return None
 
 
 # -------------------------
 # Interactions
 # -------------------------
 
-@router.get("/{prescription_id}/interactions", response_model=SuccessResponse[list[DrugInteractionResponse]])
+@router.get("/{prescription_id}/interactions", response_model=SuccessResponse[list[DrugInteractionResponse]], status_code=status.HTTP_200_OK)
 def check_prescription_interactions(
     prescription_id: uuid.UUID,
     svc: PrescriptionService = Depends(get_prescription_service),

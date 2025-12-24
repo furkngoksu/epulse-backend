@@ -1,11 +1,15 @@
 from fastapi import Depends, Header
 from app.core.security import get_user_id_from_token
+from app.core.log_context import user_id_var
 from app.repositories.user import UserRepository
+from app.repositories.password_reset_request_repository import PasswordResetRequestRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.schemas.user import User
 from app.models.user import RoleEnum
 from app.api.deps.user import get_user_repository
+from app.api.deps.db import get_db
 from app.services.auth_service import AuthService
+from sqlalchemy.orm import Session
 
 def get_current_user(
     user_repo: UserRepository = Depends(get_user_repository),
@@ -24,6 +28,7 @@ def get_current_user(
     if not user:
         raise UnauthorizedException("User not found")
 
+    user_id_var.set(str(user_id))
     return User.model_validate(user)
 
 
@@ -57,5 +62,7 @@ def get_current_doctor_or_admin(
     
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),
+    db: Session = Depends(get_db),
 ) -> AuthService:
-    return AuthService(user_repository=user_repo)
+    reset_repo = PasswordResetRequestRepository(db)
+    return AuthService(user_repository=user_repo, reset_request_repository=reset_repo)

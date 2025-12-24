@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import TYPE_CHECKING
 from app.models.hospital import Hospital
 from app.models.clinic import Clinic
@@ -18,6 +19,8 @@ from app.exceptions.exceptions import NotFoundException, BadRequestException, Co
 
 if TYPE_CHECKING:
     from app.services.report_service import ReportService
+
+logger = logging.getLogger(__name__)
 
 
 class DoctorService:
@@ -202,6 +205,8 @@ class DoctorService:
         )
         created_profile = self.doctor_profile_repository.create(profile)
 
+        logger.info("Doctor profile created successfully", extra={"user_id": str(data.user_id), "clinic_id": str(data.clinic_id)})
+
         # Fetch the profile with all relations to return proper response
         profile_with_relations = self.doctor_profile_repository.get_by_id(created_profile.id)
         return self._to_doctor_profile_response(profile_with_relations)
@@ -336,7 +341,9 @@ class DoctorService:
             doctor_id=data.doctor_id,
             patient_id=data.patient_id
         )
-        return self.doctor_patient_relationship_repository.create(relationship)
+        created = self.doctor_patient_relationship_repository.create(relationship)
+        logger.info("Doctor-patient relationship created successfully", extra={"doctor_id": str(data.doctor_id), "patient_id": str(data.patient_id)})
+        return created
 
     def delete_doctor_patient_relationship(self, relationship_id: uuid.UUID) -> None:
         relationship = self.doctor_patient_relationship_repository.get_by_id(relationship_id)

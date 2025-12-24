@@ -3,8 +3,12 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
+from app.core.logging import setup_logging
+from app.core.middleware import RequestLoggingMiddleware
 from app.db.init_db import init_db
 from app.api.v1 import app_router
+
+setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,6 +26,8 @@ app = FastAPI(
     description="Backend API for E-Pulse mobile healthcare system.",
     version="1.0.0"
 )
+
+app.add_middleware(RequestLoggingMiddleware)
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):

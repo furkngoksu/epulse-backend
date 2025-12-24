@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import date, datetime, timezone
 from typing import Optional
 
@@ -19,6 +20,8 @@ from app.schemas.report import (
     MedicationAdherenceResponse,
     BasicStatsResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ReportService:

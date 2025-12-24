@@ -1,4 +1,5 @@
 import uuid
+import logging
 from typing import Optional
 
 from app.exceptions import NotFoundException, BadRequestException, ConflictException
@@ -11,6 +12,8 @@ from app.schemas.drug_interaction import (
     DrugInteractionUpdate,
     DrugInteractionResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class CatalogService:
@@ -46,6 +49,7 @@ class CatalogService:
     def create_medication(self, data: MedicationCreate) -> MedicationResponse:
         model = MedicationModel(**data.model_dump())
         created = self.med_repo.create(model)
+        logger.info("Medication created successfully", extra={"medication_id": str(created.id), "name": created.commercial_name})
         return MedicationResponse.model_validate(created)
 
     def update_medication(self, medication_id: uuid.UUID, data: MedicationUpdate) -> MedicationResponse:
