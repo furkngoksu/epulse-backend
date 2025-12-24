@@ -1,6 +1,6 @@
 import uuid
 from sqlalchemy.orm import Session
-from app.models.user import UserModel
+from app.models.user import UserModel, RoleEnum
 
 
 class UserRepository:
@@ -39,3 +39,7 @@ class UserRepository:
     def get_total_count(self) -> int:
         """Get total number of users in the system"""
         return self.db.query(UserModel).count()
+    
+    def get_count_by_role(self, role: RoleEnum) -> int:
+        """Get count of users by role"""
+        return self.db.query(UserModel).filter(UserModel.role == role).count()

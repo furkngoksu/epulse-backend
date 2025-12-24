@@ -12,6 +12,7 @@ from app.schemas.report import (
     BasicStatsResponse,
     DoseCountResponse,
     MedicationAdherenceResponse,
+    UserCountResponse,
 )
 from app.schemas.user import User
 from app.services.report_service import ReportService
@@ -93,17 +94,17 @@ def get_basic_stats(
 
 
 
-@router.get("/total-users", response_model=SuccessResponse[dict], status_code=status.HTTP_200_OK)
+@router.get("/total-users", response_model=SuccessResponse[UserCountResponse], status_code=status.HTTP_200_OK)
 def get_total_user_count(
     current_user: User = Depends(get_current_admin),
     user_service: UserService = Depends(get_user_service)
-) -> SuccessResponse[dict]:
+) -> SuccessResponse[UserCountResponse]:
     """
-    Get total number of users in the system.
+    Get user counts by role.
     
-    Returns the total count of all users.
+    Returns total number of users broken down by role (admin, doctor, patient).
     
     Requires admin authentication.
     """
-    total = user_service.get_total_user_count()
-    return SuccessResponse(content={"total_users": total})
+    counts = user_service.get_user_counts_by_role()
+    return SuccessResponse(content=UserCountResponse(**counts))
