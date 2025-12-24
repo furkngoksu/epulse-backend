@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps.services import get_appointment_service
@@ -22,7 +22,7 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get("/", response_model=SuccessResponse[list[AppointmentResponse]])
+@router.get("/", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
 def get_all_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -37,7 +37,7 @@ def get_all_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/free", response_model=SuccessResponse[list[AppointmentResponse]])
+@router.get("/free", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
 def get_free_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -56,7 +56,7 @@ def get_free_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/search", response_model=SuccessResponse[list[AppointmentResponse]])
+@router.get("/search", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
 def search_free_appointments(
     city: str = Query(..., min_length=1, max_length=50),
     clinic: str = Query(..., min_length=1, max_length=100),
@@ -103,7 +103,7 @@ def search_free_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/doctor/{doctor_id}", response_model=SuccessResponse[list[AppointmentResponse]])
+@router.get("/doctor/{doctor_id}", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
 def get_appointments_by_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -138,7 +138,7 @@ def get_appointments_by_doctor(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/patient/{patient_id}", response_model=SuccessResponse[list[AppointmentResponse]])
+@router.get("/patient/{patient_id}", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
 def get_appointments_by_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -173,7 +173,7 @@ def get_appointments_by_patient(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse])
+@router.get("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def get_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -198,7 +198,7 @@ def get_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/", response_model=SuccessResponse[AppointmentResponse], status_code=201)
+@router.post("/", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_201_CREATED)
 def create_appointment(
     data: AppointmentCreate,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -220,7 +220,7 @@ def create_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/create-free-appointments", response_model=SuccessResponse[list[AppointmentResponse]], status_code=201)
+@router.post("/create-free-appointments", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_201_CREATED)
 def create_multiple_free_appointments(
     data: CreateFreeAppointmentsRequest,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -248,7 +248,7 @@ def create_multiple_free_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.post("/{appointment_id}/book", response_model=SuccessResponse[AppointmentResponse])
+@router.post("/{appointment_id}/book", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def book_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentBook,
@@ -267,7 +267,7 @@ def book_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/{appointment_id}/cancel", response_model=SuccessResponse[AppointmentResponse])
+@router.post("/{appointment_id}/cancel", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def cancel_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -297,7 +297,7 @@ def cancel_appointment(
     return SuccessResponse(content=appointment_service.admin_cancel(appointment_id))
 
 
-@router.post("/{appointment_id}/complete", response_model=SuccessResponse[AppointmentResponse])
+@router.post("/{appointment_id}/complete", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def complete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -320,7 +320,7 @@ def complete_appointment(
     return SuccessResponse(content=appointment_service.complete(appointment_id))
 
 
-@router.post("/{appointment_id}/no-show", response_model=SuccessResponse[AppointmentResponse])
+@router.post("/{appointment_id}/no-show", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def mark_no_show(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -343,7 +343,7 @@ def mark_no_show(
     return SuccessResponse(content=appointment_service.no_show(appointment_id))
 
 
-@router.put("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse])
+@router.put("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
 def update_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentUpdate,
@@ -358,7 +358,7 @@ def update_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.delete("/{appointment_id}", response_model=SuccessResponse[None])
+@router.delete("/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -369,4 +369,4 @@ def delete_appointment(
     Requires admin role.
     """
     appointment_service.delete(appointment_id)
-    return SuccessResponse(content=None)
+    return None

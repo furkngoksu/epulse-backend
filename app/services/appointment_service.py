@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime, date, time
 
 from app.models.appointment import Appointment, AppointmentStatusEnum
@@ -9,6 +10,8 @@ from app.repositories.user import UserRepository
 from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
 from app.schemas.appointment import AppointmentCreate, AppointmentUpdate, AppointmentBook
 from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
+
+logger = logging.getLogger(__name__)
 
 
 class AppointmentService:
@@ -113,7 +116,9 @@ class AppointmentService:
             notes=data.notes,
             status=AppointmentStatusEnum.free
         )
-        return self.appointment_repository.create(appointment)
+        created = self.appointment_repository.create(appointment)
+        logger.info("appointment_created", extra={"appointment_id": str(created.id), "doctor_id": str(data.doctor_id)})
+        return created
 
     def book(self, appointment_id: uuid.UUID, patient_id: uuid.UUID, data: AppointmentBook) -> Appointment:
         """Patient books a free appointment."""
@@ -153,7 +158,9 @@ class AppointmentService:
             )
             self.doctor_patient_relationship_repository.create(relationship)
 
-        return self.appointment_repository.update(appointment)
+        updated = self.appointment_repository.update(appointment)
+        logger.info("appointment_booked", extra={"appointment_id": str(appointment_id), "patient_id": str(patient_id)})
+        return updated
 
     def patient_cancel(self, appointment_id: uuid.UUID, patient_id: uuid.UUID) -> Appointment:
         """Patient cancels their booked appointment (reverts to free)."""
@@ -178,7 +185,9 @@ class AppointmentService:
         appointment.status = AppointmentStatusEnum.free
         appointment.notes = None
 
-        return self.appointment_repository.update(appointment)
+        updated = self.appointment_repository.update(appointment)
+        logger.info("appointment_cancelled_by_patient", extra={"appointment_id": str(appointment_id)})
+        return updated
 
     def admin_cancel(self, appointment_id: uuid.UUID) -> Appointment:
         """Admin or doctor cancels an appointment (permanent cancellation)."""

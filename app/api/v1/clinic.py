@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.api.deps.services import get_doctor_service
@@ -10,7 +10,7 @@ from app.services.doctor_service import DoctorService
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ClinicResponse])
+@router.get("/", response_model=list[ClinicResponse], status_code=status.HTTP_200_OK)
 def get_clinics(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -25,7 +25,7 @@ def get_clinics(
     return clinics
 
 
-@router.get("/{clinic_id}", response_model=ClinicResponse)
+@router.get("/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK)
 def get_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
@@ -39,7 +39,7 @@ def get_clinic(
     return clinic
 
 
-@router.post("/", response_model=ClinicResponse, status_code=201)
+@router.post("/", response_model=ClinicResponse, status_code=status.HTTP_201_CREATED)
 def create_clinic(
     data: ClinicCreate,
     service: DoctorService = Depends(get_doctor_service),
@@ -53,7 +53,7 @@ def create_clinic(
     return clinic
 
 
-@router.put("/{clinic_id}", response_model=ClinicResponse)
+@router.put("/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK)
 def update_clinic(
     clinic_id: uuid.UUID,
     data: ClinicUpdate,
@@ -68,7 +68,7 @@ def update_clinic(
     return clinic
 
 
-@router.delete("/{clinic_id}", status_code=204)
+@router.delete("/{clinic_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),

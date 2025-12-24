@@ -18,6 +18,7 @@ instance/
 
 # FastAPI / Uvicorn
 *.log
+logs/
 
 # Byte-compiled / optimized / DLL files
 *.dll

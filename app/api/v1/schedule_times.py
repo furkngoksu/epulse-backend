@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from app.api.deps.auth import get_current_user
 from app.api.deps.services import get_medication_service
 from app.schemas.base import SuccessResponse
@@ -10,7 +10,7 @@ from app.services.medication_service import MedicationService
 
 router = APIRouter(prefix="/schedule-times", tags=["Schedule Times"])
 
-@router.patch("/{schedule_time_id}/take", response_model=SuccessResponse[ScheduleTimeResponse])
+@router.patch("/{schedule_time_id}/take", response_model=SuccessResponse[ScheduleTimeResponse], status_code=status.HTTP_200_OK)
 def take_dose(
     schedule_time_id: uuid.UUID,
     payload: MarkDoseTakenRequest,
@@ -24,7 +24,7 @@ def take_dose(
     )
     return SuccessResponse(content=row)
 
-@router.patch("/{schedule_time_id}/skip", response_model=SuccessResponse[ScheduleTimeResponse])
+@router.patch("/{schedule_time_id}/skip", response_model=SuccessResponse[ScheduleTimeResponse], status_code=status.HTTP_200_OK)
 def skip_dose(
     schedule_time_id: uuid.UUID,
     payload: MarkDoseSkippedRequest,
@@ -38,7 +38,7 @@ def skip_dose(
     )
     return SuccessResponse(content=row)
 
-@router.patch("/{schedule_time_id}/miss", response_model=SuccessResponse[ScheduleTimeResponse])
+@router.patch("/{schedule_time_id}/miss", response_model=SuccessResponse[ScheduleTimeResponse], status_code=status.HTTP_200_OK)
 def miss_dose(
     schedule_time_id: uuid.UUID,
     svc: MedicationService = Depends(get_medication_service),

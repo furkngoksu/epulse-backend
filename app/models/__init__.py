@@ -11,6 +11,7 @@ from .hospital import Hospital
 from .doctor_patient_relationship import DoctorPatientRelationship
 from .drug_interaction import DrugInteractionModel
 from .medication_alias import MedicationAliasModel
+from .password_reset_request import PasswordResetRequestModel
 
 __all__ = [
     "UserModel",
@@ -26,4 +27,5 @@ __all__ = [
     "DoctorPatientRelationship",
     "DrugInteractionModel",
     "MedicationAliasModel",
+    "PasswordResetRequestModel",
 ]
