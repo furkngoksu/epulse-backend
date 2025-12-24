@@ -4,5 +4,4 @@ sqlalchemy
 fastapi
 sqlalchemy-orm
 bcrypt<4
-passlib[bcrypt]>=1.7.4
-sib-api-v3-sdk
+passlib[bcrypt]>=1.7.4requests

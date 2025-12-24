@@ -1,6 +1,5 @@
 import logging
-import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
+import requests
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -9,14 +8,15 @@ logger = logging.getLogger(__name__)
 class EmailService:
     
     def __init__(self):
-        self.enabled = bool(settings.BREVO_API_KEY)
+        self.enabled = bool(settings.MAILEROO_API_KEY)
         if not self.enabled:
+            logger.warning("Email service disabled: MAILEROO_API_KEY not set")
             return
         
-        # Configure Brevo API
-        configuration = sib_api_v3_sdk.Configuration()
-        configuration.api_key['api-key'] = settings.BREVO_API_KEY
-        self.api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+        self.api_url = "https://smtp.maileroo.com/send"
+        self.api_key = settings.MAILEROO_API_KEY
+        self.from_email = settings.FROM_EMAIL
+        self.from_name = settings.FROM_NAME
     
     def send_otp_email(self, to_email: str, otp_code: str) -> bool:
         if not self.enabled:
@@ -24,11 +24,11 @@ class EmailService:
             return False
         
         try:
-            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-                to=[{"email": to_email}],
-                sender={"email": settings.FROM_EMAIL, "name": settings.FROM_NAME},
-                subject="E-Pulse - Password Reset Code",
-                html_content=f"""
+            payload = {
+                'from': f'{self.from_name} <{self.from_email}>',
+                'to': to_email,
+                'subject': 'E-Pulse - Password Reset Code',
+                'html': f"""
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2>Password Reset Request</h2>
                     <p>Your verification code:</p>
@@ -39,14 +39,22 @@ class EmailService:
                     <p style="color: #666;">If you didn't request this, ignore this email.</p>
                 </div>
                 """
+            }
+            
+            response = requests.post(
+                self.api_url,
+                headers={'X-API-Key': self.api_key},
+                data=payload
             )
             
-            self.api_instance.send_transac_email(send_smtp_email)
-            logger.info("OTP email sent successfully", extra={"to": to_email})
-            return True
-        except ApiException as e:
-            logger.error(f"Failed to send OTP: {str(e)}")
-            return False
+            if response.status_code == 200 and response.json().get('success'):
+                logger.info("OTP email sent successfully", extra={"to": to_email})
+                return True
+            else:
+                error_message = response.json().get('message', 'Unknown error')
+                logger.error(f"Failed to send OTP: {error_message}")
+                return False
+                
         except Exception as e:
             logger.error(f"Failed to send OTP: {str(e)}")
             return False
@@ -57,25 +65,33 @@ class EmailService:
             return False
         
         try:
-            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-                to=[{"email": to_email}],
-                sender={"email": settings.FROM_EMAIL, "name": settings.FROM_NAME},
-                subject="E-Pulse - Password Changed",
-                html_content="""
+            payload = {
+                'from': f'{self.from_name} <{self.from_email}>',
+                'to': to_email,
+                'subject': 'E-Pulse - Password Changed',
+                'html': """
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                     <h2>Password Changed Successfully</h2>
                     <p>Your password has been changed.</p>
                     <p style="color: #666;">If you didn't make this change, contact support immediately.</p>
                 </div>
                 """
+            }
+            
+            response = requests.post(
+                self.api_url,
+                headers={'X-API-Key': self.api_key},
+                data=payload
             )
             
-            self.api_instance.send_transac_email(send_smtp_email)
-            logger.info("Password changed notification sent successfully", extra={"to": to_email})
-            return True
-        except ApiException as e:
-            logger.error(f"Failed to send notification: {str(e)}")
-            return False
+            if response.status_code == 200 and response.json().get('success'):
+                logger.info("Password changed notification sent successfully", extra={"to": to_email})
+                return True
+            else:
+                error_message = response.json().get('message', 'Unknown error')
+                logger.error(f"Failed to send notification: {error_message}")
+                return False
+                
         except Exception as e:
             logger.error(f"Failed to send notification: {str(e)}")
             return False
