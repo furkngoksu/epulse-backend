@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     MAILEROO_API_KEY: str | None = None
+    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_ASSISTANT_ID: Optional[str] = None
     FROM_EMAIL: str = "noreply@epulse.app"
     FROM_NAME: str = "E-Pulse"
 
