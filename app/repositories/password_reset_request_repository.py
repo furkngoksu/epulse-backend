@@ -24,7 +24,7 @@ class PasswordResetRequestRepository:
     
     def get_active_by_user(self, user_id: uuid.UUID) -> Optional[PasswordResetRequestModel]:
         """Get the most recent active (not used, not expired) request for a user"""
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         return self.db.query(PasswordResetRequestModel).filter(
             PasswordResetRequestModel.user_id == user_id,
             PasswordResetRequestModel.used_at.is_(None),
@@ -37,7 +37,7 @@ class PasswordResetRequestRepository:
         return request
     
     def mark_as_used(self, request: PasswordResetRequestModel) -> None:
-        request.used_at = datetime.now(timezone.utc)
+        request.used_at = datetime.utcnow()
         self.db.commit()
     
     def increment_attempt(self, request: PasswordResetRequestModel) -> None:
@@ -50,7 +50,7 @@ class PasswordResetRequestRepository:
     
     def get_verified_unused_requests(self) -> list[PasswordResetRequestModel]:
         """Get all verified but not yet used reset requests that haven't expired"""
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         return self.db.query(PasswordResetRequestModel).filter(
             PasswordResetRequestModel.verified_at.isnot(None),
             PasswordResetRequestModel.used_at.is_(None),
