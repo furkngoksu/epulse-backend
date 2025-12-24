@@ -1,6 +1,6 @@
 import uuid
 from datetime import date
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import get_current_user, get_current_doctor
 from app.api.deps.services import get_medication_service
@@ -15,7 +15,7 @@ from app.services.medication_service import MedicationService
 router = APIRouter(prefix="/patient-medications", tags=["PatientMedications"])
 
 
-@router.post("/create/{patient_id}", response_model=SuccessResponse[PatientMedicationResponse], status_code=201)
+@router.post("/create/{patient_id}", response_model=SuccessResponse[PatientMedicationResponse], status_code=status.HTTP_201_CREATED)
 def create_patient_medication_for_patient(
     patient_id: uuid.UUID,
     payload: PatientMedicationWithScheduleCreate,
@@ -28,7 +28,7 @@ def create_patient_medication_for_patient(
     return SuccessResponse(content=created)
 
 
-@router.get("/upcoming", response_model=SuccessResponse[list[PatientMedicationResponse]])
+@router.get("/upcoming", response_model=SuccessResponse[list[PatientMedicationResponse]], status_code=status.HTTP_200_OK)
 def list_upcoming_patient_medications(
     hours: int = Query(24, ge=1, le=168),
     svc: MedicationService = Depends(get_medication_service),
@@ -38,7 +38,7 @@ def list_upcoming_patient_medications(
     return SuccessResponse(content=rows)
 
 
-@router.get("/between", response_model=SuccessResponse[list[PatientMedicationResponse]])
+@router.get("/between", response_model=SuccessResponse[list[PatientMedicationResponse]], status_code=status.HTTP_200_OK)
 def list_patient_medications_between(
     start: date = Query(...),
     end: date = Query(...),
@@ -53,7 +53,7 @@ def list_patient_medications_between(
     return SuccessResponse(content=rows)
 
 
-@router.get("", response_model=SuccessResponse[list[PatientMedicationResponse]])
+@router.get("", response_model=SuccessResponse[list[PatientMedicationResponse]], status_code=status.HTTP_200_OK)
 def list_patient_medications(
     status: str = Query("all", pattern="^(active|paused|all)$"),
     skip: int = Query(0, ge=0),
@@ -70,7 +70,7 @@ def list_patient_medications(
     return SuccessResponse(content=rows)
 
 
-@router.get("/{patient_medication_id}", response_model=SuccessResponse[PatientMedicationResponse])
+@router.get("/{patient_medication_id}", response_model=SuccessResponse[PatientMedicationResponse], status_code=status.HTTP_200_OK)
 def get_patient_medication(
     patient_medication_id: uuid.UUID,
     svc: MedicationService = Depends(get_medication_service),
@@ -83,14 +83,14 @@ def get_patient_medication(
     return SuccessResponse(content=pm)
 
 
-@router.delete("/{patient_medication_id}", response_model=SuccessResponse)
+@router.delete("/{patient_medication_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_patient_medication(
     patient_medication_id: uuid.UUID,
     svc: MedicationService = Depends(get_medication_service),
     current_user: User = Depends(get_current_user),
-) -> SuccessResponse[dict]:
+):
     svc.delete_patient_medication(
         patient_medication_id=patient_medication_id,
         current_user_id=current_user.id,
     )
-    return SuccessResponse(success=True)
+    return None

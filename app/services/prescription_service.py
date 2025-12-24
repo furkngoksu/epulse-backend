@@ -1,4 +1,5 @@
 import uuid
+import logging
 from itertools import combinations
 from typing import Optional
 
@@ -15,6 +16,8 @@ from app.schemas.prescription import PrescriptionCreate, PrescriptionUpdate, Pre
 from app.schemas.prescription_item import PrescriptionItem, PrescriptionItemCreate, PrescriptionItemUpdate
 from app.schemas.drug_interaction import DrugInteractionResponse
 from app.schemas.user import User
+
+logger = logging.getLogger(__name__)
 
 
 class PrescriptionService:
@@ -96,6 +99,7 @@ class PrescriptionService:
             status=Status.inactive,
         )
         created = self.prescription_repo.create(prescription=rx)
+        logger.info("prescription_created", extra={"prescription_id": str(created.id), "patient_id": str(data.patient_id)})
         return Prescription.model_validate(created)
 
     def get_prescription_by_id(self, prescription_id: uuid.UUID, current_user: User) -> Prescription:
@@ -164,6 +168,7 @@ class PrescriptionService:
             duration=data.duration,
         )
         created = self.item_repo.create(item)
+        logger.info("prescription_item_added", extra={"prescription_id": str(prescription_id), "medication_id": str(data.medication_id)})
         return PrescriptionItem.model_validate(created)
 
     def add_prescription_items(

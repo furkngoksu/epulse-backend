@@ -1,6 +1,6 @@
 import uuid
 from typing import List
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps.auth import get_current_user, get_current_admin
@@ -17,7 +17,7 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get("/", response_model=List[DoctorPatientRelationshipResponse])
+@router.get("/", response_model=List[DoctorPatientRelationshipResponse], status_code=status.HTTP_200_OK)
 def get_all_relationships(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -32,7 +32,7 @@ def get_all_relationships(
     return relationships
 
 
-@router.get("/doctor/{doctor_id}/patients", response_model=List[PatientSummary])
+@router.get("/doctor/{doctor_id}/patients", response_model=List[PatientSummary], status_code=status.HTTP_200_OK)
 def get_patients_for_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -59,7 +59,7 @@ def get_patients_for_doctor(
     return patient_summaries
 
 
-@router.get("/patient/{patient_id}/doctors", response_model=List[DoctorPatientRelationshipResponse])
+@router.get("/patient/{patient_id}/doctors", response_model=List[DoctorPatientRelationshipResponse], status_code=status.HTTP_200_OK)
 def get_doctors_for_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -86,7 +86,7 @@ def get_doctors_for_patient(
     return relationships
 
 
-@router.get("/{relationship_id}", response_model=DoctorPatientRelationshipResponse)
+@router.get("/{relationship_id}", response_model=DoctorPatientRelationshipResponse, status_code=status.HTTP_200_OK)
 def get_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -100,7 +100,7 @@ def get_relationship(
     return relationship
 
 
-@router.post("/", response_model=DoctorPatientRelationshipResponse, status_code=201)
+@router.post("/", response_model=DoctorPatientRelationshipResponse, status_code=status.HTTP_201_CREATED)
 def create_relationship(
     data: DoctorPatientRelationshipCreate,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -123,7 +123,7 @@ def create_relationship(
     return relationship
 
 
-@router.delete("/{relationship_id}", status_code=204)
+@router.delete("/{relationship_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),

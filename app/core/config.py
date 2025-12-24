@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
     OPENAI_API_KEY: Optional[str] = None
     OPENAI_ASSISTANT_ID: Optional[str] = None
+    BREVO_API_KEY: str | None = None
+    FROM_EMAIL: str = "noreply@epulse.app"
+    FROM_NAME: str = "E-Pulse"
 
     class Config:
         env_file = ".env"

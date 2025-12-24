@@ -1,5 +1,5 @@
 import uuid
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.api.deps.services import get_doctor_service
@@ -10,7 +10,7 @@ from app.services.doctor_service import DoctorService
 router = APIRouter()
 
 
-@router.get("/", response_model=list[HospitalResponse])
+@router.get("/", response_model=list[HospitalResponse], status_code=status.HTTP_200_OK)
 def get_hospitals(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -25,7 +25,7 @@ def get_hospitals(
     return hospitals
 
 
-@router.get("/{hospital_id}", response_model=HospitalResponse)
+@router.get("/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK)
 def get_hospital(
     hospital_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
@@ -39,7 +39,7 @@ def get_hospital(
     return hospital
 
 
-@router.post("/", response_model=HospitalResponse, status_code=201)
+@router.post("/", response_model=HospitalResponse, status_code=status.HTTP_201_CREATED)
 def create_hospital(
     data: HospitalCreate,
     service: DoctorService = Depends(get_doctor_service),
@@ -53,7 +53,7 @@ def create_hospital(
     return hospital
 
 
-@router.put("/{hospital_id}", response_model=HospitalResponse)
+@router.put("/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK)
 def update_hospital(
     hospital_id: uuid.UUID,
     data: HospitalUpdate,
@@ -68,7 +68,7 @@ def update_hospital(
     return hospital
 
 
-@router.delete("/{hospital_id}", status_code=204)
+@router.delete("/{hospital_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_hospital(
     hospital_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),

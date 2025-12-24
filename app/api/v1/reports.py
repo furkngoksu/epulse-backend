@@ -1,10 +1,10 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
-from app.api.deps.auth import get_current_user
-from app.api.deps.services import get_report_service
+from app.api.deps.auth import get_current_user, get_current_admin
+from app.api.deps.services import get_report_service, get_user_service
 from app.models.schedule_time import DoseStatusEnum
 from app.schemas.base import SuccessResponse
 from app.schemas.report import (
@@ -15,11 +15,12 @@ from app.schemas.report import (
 )
 from app.schemas.user import User
 from app.services.report_service import ReportService
+from app.services.user_service import UserService
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
-@router.get("/{patient_id}/adherence-rate", response_model=SuccessResponse[AdherenceRateResponse])
+@router.get("/{patient_id}/adherence-rate", response_model=SuccessResponse[AdherenceRateResponse], status_code=status.HTTP_200_OK)
 def get_adherence_rate(
     patient_id: UUID,
     start_date: date = Query(..., description="Start date for the report"),
@@ -40,7 +41,7 @@ def get_adherence_rate(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/dose-count", response_model=SuccessResponse[DoseCountResponse])
+@router.get("/{patient_id}/dose-count", response_model=SuccessResponse[DoseCountResponse], status_code=status.HTTP_200_OK)
 def get_dose_count(
     patient_id: UUID,
     start_date: date = Query(..., description="Start date for the report"),
@@ -61,7 +62,7 @@ def get_dose_count(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/active-medications", response_model=SuccessResponse[list[MedicationAdherenceResponse]])
+@router.get("/{patient_id}/active-medications", response_model=SuccessResponse[list[MedicationAdherenceResponse]], status_code=status.HTTP_200_OK)
 def get_active_medications(
     patient_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -74,7 +75,7 @@ def get_active_medications(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/basic-stats", response_model=SuccessResponse[BasicStatsResponse])
+@router.get("/{patient_id}/basic-stats", response_model=SuccessResponse[BasicStatsResponse], status_code=status.HTTP_200_OK)
 def get_basic_stats(
     patient_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -89,3 +90,20 @@ def get_basic_stats(
     """
     result = report_service.get_basic_stats(patient_id=patient_id)
     return SuccessResponse(content=result)
+
+
+
+@router.get("/total-users", response_model=SuccessResponse[dict], status_code=status.HTTP_200_OK)
+def get_total_user_count(
+    current_user: User = Depends(get_current_admin),
+    user_service: UserService = Depends(get_user_service)
+) -> SuccessResponse[dict]:
+    """
+    Get total number of users in the system.
+    
+    Returns the total count of all users.
+    
+    Requires admin authentication.
+    """
+    total = user_service.get_total_user_count()
+    return SuccessResponse(content={"total_users": total})

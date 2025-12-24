@@ -1,4 +1,5 @@
 import uuid
+import logging
 from datetime import datetime, timedelta, timezone, date, time
 import math
 from zoneinfo import ZoneInfo
@@ -22,6 +23,8 @@ from app.schemas.schedule import ScheduleCreate, ScheduleResponse
 from app.schemas.schedule_time import ScheduleTimeCreate, ScheduleTimeResponse
 from app.schemas.medication_alias import MedicationAliasResponse
 from app.models.medication_alias import MedicationAliasModel
+
+logger = logging.getLogger(__name__)
 
 class MedicationService:
     def __init__(
@@ -226,6 +229,18 @@ class MedicationService:
         )
 
         created = self.pm_repo.create(pm)
+        
+        logger.info(
+            "Patient medication created successfully",
+            extra={
+                "patient_id": str(patient_id),
+                "medication_id": str(data.medication_id),
+                "schedule_times_count": len(schedule_times),
+                "start_date": str(start_date),
+                "end_date": str(end_date),
+            }
+        )
+        
         return PatientMedicationResponse.model_validate(created)
 
 
@@ -274,6 +289,14 @@ class MedicationService:
         need = pm.tablets_per_use or 1
 
         if pm.current_stock < need:
+            logger.warning(
+                "Not enough medication stock",
+                extra={
+                    "schedule_time_id": str(schedule_time_id),
+                    "needed": need,
+                    "current": pm.current_stock,
+                }
+            )
             raise BadRequestException("Not enough stock")
 
         pm.current_stock -= need
@@ -283,6 +306,16 @@ class MedicationService:
         st.skip_reason = None
 
         st = self.st_repo.update(st)
+        
+        logger.info(
+            "Dose taken successfully",
+            extra={
+                "schedule_time_id": str(schedule_time_id),
+                "patient_medication_id": str(pm.id),
+                "remaining_stock": pm.current_stock,
+            }
+        )
+        
         return ScheduleTimeResponse.model_validate(st)
 
     def mark_dose_skipped(self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID, reason: str | None = None) -> ScheduleTimeResponse:
@@ -299,6 +332,9 @@ class MedicationService:
         st.skip_reason = reason
 
         st = self.st_repo.update(st)
+        
+        logger.info("Dose skipped", extra={"schedule_time_id": str(schedule_time_id), "reason": reason})
+        
         return ScheduleTimeResponse.model_validate(st)
 
     def mark_dose_missed(self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID) -> ScheduleTimeResponse:

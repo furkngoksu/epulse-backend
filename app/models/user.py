@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.appointment import Appointment
     from app.models.doctor_profile import DoctorProfile
     from app.models.doctor_patient_relationship import DoctorPatientRelationship
+    from app.models.password_reset_request import PasswordResetRequestModel
 
 class GenderEnum(str, Enum):
     male = "male"
@@ -72,4 +73,7 @@ class UserModel(Base):
         "DoctorPatientRelationship",
         foreign_keys="DoctorPatientRelationship.patient_id",
         back_populates="patient"
+    )
+    password_reset_requests: Mapped[list["PasswordResetRequestModel"]] = relationship(
+        "PasswordResetRequestModel", back_populates="user"
     )

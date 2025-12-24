@@ -1,8 +1,11 @@
+import logging
 from uuid import UUID
 from app.repositories.user import UserRepository
 from app.schemas.user import UserResponse, UserUpdate
 from app.models.user import RoleEnum
 from app.exceptions import NotFoundException, ConflictException, ForbiddenException
+
+logger = logging.getLogger(__name__)
 
 class UserService:
 
@@ -55,6 +58,7 @@ class UserService:
             setattr(user, field, value)
 
         updated = self.user_repo.update(user)
+        logger.info("User profile updated successfully", extra={"user_id": str(user_id)})
         return UserResponse.model_validate(updated)
 
     def update_profile_photo(self, user_id: UUID, url: str):
@@ -80,3 +84,7 @@ class UserService:
 
         updated = self.user_repo.update(user)
         return UserResponse.model_validate(updated)
+    
+    def get_total_user_count(self) -> int:
+        """Get total number of users in the system"""
+        return self.user_repo.get_total_count()

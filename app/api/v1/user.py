@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from app.api.deps.auth import get_current_user
 from app.api.deps.services import get_user_service
@@ -8,7 +8,7 @@ from app.services import UserService
 
 router = APIRouter()
 
-@router.get("/profile")
+@router.get("/profile", status_code=status.HTTP_200_OK)
 def get_current_user_profile(
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service)
@@ -44,7 +44,7 @@ def get_current_user_profile(
         }
     }
 
-@router.get("/profile/{user_id}")
+@router.get("/profile/{user_id}", status_code=status.HTTP_200_OK)
 def get_user_profile(
     user_id: UUID,
     current_user: User = Depends(get_current_user),
