@@ -9,6 +9,7 @@ from app.api.deps.repositories import (
     get_doctor_profile_repository,
     get_drug_interaction_repository,
     get_hospital_repository,
+    get_medication_alias_repository,
     get_medication_repository,
     get_patient_medication_repository,
     get_prescription_item_repository,
@@ -23,6 +24,7 @@ from app.repositories import (
     PrescriptionRepository,
     PrescriptionItemRepository,
     DrugInteractionRepository,
+    MedicationAliasRepository,
     MedicationRepository,
     PatientMedicationRepository,
     ScheduleRepository,
@@ -98,12 +100,14 @@ def get_medication_service(
     patient_medication_repo: PatientMedicationRepository = Depends(get_patient_medication_repository),
     schedule_repo: ScheduleRepository = Depends(get_schedule_repository),
     schedule_time_repo: ScheduleTimeRepository = Depends(get_schedule_time_repository),
+    medication_alias_repo: MedicationAliasRepository = Depends(get_medication_alias_repository),
 ) -> MedicationService:
     return MedicationService(
         medication_repo=medication_repo,
         patient_medication_repo=patient_medication_repo,
         schedule_repo=schedule_repo,
         schedule_time_repo=schedule_time_repo,
+        medication_alias_repo=medication_alias_repo,
     )
 
 def get_prescription_service(

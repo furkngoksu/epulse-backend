@@ -11,6 +11,7 @@ from app.models.schedule_time import ScheduleTimeModel, DoseStatusEnum
 from app.repositories.medication_repository import MedicationRepository
 from app.repositories.patient_medication_repository import PatientMedicationRepository
 from app.repositories.schedule_repository import ScheduleRepository, ScheduleTimeRepository
+from app.repositories.medication_alias_repository import MedicationAliasRepository
 from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
 from app.schemas.patient_medication import (
     PatientMedicationUpdate,
@@ -19,6 +20,8 @@ from app.schemas.patient_medication import (
 )
 from app.schemas.schedule import ScheduleCreate, ScheduleResponse
 from app.schemas.schedule_time import ScheduleTimeCreate, ScheduleTimeResponse
+from app.schemas.medication_alias import MedicationAliasResponse
+from app.models.medication_alias import MedicationAliasModel
 
 class MedicationService:
     def __init__(
@@ -27,11 +30,13 @@ class MedicationService:
         patient_medication_repo: PatientMedicationRepository,
         schedule_repo: ScheduleRepository,
         schedule_time_repo: ScheduleTimeRepository,
+        medication_alias_repo: MedicationAliasRepository,
     ):
         self.med_repo = medication_repo
         self.pm_repo = patient_medication_repo
         self.schedule_repo = schedule_repo
         self.st_repo = schedule_time_repo
+        self.alias_repo = medication_alias_repo
 
     # -------- #
     # Catalog
@@ -311,3 +316,43 @@ class MedicationService:
 
         st = self.st_repo.update(st)
         return ScheduleTimeResponse.model_validate(st)
+
+    # -------- #
+    # Medication Aliases
+    # -------- #
+
+    def set_alias(
+        self, user_id: uuid.UUID, medication_id: uuid.UUID, alias_name: str
+    ) -> MedicationAliasResponse:
+        # Validate medication exists
+        med = self.med_repo.get_by_id(medication_id)
+        if not med:
+            raise NotFoundException("Medication not found")
+
+        # Check if alias already exists for this user+medication
+        existing = self.alias_repo.get_by_user_and_medication(user_id, medication_id)
+
+        if existing:
+            # Update existing alias
+            existing.alias_name = alias_name
+            alias = self.alias_repo.update(existing)
+        else:
+            # Create new alias
+            alias = MedicationAliasModel(
+                user_id=user_id,
+                medication_id=medication_id,
+                alias_name=alias_name,
+            )
+            alias = self.alias_repo.create(alias)
+
+        return MedicationAliasResponse.model_validate(alias)
+
+    def get_aliases(self, user_id: uuid.UUID) -> list[MedicationAliasResponse]:
+        aliases = self.alias_repo.get_all_by_user(user_id)
+        return [MedicationAliasResponse.model_validate(a) for a in aliases]
+
+    def delete_alias(self, alias_id: uuid.UUID, user_id: uuid.UUID) -> None:
+        alias = self.alias_repo.get_by_id_for_user(alias_id, user_id)
+        if not alias:
+            raise NotFoundException("Medication alias not found")
+        self.alias_repo.delete(alias)

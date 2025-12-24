@@ -9,6 +9,7 @@ from app.repositories import (
     DoctorProfileRepository,
     DrugInteractionRepository,
     HospitalRepository,
+    MedicationAliasRepository,
     MedicationRepository,
     PatientMedicationRepository,
     PrescriptionItemRepository,
@@ -49,6 +50,12 @@ def get_patient_medication_repository(
     db: Session = Depends(get_db),
 ) -> PatientMedicationRepository:
     return PatientMedicationRepository(db)
+
+
+def get_medication_alias_repository(
+    db: Session = Depends(get_db),
+) -> MedicationAliasRepository:
+    return MedicationAliasRepository(db)
 
 
 # Doctor Repositories
