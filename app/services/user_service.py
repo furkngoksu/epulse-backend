@@ -86,5 +86,17 @@ class UserService:
         return UserResponse.model_validate(updated)
     
     def get_total_user_count(self) -> int:
-        """Get total number of users in the system"""
         return self.user_repo.get_total_count()
+    
+    def get_user_counts_by_role(self) -> dict[str, int]:
+        total_users = self.user_repo.get_total_count()
+        total_admins = self.user_repo.get_count_by_role(RoleEnum.admin)
+        total_doctors = self.user_repo.get_count_by_role(RoleEnum.doctor)
+        total_patients = self.user_repo.get_count_by_role(RoleEnum.patient)
+        
+        return {
+            "total_users": total_users,
+            "total_admins": total_admins,
+            "total_doctors": total_doctors,
+            "total_patients": total_patients
+        }

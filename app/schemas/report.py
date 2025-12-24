@@ -39,3 +39,10 @@ class BasicStatsResponse(BaseModel):
     active_medications_count: int
     overall_adherence_rate: float = Field(..., description="Overall adherence rate (0-100)")
     pending_doses_today: int
+
+
+class UserCountResponse(BaseModel):
+    total_users: int = Field(..., description="Total number of users in the system")
+    total_admins: int = Field(..., description="Total number of admin users")
+    total_doctors: int = Field(..., description="Total number of doctor users")
+    total_patients: int = Field(..., description="Total number of patient users")
