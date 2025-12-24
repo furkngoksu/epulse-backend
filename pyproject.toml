@@ -19,6 +19,7 @@ dependencies = [
     "sqlalchemy>=2.0.44",
     "sqlalchemy-orm>=1.2.10",
     "uvicorn>=0.38.0",
+    "openai>=1.52.0",
 ]
 
 [dependency-groups]
