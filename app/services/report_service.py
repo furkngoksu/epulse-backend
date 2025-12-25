@@ -17,6 +17,7 @@ from app.schemas.report import (
     MedicationAdherenceResponse,
     BasicStatsResponse,
 )
+from app.services.medication_service import MedicationService
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +29,13 @@ class ReportService:
         patient_medication_repo: PatientMedicationRepository,
         schedule_time_repo: ScheduleTimeRepository,
         db_session: Session,
+        medication_service: MedicationService,
     ):
         self.user_repo = user_repo
         self.pm_repo = patient_medication_repo
         self.st_repo = schedule_time_repo
         self.db = db_session
+        self.medication_service = medication_service
 
     def get_adherence_rate(
         self,
@@ -122,6 +125,12 @@ class ReportService:
         if not active_meds:
             return []
 
+        MedicationService.mark_dose_missed(
+            current_user_id=patient_id,
+            pm_repo=self.pm_repo,
+            st_repo=self.st_repo
+        )
+        
         results = []
 
         for pm in active_meds:

@@ -377,23 +377,53 @@ class MedicationService:
 
         return ScheduleTimeResponse.model_validate(st)
 
-    def mark_dose_missed(
-        self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID
-    ) -> ScheduleTimeResponse:
-        st = self.st_repo.get_by_id(schedule_time_id)
-        if not st:
-            raise NotFoundException("Schedule time not found")
+    @staticmethod
+    def mark_dose_missed(current_user_id: uuid.UUID, pm_repo: PatientMedicationRepository, st_repo: ScheduleTimeRepository):
+        now = datetime.now(timezone.utc)
+        cutoff_time = now - timedelta(hours=2)
 
-        pm = st.schedule.patient_medication
-        if pm.user_id != current_user_id:
-            raise BadRequestException("User does not own this schedule time")
+        # Get all active patient medications for the user
+        patient_meds = pm_repo.list_by_user(
+            user_id=current_user_id,
+            is_active=True,
+            skip=0,
+            limit=10000,
+        )
 
-        st.status = DoseStatusEnum.missed
-        st.taken_at = None
-        st.skip_reason = None
+        missed_count = 0
 
-        st = self.st_repo.update(st)
-        return ScheduleTimeResponse.model_validate(st)
+        for pm in patient_meds:
+            for schedule in pm.schedules:
+                for st in schedule.schedule_times:
+                    if (
+                        st.status == DoseStatusEnum.pending
+                        and st.dose_datetime <= cutoff_time
+                    ):
+                        st.status = DoseStatusEnum.missed
+                        st.taken_at = None
+                        st.skip_reason = "Automatically marked as missed (2+ hours overdue)"
+                        
+                        st_repo.update(st)
+                        missed_count += 1
+
+                        logger.info(
+                            "Dose automatically marked as missed",
+                            extra={
+                                "schedule_time_id": str(st.id),
+                                "patient_medication_id": str(pm.id),
+                                "dose_datetime": st.dose_datetime.isoformat(),
+                                "hours_overdue": (now - st.dose_datetime).total_seconds() / 3600,
+                            },
+                        )
+
+        logger.info(
+            "Missed dose check completed",
+            extra={
+                "user_id": str(current_user_id),
+                "total_missed": missed_count,
+            },
+        )
+        
 
     # -------- #
     # Medication Aliases
