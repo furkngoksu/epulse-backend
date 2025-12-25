@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from app.schemas.user import UserResponse
 from pydantic.networks import EmailStr
-
+from datetime import date
 
 class LoginRequest(BaseModel):
     national_id: str = Field(..., min_length=11, max_length=11)
@@ -28,7 +28,7 @@ class RegisterRequest(BaseModel):
     email: str
     phone_number: str
     password: str
-    date_of_birth: str
+    date_of_birth: date
     gender: str
 
 
