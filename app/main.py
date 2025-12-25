@@ -62,7 +62,17 @@ app.include_router(app_router)
 
 if __name__ == "__main__":
     import uvicorn
+    import multiprocessing
+
+    # Calculate optimal number of workers: (2 x CPU cores) + 1
+    workers = (multiprocessing.cpu_count() * 2) + 1
+
+    print(f"🚀 Starting server with {workers} workers on {multiprocessing.cpu_count()} CPU cores")
 
     uvicorn.run(
-        "app.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        workers=workers,
+        log_level="info",
     )
