@@ -193,13 +193,15 @@ class DoctorService:
         return [self._to_doctor_profile_response(profile) for profile in profiles]
 
     def create_doctor_profile(self, data: DoctorProfileCreate) -> DoctorProfileResponse:
-        # Verify user exists and is a doctor
+        # Verify user exists
         user = self.user_repository.get_by_id(data.user_id)
         if not user:
             raise NotFoundException("User not found")
 
+        # Update user role to doctor if not already
         if user.role != RoleEnum.doctor:
-            raise BadRequestException("User must have doctor role")
+            user.role = RoleEnum.doctor
+            self.user_repository.update(user)
 
         # Check if profile already exists for this user
         existing_profile = self.doctor_profile_repository.get_by_user_id(data.user_id)
