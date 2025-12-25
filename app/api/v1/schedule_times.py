@@ -8,7 +8,7 @@ from app.schemas.schedule_time import MarkDoseTakenRequest, MarkDoseSkippedReque
 from app.schemas.user import User
 from app.services.medication_service import MedicationService
 
-router = APIRouter(prefix="/schedule-times", tags=["Schedule Times"])
+router = APIRouter()
 
 
 @router.patch(
