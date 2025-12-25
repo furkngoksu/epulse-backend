@@ -20,7 +20,7 @@ class PrescriptionRepository:
         q = self.db.query(PrescriptionModel)
         if status is not None:
             q = q.filter(PrescriptionModel.status == status)
-        return q.offset(skip).limit(limit).all()
+        return q.order_by(PrescriptionModel.date.desc()).offset(skip).limit(limit).all()
 
     def get_by_id(self, prescription_id: UUID) -> PrescriptionModel | None:
         return (
