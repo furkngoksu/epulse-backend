@@ -28,6 +28,7 @@ from app.services import (
     PrescriptionService,
     ReportService,
     UserService,
+    MedicationService,
 )
 from app.repositories import (
     PrescriptionRepository,
@@ -47,6 +48,27 @@ from app.repositories import (
 )
 
 
+# Medication Service
+def get_medication_service(
+    medication_repo: MedicationRepository = Depends(get_medication_repository),
+    patient_medication_repo: PatientMedicationRepository = Depends(
+        get_patient_medication_repository
+    ),
+    schedule_repo: ScheduleRepository = Depends(get_schedule_repository),
+    schedule_time_repo: ScheduleTimeRepository = Depends(get_schedule_time_repository),
+    medication_alias_repo: MedicationAliasRepository = Depends(
+        get_medication_alias_repository
+    ),
+) -> MedicationService:
+    return MedicationService(
+        medication_repo=medication_repo,
+        patient_medication_repo=patient_medication_repo,
+        schedule_repo=schedule_repo,
+        schedule_time_repo=schedule_time_repo,
+        medication_alias_repo=medication_alias_repo,
+    )
+
+
 # Report Service (defined early to avoid circular dependencies)
 def get_report_service(
     user_repository: UserRepository = Depends(get_user_repository),
@@ -57,12 +79,14 @@ def get_report_service(
         get_schedule_time_repository
     ),
     db: Session = Depends(get_db),
+    medication_service: MedicationService = Depends(get_medication_service),
 ) -> ReportService:
     return ReportService(
         user_repo=user_repository,
         patient_medication_repo=patient_medication_repository,
         schedule_time_repo=schedule_time_repository,
         db_session=db,
+        medication_service=medication_service,
     )
 
 
@@ -114,27 +138,6 @@ def get_catalog_service(
     return CatalogService(
         medication_repository=medication_repository,
         drug_interaction_repository=drug_interaction_repository,
-    )
-
-
-# Medication Service
-def get_medication_service(
-    medication_repo: MedicationRepository = Depends(get_medication_repository),
-    patient_medication_repo: PatientMedicationRepository = Depends(
-        get_patient_medication_repository
-    ),
-    schedule_repo: ScheduleRepository = Depends(get_schedule_repository),
-    schedule_time_repo: ScheduleTimeRepository = Depends(get_schedule_time_repository),
-    medication_alias_repo: MedicationAliasRepository = Depends(
-        get_medication_alias_repository
-    ),
-) -> MedicationService:
-    return MedicationService(
-        medication_repo=medication_repo,
-        patient_medication_repo=patient_medication_repo,
-        schedule_repo=schedule_repo,
-        schedule_time_repo=schedule_time_repo,
-        medication_alias_repo=medication_alias_repo,
     )
 
 

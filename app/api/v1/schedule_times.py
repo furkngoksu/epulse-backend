@@ -47,14 +47,3 @@ def skip_dose(
         reason=payload.reason,
     )
     return SuccessResponse(content=row)
-
-
-@router.patch(
-    "/mark-missed",
-    status_code=status.HTTP_204_NO_CONTENT,
-)
-def mark_missed_doses(
-    svc: MedicationService = Depends(get_medication_service),
-    current_user: User = Depends(get_current_user),
-) -> None:
-    svc.mark_dose_missed(current_user_id=current_user.id)

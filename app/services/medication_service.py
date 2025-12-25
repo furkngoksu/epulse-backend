@@ -377,12 +377,13 @@ class MedicationService:
 
         return ScheduleTimeResponse.model_validate(st)
 
-    def mark_dose_missed(self, current_user_id: uuid.UUID) -> None:
+    @staticmethod
+    def mark_dose_missed(current_user_id: uuid.UUID, pm_repo: PatientMedicationRepository, st_repo: ScheduleTimeRepository):
         now = datetime.now(timezone.utc)
         cutoff_time = now - timedelta(hours=2)
 
         # Get all active patient medications for the user
-        patient_meds = self.pm_repo.list_by_user(
+        patient_meds = pm_repo.list_by_user(
             user_id=current_user_id,
             is_active=True,
             skip=0,
@@ -402,7 +403,7 @@ class MedicationService:
                         st.taken_at = None
                         st.skip_reason = "Automatically marked as missed (2+ hours overdue)"
                         
-                        self.st_repo.update(st)
+                        st_repo.update(st)
                         missed_count += 1
 
                         logger.info(
@@ -422,6 +423,7 @@ class MedicationService:
                 "total_missed": missed_count,
             },
         )
+        
 
     # -------- #
     # Medication Aliases
