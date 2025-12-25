@@ -1,6 +1,7 @@
 import uuid
 import logging
 from datetime import date, datetime, timezone
+from functools import wraps
 
 from sqlalchemy.orm import Session, selectinload
 
@@ -22,6 +23,16 @@ from app.services.medication_service import MedicationService
 logger = logging.getLogger(__name__)
 
 
+def ensure_missed_doses_marked(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        # Call mark_dose_missed before the actual method
+        self.medication_service.mark_dose_missed(current_user_id=args[0])
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class ReportService:
     def __init__(
         self,
@@ -37,6 +48,7 @@ class ReportService:
         self.db = db_session
         self.medication_service = medication_service
 
+    @ensure_missed_doses_marked
     def get_adherence_rate(
         self,
         patient_id: uuid.UUID,
@@ -81,6 +93,7 @@ class ReportService:
             pending_doses=pending,
         )
 
+    @ensure_missed_doses_marked
     def get_number_of_doses(
         self,
         patient_id: uuid.UUID,
@@ -112,6 +125,7 @@ class ReportService:
             status=status.value,
         )
 
+    @ensure_missed_doses_marked
     def get_active_medications(
         self,
         patient_id: uuid.UUID,
@@ -125,12 +139,6 @@ class ReportService:
         if not active_meds:
             return []
 
-        MedicationService.mark_dose_missed(
-            current_user_id=patient_id,
-            pm_repo=self.pm_repo,
-            st_repo=self.st_repo
-        )
-        
         results = []
 
         for pm in active_meds:
@@ -184,6 +192,7 @@ class ReportService:
 
         return results
 
+    @ensure_missed_doses_marked
     def get_basic_stats(
         self,
         patient_id: uuid.UUID,
