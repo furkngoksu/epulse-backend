@@ -3,6 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import get_current_user, get_current_admin
+from app.schemas.base import SuccessResponse
 from app.schemas.user import User, RoleEnum
 from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
@@ -16,11 +17,7 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get(
-    "/",
-    response_model=List[DoctorPatientRelationshipResponse],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/", response_model=SuccessResponse[List[DoctorPatientRelationshipResponse]], status_code=status.HTTP_200_OK)
 def get_all_relationships(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -32,14 +29,10 @@ def get_all_relationships(
     Requires admin role.
     """
     relationships = doctor_service.get_all_relationships(skip=skip, limit=limit)
-    return relationships
+    return SuccessResponse(content=relationships)
 
 
-@router.get(
-    "/doctor/{doctor_id}/patients",
-    response_model=List[PatientSummary],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/doctor/{doctor_id}/patients", response_model=SuccessResponse[List[PatientSummary]], status_code=status.HTTP_200_OK)
 def get_patients_for_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -63,14 +56,10 @@ def get_patients_for_doctor(
     patient_summaries = doctor_service.get_doctor_patient_summaries(
         doctor_id, skip=skip, limit=limit
     )
-    return patient_summaries
+    return SuccessResponse(content=patient_summaries)
 
 
-@router.get(
-    "/patient/{patient_id}/doctors",
-    response_model=List[DoctorPatientRelationshipResponse],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/patient/{patient_id}/doctors", response_model=SuccessResponse[List[DoctorPatientRelationshipResponse]], status_code=status.HTTP_200_OK)
 def get_doctors_for_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -94,14 +83,10 @@ def get_doctors_for_patient(
     relationships = doctor_service.get_patient_doctors(
         patient_id, skip=skip, limit=limit
     )
-    return relationships
+    return SuccessResponse(content=relationships)
 
 
-@router.get(
-    "/{relationship_id}",
-    response_model=DoctorPatientRelationshipResponse,
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/{relationship_id}", response_model=SuccessResponse[DoctorPatientRelationshipResponse], status_code=status.HTTP_200_OK)
 def get_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -112,14 +97,10 @@ def get_relationship(
     Requires authentication.
     """
     relationship = doctor_service.get_relationship_by_id(relationship_id)
-    return relationship
+    return SuccessResponse(content=relationship)
 
 
-@router.post(
-    "/",
-    response_model=DoctorPatientRelationshipResponse,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/", response_model=SuccessResponse[DoctorPatientRelationshipResponse], status_code=status.HTTP_201_CREATED)
 def create_relationship(
     data: DoctorPatientRelationshipCreate,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -139,10 +120,10 @@ def create_relationship(
         raise ForbiddenException("Patients cannot create doctor-patient relationships")
 
     relationship = doctor_service.create_doctor_patient_relationship(data)
-    return relationship
+    return SuccessResponse(content=relationship)
 
 
-@router.delete("/{relationship_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{relationship_id}", response_model=SuccessResponse[None], status_code=status.HTTP_200_OK)
 def delete_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -153,3 +134,4 @@ def delete_relationship(
     Requires admin role.
     """
     doctor_service.delete_doctor_patient_relationship(relationship_id)
+    return SuccessResponse(content=None)
