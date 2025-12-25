@@ -23,16 +23,6 @@ from app.services.medication_service import MedicationService
 logger = logging.getLogger(__name__)
 
 
-def ensure_missed_doses_marked(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        # Call mark_dose_missed before the actual method
-        self.medication_service.mark_dose_missed(current_user_id=args[0])
-        return func(self, *args, **kwargs)
-
-    return wrapper
-
-
 class ReportService:
     def __init__(
         self,
@@ -48,13 +38,26 @@ class ReportService:
         self.db = db_session
         self.medication_service = medication_service
 
-    @ensure_missed_doses_marked
+    @staticmethod
+    def _mark_missed_doses(
+        medication_service: MedicationService,
+        patient_id: uuid.UUID,
+        pm_repo: PatientMedicationRepository,
+        st_repo: ScheduleTimeRepository,
+    ):
+        medication_service.mark_dose_missed(
+            current_user_id=patient_id,
+            pm_repo=pm_repo,
+            st_repo=st_repo,
+        )
+
     def get_adherence_rate(
         self,
         patient_id: uuid.UUID,
         start_date: date,
         end_date: date,
     ) -> AdherenceRateResponse:
+        self._mark_missed_doses(self.medication_service, patient_id, self.pm_repo, self.st_repo)
         """
         Calculate adherence rate for a patient within a date range.
         Adherence rate = (taken doses / (taken + missed + skipped)) * 100
@@ -93,7 +96,6 @@ class ReportService:
             pending_doses=pending,
         )
 
-    @ensure_missed_doses_marked
     def get_number_of_doses(
         self,
         patient_id: uuid.UUID,
@@ -101,6 +103,7 @@ class ReportService:
         end_date: date,
         status: DoseStatusEnum,
     ) -> DoseCountResponse:
+        self._mark_missed_doses(self.medication_service, patient_id, self.pm_repo, self.st_repo)
         """
         Get the number of doses with a specific status for a patient within a date range.
         """
@@ -125,11 +128,11 @@ class ReportService:
             status=status.value,
         )
 
-    @ensure_missed_doses_marked
     def get_active_medications(
         self,
         patient_id: uuid.UUID,
     ) -> list[MedicationAdherenceResponse]:
+        self._mark_missed_doses(self.medication_service, patient_id, self.pm_repo, self.st_repo)
         """
         Get all active medications for a patient with adherence rate for each.
         """
@@ -192,11 +195,11 @@ class ReportService:
 
         return results
 
-    @ensure_missed_doses_marked
     def get_basic_stats(
         self,
         patient_id: uuid.UUID,
     ) -> BasicStatsResponse:
+        self._mark_missed_doses(self.medication_service, patient_id, self.pm_repo, self.st_repo)
         """
         Get basic statistics for a patient:
         - Patient info (id, name, age)
