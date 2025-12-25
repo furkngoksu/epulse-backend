@@ -114,6 +114,7 @@ class ChatbotService:
             "Avoid diagnosis. Do not invent dosages. "
             "If a medication is known, include what it is for, how it is typically taken, "
             "common side effects, and key precautions. Keep it concise. "
+            "If the question is unrelated to healthcare or the app, reply briefly that you are a health assistant and cannot help with unrelated topics. "
             "Add a brief safety note only when the topic clearly involves medication use or health risk."
         )
 
