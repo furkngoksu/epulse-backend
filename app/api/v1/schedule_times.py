@@ -50,17 +50,11 @@ def skip_dose(
 
 
 @router.patch(
-    "/{schedule_time_id}/miss",
-    response_model=SuccessResponse[ScheduleTimeResponse],
-    status_code=status.HTTP_200_OK,
+    "/mark-missed",
+    status_code=status.HTTP_204_NO_CONTENT,
 )
-def miss_dose(
-    schedule_time_id: uuid.UUID,
+def mark_missed_doses(
     svc: MedicationService = Depends(get_medication_service),
     current_user: User = Depends(get_current_user),
-) -> SuccessResponse[ScheduleTimeResponse]:
-    row = svc.mark_dose_missed(
-        current_user_id=current_user.id,
-        schedule_time_id=schedule_time_id,
-    )
-    return SuccessResponse(content=row)
+) -> None:
+    svc.mark_dose_missed(current_user_id=current_user.id)
