@@ -110,6 +110,7 @@ class PrescriptionService:
             doctor_id=doctor_id,
             patient_id=data.patient_id,
             notes=data.notes,
+            date=data.date if data.date else None,
             status=Status.inactive,
         )
         created = self.prescription_repo.create(prescription=rx)

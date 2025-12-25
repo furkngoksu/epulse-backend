@@ -1,8 +1,9 @@
 from enum import Enum
 from typing import TYPE_CHECKING
 import uuid
+from datetime import datetime
 
-from sqlalchemy import String, Enum as SAEnum
+from sqlalchemy import DateTime, String, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,6 +29,8 @@ class PrescriptionModel(Base):
     patient_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
 
     notes: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+    date: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
     status: Mapped[Status] = mapped_column(
         SAEnum(Status), nullable=False, default=Status.inactive
