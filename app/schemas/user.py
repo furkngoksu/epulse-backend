@@ -1,6 +1,6 @@
 import uuid
 from datetime import date
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 from app.models.user import GenderEnum, RoleEnum
 
 class User(BaseModel):
@@ -22,8 +22,6 @@ class UserUpdate(BaseModel):
     last_name: str | None = None
     email: EmailStr | None = None
     phone_number: str | None = None
-    date_of_birth: date | None = None
-    gender: GenderEnum | None = None
 
 class UserResponse(User):
     pass

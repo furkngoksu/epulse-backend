@@ -19,11 +19,7 @@ class UserService:
         return UserResponse.model_validate(user)
 
     def get_user_profile(self, current_user_id: UUID, current_user_role: RoleEnum, requested_user_id: UUID) -> UserResponse:
-        """
-        Get user profile with authorization checks.
-        - Admin users can access any profile
-        - Non-admin users (doctor/patient) can only access their own profile
-        """
+
         # Authorization check
         if current_user_role != RoleEnum.admin:
             if current_user_id != requested_user_id:
@@ -40,15 +36,10 @@ class UserService:
         users = self.user_repo.get_users(skip, limit)
         return [UserResponse.model_validate(u) for u in users]
 
-    def update_user_profile(self, user_id: UUID, data: UserUpdate):
+    def update_user_profile(self, user_id: UUID, data: UserUpdate) -> UserResponse:
         user = self.user_repo.get_by_id(user_id)
         if not user:
             raise NotFoundException("User not found")
-
-        restricted = ["national_id", "date_of_birth"]
-        for field in restricted:
-            if getattr(data, field, None) is not None:
-                raise ForbiddenException(f"{field} cannot be updated")
 
         if data.email and data.email != user.email:
             if self.user_repo.get_by_email(data.email):
