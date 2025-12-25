@@ -1,10 +1,8 @@
 from fastapi import Depends, Header
 from app.core.security import get_user_id_from_token
 from app.core.log_context import user_id_var
-from app.repositories.user import UserRepository
-from app.repositories.password_reset_request_repository import (
-    PasswordResetRequestRepository,
-)
+from app.repositories.user_repository import UserRepository
+from app.repositories.password_reset_request_repository import PasswordResetRequestRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.schemas.user import User
 from app.models.user import RoleEnum
@@ -12,7 +10,6 @@ from app.api.deps.user import get_user_repository
 from app.api.deps.db import get_db
 from app.services.auth_service import AuthService
 from sqlalchemy.orm import Session
-
 
 def get_current_user(
     user_repo: UserRepository = Depends(get_user_repository),
@@ -42,14 +39,12 @@ def get_current_admin(
         raise ForbiddenException("Admin access required")
     return current_user
 
-
 def get_current_doctor(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if current_user.role != RoleEnum.doctor:
         raise ForbiddenException("Doctor access required")
     return current_user
-
 
 def get_current_patient(current_user: User = Depends(get_current_user)) -> User:
     if current_user.role != RoleEnum.patient:
@@ -64,7 +59,7 @@ def get_current_doctor_or_admin(
         raise ForbiddenException("Doctor or admin access required")
     return current_user
 
-
+    
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),
     db: Session = Depends(get_db),
