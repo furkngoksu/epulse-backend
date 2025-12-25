@@ -1,6 +1,7 @@
 """
 Tests for user endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 

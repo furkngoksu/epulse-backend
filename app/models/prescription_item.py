@@ -30,4 +30,6 @@ class PrescriptionItemModel(Base):
     duration: Mapped[int] = mapped_column(Integer)
 
     prescription: Mapped["PrescriptionModel"] = relationship(back_populates="items")
-    medication: Mapped["MedicationModel"] = relationship(back_populates="prescription_items")
+    medication: Mapped["MedicationModel"] = relationship(
+        back_populates="prescription_items"
+    )

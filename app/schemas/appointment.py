@@ -13,22 +13,26 @@ class AppointmentBase(BaseModel):
 
 class AppointmentCreate(AppointmentBase):
     """Schema for creating a free appointment slot (by doctor or admin)."""
+
     pass
 
 
 class AppointmentBook(BaseModel):
     """Schema for patient booking an appointment."""
+
     notes: str | None = None
 
 
 class AppointmentUpdate(BaseModel):
     """Schema for updating appointment details (by admin)."""
+
     appointment_datetime: datetime | None = None
     notes: str | None = None
 
 
 class CreateFreeAppointmentsRequest(BaseModel):
     """Schema for creating multiple free appointment slots."""
+
     doctor_id: uuid.UUID
     dates: list[date] = Field(..., min_length=1)
     time_slots: list[time] = Field(..., min_length=1)
@@ -48,11 +52,11 @@ class AppointmentResponse(BaseModel):
     notes: str | None = None
     status: AppointmentStatusEnum
 
-    @model_validator(mode='before')
+    @model_validator(mode="before")
     @classmethod
     def compute_fields(cls, data: Any) -> dict:
         """Compute derived fields from ORM relationships."""
-        if hasattr(data, '__dict__'):  # It's an ORM object
+        if hasattr(data, "__dict__"):  # It's an ORM object
             appointment = data
 
             # Get doctor information
@@ -70,18 +74,18 @@ class AppointmentResponse(BaseModel):
                 patient_name = f"{patient.first_name} {patient.last_name}"
 
             return {
-                'id': appointment.id,
-                'hospital_name': hospital.name,
-                'clinic_name': clinic.name,
-                'city': hospital.city,
-                'district': hospital.district,
-                'doctor_id': appointment.doctor_id,
-                'doctor_name': doctor_name,
-                'patient_id': appointment.patient_id,
-                'patient_name': patient_name,
-                'appointment_datetime': appointment.appointment_datetime,
-                'notes': appointment.notes,
-                'status': appointment.status,
+                "id": appointment.id,
+                "hospital_name": hospital.name,
+                "clinic_name": clinic.name,
+                "city": hospital.city,
+                "district": hospital.district,
+                "doctor_id": appointment.doctor_id,
+                "doctor_name": doctor_name,
+                "patient_id": appointment.patient_id,
+                "patient_name": patient_name,
+                "appointment_datetime": appointment.appointment_datetime,
+                "notes": appointment.notes,
+                "status": appointment.status,
             }
         return data
 

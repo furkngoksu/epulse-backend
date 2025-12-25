@@ -10,7 +10,6 @@ from app.models.hospital import Hospital
 
 
 class AppointmentRepository:
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -18,10 +17,10 @@ class AppointmentRepository:
         """Apply eager loading for all appointment relationships."""
         return query.options(
             joinedload(Appointment.doctor)
-                .joinedload(UserModel.doctor_profile)
-                .joinedload(DoctorProfile.clinic)
-                .joinedload(Clinic.hospital),
-            joinedload(Appointment.patient)
+            .joinedload(UserModel.doctor_profile)
+            .joinedload(DoctorProfile.clinic)
+            .joinedload(Clinic.hospital),
+            joinedload(Appointment.patient),
         )
 
     def get_all(self, skip: int = 0, limit: int = 100) -> list[Appointment]:
@@ -41,7 +40,7 @@ class AppointmentRepository:
         limit: int = 100,
         status: AppointmentStatusEnum | None = None,
         from_date: datetime | None = None,
-        to_date: datetime | None = None
+        to_date: datetime | None = None,
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         query = self.db.query(Appointment).filter(Appointment.doctor_id == doctor_id)
@@ -52,9 +51,17 @@ class AppointmentRepository:
             query = query.filter(Appointment.appointment_datetime >= from_date)
         if to_date:
             # Include the entire day by adding 23:59:59
-            to_datetime = datetime.combine(to_date.date() if isinstance(to_date, datetime) else to_date, datetime.max.time())
+            to_datetime = datetime.combine(
+                to_date.date() if isinstance(to_date, datetime) else to_date,
+                datetime.max.time(),
+            )
             query = query.filter(Appointment.appointment_datetime <= to_datetime)
-        return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
+        return (
+            query.order_by(Appointment.appointment_datetime)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def get_by_patient(
         self,
@@ -63,7 +70,7 @@ class AppointmentRepository:
         limit: int = 100,
         status: AppointmentStatusEnum | None = None,
         from_date: datetime | None = None,
-        to_date: datetime | None = None
+        to_date: datetime | None = None,
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         query = self.db.query(Appointment).filter(Appointment.patient_id == patient_id)
@@ -74,19 +81,29 @@ class AppointmentRepository:
             query = query.filter(Appointment.appointment_datetime >= from_date)
         if to_date:
             # Include the entire day by adding 23:59:59
-            to_datetime = datetime.combine(to_date.date() if isinstance(to_date, datetime) else to_date, datetime.max.time())
+            to_datetime = datetime.combine(
+                to_date.date() if isinstance(to_date, datetime) else to_date,
+                datetime.max.time(),
+            )
             query = query.filter(Appointment.appointment_datetime <= to_datetime)
-        return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
+        return (
+            query.order_by(Appointment.appointment_datetime)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def get_free_appointments(
         self,
         skip: int = 0,
         limit: int = 100,
         doctor_id: uuid.UUID | None = None,
-        from_datetime: datetime | None = None
+        from_datetime: datetime | None = None,
     ) -> list[Appointment]:
         """Get available (free) appointments for booking."""
-        query = self.db.query(Appointment).filter(Appointment.status == AppointmentStatusEnum.free)
+        query = self.db.query(Appointment).filter(
+            Appointment.status == AppointmentStatusEnum.free
+        )
         query = self._apply_eager_loading(query)
 
         if doctor_id:
@@ -98,20 +115,25 @@ class AppointmentRepository:
             # By default, only show future appointments
             query = query.filter(Appointment.appointment_datetime >= datetime.now())
 
-        return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
+        return (
+            query.order_by(Appointment.appointment_datetime)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     def check_doctor_availability(
         self,
         doctor_id: uuid.UUID,
         appointment_datetime: datetime,
-        exclude_appointment_id: uuid.UUID | None = None
+        exclude_appointment_id: uuid.UUID | None = None,
     ) -> bool:
         """Check if a doctor has any overlapping appointments at the given time."""
         query = self.db.query(Appointment).filter(
             and_(
                 Appointment.doctor_id == doctor_id,
                 Appointment.appointment_datetime == appointment_datetime,
-                Appointment.status.notin_([AppointmentStatusEnum.cancelled])
+                Appointment.status.notin_([AppointmentStatusEnum.cancelled]),
             )
         )
 
@@ -145,7 +167,7 @@ class AppointmentRepository:
         from_date: date | None = None,
         to_date: date | None = None,
         skip: int = 0,
-        limit: int = 20
+        limit: int = 20,
     ) -> list[Appointment]:
         """Search for free appointments with advanced filtering."""
         # Build query with joins (joins are already done for filtering, now add eager loading)
@@ -158,7 +180,7 @@ class AppointmentRepository:
             .filter(
                 Appointment.status == AppointmentStatusEnum.free,
                 Hospital.city.ilike(f"%{city}%"),
-                Clinic.name.ilike(f"%{clinic_name}%")
+                Clinic.name.ilike(f"%{clinic_name}%"),
             )
         )
         # Apply eager loading for relationships
@@ -186,4 +208,9 @@ class AppointmentRepository:
             query = query.filter(Appointment.appointment_datetime <= to_datetime)
 
         # Order by appointment_datetime ascending (earliest first)
-        return query.order_by(Appointment.appointment_datetime).offset(skip).limit(limit).all()
+        return (
+            query.order_by(Appointment.appointment_datetime)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )

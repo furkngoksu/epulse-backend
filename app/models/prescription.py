@@ -11,9 +11,11 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.prescription_item import PrescriptionItemModel
 
+
 class Status(str, Enum):
     active = "active"
     inactive = "inactive"
+
 
 class PrescriptionModel(Base):
     __tablename__ = "prescriptions"

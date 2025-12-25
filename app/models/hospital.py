@@ -22,6 +22,4 @@ class Hospital(Base):
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
 
     # Relationships
-    clinics: Mapped[list["Clinic"]] = relationship(
-        "Clinic", back_populates="hospital"
-    )
+    clinics: Mapped[list["Clinic"]] = relationship("Clinic", back_populates="hospital")

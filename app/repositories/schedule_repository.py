@@ -8,16 +8,15 @@ from app.models.schedule_time import ScheduleTimeModel, DoseStatusEnum
 from app.models.schedule import ScheduleModel
 from app.models.patient_medication import PatientMedicationModel
 
-import uuid
-from sqlalchemy.orm import Session
-from app.models.schedule import ScheduleModel
 
 class ScheduleRepository:
     def __init__(self, db_session: Session):
         self.db = db_session
 
     def get_by_id(self, schedule_id: uuid.UUID) -> ScheduleModel | None:
-        return self.db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).first()
+        return (
+            self.db.query(ScheduleModel).filter(ScheduleModel.id == schedule_id).first()
+        )
 
     def create(self, schedule: ScheduleModel) -> ScheduleModel:
         self.db.add(schedule)
@@ -52,7 +51,9 @@ class ScheduleTimeRepository:
         self.db.refresh(schedule_time)
         return schedule_time
 
-    def create_many(self, schedule_times: list[ScheduleTimeModel]) -> list[ScheduleTimeModel]:
+    def create_many(
+        self, schedule_times: list[ScheduleTimeModel]
+    ) -> list[ScheduleTimeModel]:
         if not schedule_times:
             return []
         self.db.add_all(schedule_times)
@@ -80,7 +81,10 @@ class ScheduleTimeRepository:
         q = (
             self.db.query(ScheduleTimeModel)
             .join(ScheduleModel, ScheduleTimeModel.schedule_id == ScheduleModel.id)
-            .join(PatientMedicationModel, ScheduleModel.patient_medication_id == PatientMedicationModel.id)
+            .join(
+                PatientMedicationModel,
+                ScheduleModel.patient_medication_id == PatientMedicationModel.id,
+            )
             .options(
                 selectinload(ScheduleTimeModel.schedule)
                 .selectinload(ScheduleModel.patient_medication)
@@ -104,7 +108,10 @@ class ScheduleTimeRepository:
         return (
             self.db.query(ScheduleTimeModel)
             .join(ScheduleModel, ScheduleTimeModel.schedule_id == ScheduleModel.id)
-            .join(PatientMedicationModel, ScheduleModel.patient_medication_id == PatientMedicationModel.id)
+            .join(
+                PatientMedicationModel,
+                ScheduleModel.patient_medication_id == PatientMedicationModel.id,
+            )
             .options(
                 selectinload(ScheduleTimeModel.schedule)
                 .selectinload(ScheduleModel.patient_medication)
@@ -124,7 +131,9 @@ class ScheduleTimeRepository:
         taken_at: datetime | None = None,
     ) -> ScheduleTimeModel:
         schedule_time.status = DoseStatusEnum.taken
-        schedule_time.taken_at = taken_at or datetime.now(tz=schedule_time.dose_datetime.tzinfo)
+        schedule_time.taken_at = taken_at or datetime.now(
+            tz=schedule_time.dose_datetime.tzinfo
+        )
         schedule_time.skip_reason = None
         return self.update(schedule_time)
 
@@ -158,7 +167,10 @@ class ScheduleTimeRepository:
         rows = (
             self.db.query(ScheduleTimeModel)
             .join(ScheduleModel, ScheduleTimeModel.schedule_id == ScheduleModel.id)
-            .join(PatientMedicationModel, ScheduleModel.patient_medication_id == PatientMedicationModel.id)
+            .join(
+                PatientMedicationModel,
+                ScheduleModel.patient_medication_id == PatientMedicationModel.id,
+            )
             .filter(PatientMedicationModel.user_id == patient_id)
             .filter(PatientMedicationModel.is_active.is_(True))
             .filter(ScheduleTimeModel.status == DoseStatusEnum.pending)
@@ -173,16 +185,16 @@ class ScheduleTimeRepository:
 
         self.db.commit()
         return len(rows)
-    
+
     def get_by_id_with_patient_medication(
-        self,
-        schedule_time_id: uuid.UUID
+        self, schedule_time_id: uuid.UUID
     ) -> ScheduleTimeModel | None:
         return (
             self.db.query(ScheduleTimeModel)
             .options(
-                selectinload(ScheduleTimeModel.schedule)
-                .selectinload(ScheduleModel.patient_medication)
+                selectinload(ScheduleTimeModel.schedule).selectinload(
+                    ScheduleModel.patient_medication
+                )
             )
             .filter(ScheduleTimeModel.id == schedule_time_id)
             .first()

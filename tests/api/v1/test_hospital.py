@@ -1,6 +1,7 @@
 """
 Tests for hospital endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -23,7 +21,7 @@ def get_admin_token():
     url = f"{BASE_URL}/auth/login"
     data = {
         "national_id": "00000000000",  # Admin national ID
-        "password": "adminpassword"
+        "password": "adminpassword",
     }
     response = requests.post(url, json=data)
     return response.json()["access_token"]
@@ -41,7 +39,7 @@ def test_create_hospital():
         "address": "123 Main Street",
         "city": "New York",
         "district": "Manhattan",
-        "phone": "+1234567890"
+        "phone": "+1234567890",
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -96,9 +94,7 @@ def test_update_hospital(hospital_id):
     token = get_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    data = {
-        "name": "City General Hospital - Updated"
-    }
+    data = {"name": "City General Hospital - Updated"}
 
     response = requests.put(url, json=data, headers=headers)
 

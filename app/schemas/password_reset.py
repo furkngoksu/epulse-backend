@@ -1,6 +1,7 @@
 import uuid
 from pydantic import BaseModel, Field
 
+
 class ForgotPasswordRequest(BaseModel):
     email: str
 

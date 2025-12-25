@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
 
 from app.api.deps.services import get_appointment_service
 from app.api.deps.auth import get_current_user, get_current_admin
-from app.schemas.user import User, RoleEnum
+from app.schemas.user import RoleEnum
 from app.schemas.base import SuccessResponse
 from app.models.appointment import AppointmentStatusEnum
 from app.models.user import UserModel
@@ -14,7 +13,7 @@ from app.schemas.appointment import (
     AppointmentUpdate,
     AppointmentBook,
     AppointmentResponse,
-    CreateFreeAppointmentsRequest
+    CreateFreeAppointmentsRequest,
 )
 from app.services.appointment_service import AppointmentService
 from app.exceptions.exceptions import ForbiddenException
@@ -22,12 +21,16 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get("/", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_all_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_admin)
+    current_user: UserModel = Depends(get_current_admin),
 ):
     """
     Get all appointments.
@@ -37,14 +40,18 @@ def get_all_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/free", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/free",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_free_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     doctor_id: uuid.UUID | None = Query(None),
     from_datetime: datetime | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Get available appointments for booking.
@@ -56,7 +63,11 @@ def get_free_appointments(
     return SuccessResponse(content=appointments)
 
 
-@router.get("/search", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/search",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def search_free_appointments(
     city: str = Query(..., min_length=1, max_length=50),
     clinic: str = Query(..., min_length=1, max_length=100),
@@ -68,7 +79,7 @@ def search_free_appointments(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Search for free appointments with advanced filtering.
@@ -98,12 +109,16 @@ def search_free_appointments(
         from_date=from_date,
         to_date=to_date,
         skip=skip,
-        limit=limit
+        limit=limit,
     )
     return SuccessResponse(content=appointments)
 
 
-@router.get("/doctor/{doctor_id}", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/doctor/{doctor_id}",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_appointments_by_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -112,7 +127,7 @@ def get_appointments_by_doctor(
     from_date: date | None = None,
     to_date: date | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Get all appointments for a specific doctor.
@@ -128,17 +143,27 @@ def get_appointments_by_doctor(
         raise ForbiddenException("You can only view your own appointments")
 
     # Convert dates to datetime for filtering
-    from_datetime = datetime.combine(from_date, datetime.min.time()) if from_date else None
+    from_datetime = (
+        datetime.combine(from_date, datetime.min.time()) if from_date else None
+    )
     to_datetime = datetime.combine(to_date, datetime.min.time()) if to_date else None
 
     appointments = appointment_service.get_by_doctor(
-        doctor_id, skip=skip, limit=limit, status=status,
-        from_date=from_datetime, to_date=to_datetime
+        doctor_id,
+        skip=skip,
+        limit=limit,
+        status=status,
+        from_date=from_datetime,
+        to_date=to_datetime,
     )
     return SuccessResponse(content=appointments)
 
 
-@router.get("/patient/{patient_id}", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/patient/{patient_id}",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_appointments_by_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -147,7 +172,7 @@ def get_appointments_by_patient(
     from_date: date | None = None,
     to_date: date | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Get all appointments for a specific patient.
@@ -163,21 +188,31 @@ def get_appointments_by_patient(
         raise ForbiddenException("You can only view your own appointments")
 
     # Convert dates to datetime for filtering
-    from_datetime = datetime.combine(from_date, datetime.min.time()) if from_date else None
+    from_datetime = (
+        datetime.combine(from_date, datetime.min.time()) if from_date else None
+    )
     to_datetime = datetime.combine(to_date, datetime.min.time()) if to_date else None
 
     appointments = appointment_service.get_by_patient(
-        patient_id, skip=skip, limit=limit, status=status,
-        from_date=from_datetime, to_date=to_datetime
+        patient_id,
+        skip=skip,
+        limit=limit,
+        status=status,
+        from_date=from_datetime,
+        to_date=to_datetime,
     )
     return SuccessResponse(content=appointments)
 
 
-@router.get("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{appointment_id}",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Get an appointment by ID.
@@ -198,11 +233,15 @@ def get_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 def create_appointment(
     data: AppointmentCreate,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Create a new free appointment slot.
@@ -220,11 +259,15 @@ def create_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/create-free-appointments", response_model=SuccessResponse[list[AppointmentResponse]], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/create-free-appointments",
+    response_model=SuccessResponse[list[AppointmentResponse]],
+    status_code=status.HTTP_201_CREATED,
+)
 def create_multiple_free_appointments(
     data: CreateFreeAppointmentsRequest,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Create multiple free appointment slots for a doctor on specified dates and time slots.
@@ -241,19 +284,21 @@ def create_multiple_free_appointments(
         raise ForbiddenException("You can only create appointments for yourself")
 
     appointments = appointment_service.create_multiple_free_appointments(
-        doctor_id=data.doctor_id,
-        dates=data.dates,
-        time_slots=data.time_slots
+        doctor_id=data.doctor_id, dates=data.dates, time_slots=data.time_slots
     )
     return SuccessResponse(content=appointments)
 
 
-@router.post("/{appointment_id}/book", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.post(
+    "/{appointment_id}/book",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def book_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentBook,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Book a free appointment.
@@ -267,11 +312,15 @@ def book_appointment(
     return SuccessResponse(content=appointment)
 
 
-@router.post("/{appointment_id}/cancel", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.post(
+    "/{appointment_id}/cancel",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def cancel_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Cancel an appointment.
@@ -285,7 +334,9 @@ def cancel_appointment(
     if current_user.role == RoleEnum.patient:
         if appointment.patient_id != current_user.id:
             raise ForbiddenException("You can only cancel your own appointments")
-        return SuccessResponse(content=appointment_service.patient_cancel(appointment_id, current_user.id))
+        return SuccessResponse(
+            content=appointment_service.patient_cancel(appointment_id, current_user.id)
+        )
 
     # Doctor cancellation - permanent
     if current_user.role == RoleEnum.doctor:
@@ -297,11 +348,15 @@ def cancel_appointment(
     return SuccessResponse(content=appointment_service.admin_cancel(appointment_id))
 
 
-@router.post("/{appointment_id}/complete", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.post(
+    "/{appointment_id}/complete",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def complete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Mark an appointment as completed.
@@ -314,17 +369,24 @@ def complete_appointment(
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Doctors can only complete their own appointments
-    if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
+    if (
+        current_user.role == RoleEnum.doctor
+        and appointment.doctor_id != current_user.id
+    ):
         raise ForbiddenException("You can only complete your own appointments")
 
     return SuccessResponse(content=appointment_service.complete(appointment_id))
 
 
-@router.post("/{appointment_id}/no-show", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.post(
+    "/{appointment_id}/no-show",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def mark_no_show(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_user)
+    current_user: UserModel = Depends(get_current_user),
 ):
     """
     Mark an appointment as no-show (patient did not attend).
@@ -337,18 +399,25 @@ def mark_no_show(
     appointment = appointment_service.get_by_id(appointment_id)
 
     # Doctors can only mark their own appointments
-    if current_user.role == RoleEnum.doctor and appointment.doctor_id != current_user.id:
+    if (
+        current_user.role == RoleEnum.doctor
+        and appointment.doctor_id != current_user.id
+    ):
         raise ForbiddenException("You can only mark your own appointments as no-show")
 
     return SuccessResponse(content=appointment_service.no_show(appointment_id))
 
 
-@router.put("/{appointment_id}", response_model=SuccessResponse[AppointmentResponse], status_code=status.HTTP_200_OK)
+@router.put(
+    "/{appointment_id}",
+    response_model=SuccessResponse[AppointmentResponse],
+    status_code=status.HTTP_200_OK,
+)
 def update_appointment(
     appointment_id: uuid.UUID,
     data: AppointmentUpdate,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_admin)
+    current_user: UserModel = Depends(get_current_admin),
 ):
     """
     Update appointment details.
@@ -362,7 +431,7 @@ def update_appointment(
 def delete_appointment(
     appointment_id: uuid.UUID,
     appointment_service: AppointmentService = Depends(get_appointment_service),
-    current_user: UserModel = Depends(get_current_admin)
+    current_user: UserModel = Depends(get_current_admin),
 ):
     """
     Delete an appointment.

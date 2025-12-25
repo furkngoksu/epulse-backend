@@ -1,8 +1,7 @@
 import uuid
 import logging
-from datetime import datetime, timedelta, timezone, date, time
+from datetime import datetime, timedelta, timezone, date
 import math
-from zoneinfo import ZoneInfo
 
 from app.exceptions.exceptions import NotFoundException, BadRequestException
 from app.models.medication import MedicationModel
@@ -11,9 +10,16 @@ from app.models.schedule import ScheduleModel
 from app.models.schedule_time import ScheduleTimeModel, DoseStatusEnum
 from app.repositories.medication_repository import MedicationRepository
 from app.repositories.patient_medication_repository import PatientMedicationRepository
-from app.repositories.schedule_repository import ScheduleRepository, ScheduleTimeRepository
+from app.repositories.schedule_repository import (
+    ScheduleRepository,
+    ScheduleTimeRepository,
+)
 from app.repositories.medication_alias_repository import MedicationAliasRepository
-from app.schemas.medication import MedicationCreate, MedicationUpdate, MedicationResponse
+from app.schemas.medication import (
+    MedicationCreate,
+    MedicationUpdate,
+    MedicationResponse,
+)
 from app.schemas.patient_medication import (
     PatientMedicationUpdate,
     PatientMedicationResponse,
@@ -25,6 +31,7 @@ from app.schemas.medication_alias import MedicationAliasResponse
 from app.models.medication_alias import MedicationAliasModel
 
 logger = logging.getLogger(__name__)
+
 
 class MedicationService:
     def __init__(
@@ -60,7 +67,9 @@ class MedicationService:
         med = self.med_repo.create(model)
         return MedicationResponse.model_validate(med)
 
-    def update_catalog_medication(self, medication_id: uuid.UUID, data: MedicationUpdate) -> MedicationResponse:
+    def update_catalog_medication(
+        self, medication_id: uuid.UUID, data: MedicationUpdate
+    ) -> MedicationResponse:
         med = self.med_repo.get_by_id(medication_id)
         if not med:
             raise NotFoundException("Medication not found")
@@ -88,7 +97,6 @@ class MedicationService:
         skip: int = 0,
         limit: int = 100,
     ) -> list[PatientMedicationResponse]:
-
         if status == "active":
             is_active = True
         elif status == "paused":
@@ -138,7 +146,6 @@ class MedicationService:
         pm = self.pm_repo.update(pm)
         return PatientMedicationResponse.model_validate(pm)
 
-
     def delete_patient_medication(
         self,
         patient_medication_id: uuid.UUID,
@@ -153,25 +160,30 @@ class MedicationService:
 
         self.pm_repo.delete(pm)
 
-    
-    def get_upcoming_patient_medications(self, patient_id: uuid.UUID, hours: int) -> list[PatientMedicationResponse]:
+    def get_upcoming_patient_medications(
+        self, patient_id: uuid.UUID, hours: int
+    ) -> list[PatientMedicationResponse]:
         now = datetime.now(timezone.utc)
         end = now + timedelta(hours=hours)
-        meds = self.pm_repo.get_upcoming_medications(patient_id=patient_id, now=now, end=end)
+        meds = self.pm_repo.get_upcoming_medications(
+            patient_id=patient_id, now=now, end=end
+        )
         return [PatientMedicationResponse.model_validate(m) for m in meds]
 
     def get_patient_medications_between(
         self, patient_id: uuid.UUID, range_start: date, range_end: date
     ) -> list[PatientMedicationResponse]:
-        rows = self.pm_repo.get_medications_for_date_range(patient_id, range_start, range_end)
+        rows = self.pm_repo.get_medications_for_date_range(
+            patient_id, range_start, range_end
+        )
         return [PatientMedicationResponse.model_validate(pm) for pm in rows]
-    
+
     def _iter_dates(self, start: date, end: date):
         d = start
         while d <= end:
             yield d
             d += timedelta(days=1)
-    
+
     def create_patient_medication_with_schedule(
         self,
         patient_id: uuid.UUID,
@@ -208,7 +220,9 @@ class MedicationService:
             for dt in times_utc
         ]
 
-        custom_name = data.custom_name or getattr(med, "commercial_name", None) or "Medication"
+        custom_name = (
+            data.custom_name or getattr(med, "commercial_name", None) or "Medication"
+        )
 
         schedule = ScheduleModel(
             start_date=start_date,
@@ -229,7 +243,7 @@ class MedicationService:
         )
 
         created = self.pm_repo.create(pm)
-        
+
         logger.info(
             "Patient medication created successfully",
             extra={
@@ -238,11 +252,10 @@ class MedicationService:
                 "schedule_times_count": len(schedule_times),
                 "start_date": str(start_date),
                 "end_date": str(end_date),
-            }
+            },
         )
-        
-        return PatientMedicationResponse.model_validate(created)
 
+        return PatientMedicationResponse.model_validate(created)
 
     # -------- #
     # Schedules and Schedule Times
@@ -257,7 +270,9 @@ class MedicationService:
         schedule = self.schedule_repo.create(schedule)
         return ScheduleResponse.model_validate(schedule)
 
-    def add_schedule_time(self, schedule_id: uuid.UUID, data: ScheduleTimeCreate) -> ScheduleTimeResponse:
+    def add_schedule_time(
+        self, schedule_id: uuid.UUID, data: ScheduleTimeCreate
+    ) -> ScheduleTimeResponse:
         schedule = self.schedule_repo.get_by_id(schedule_id)
         if not schedule:
             raise NotFoundException("Schedule not found")
@@ -270,11 +285,16 @@ class MedicationService:
         st = self.st_repo.create(st)
         return ScheduleTimeResponse.model_validate(st)
 
-    def mark_dose_taken(self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID, taken_at: datetime | None = None) -> ScheduleTimeResponse:
+    def mark_dose_taken(
+        self,
+        schedule_time_id: uuid.UUID,
+        current_user_id: uuid.UUID,
+        taken_at: datetime | None = None,
+    ) -> ScheduleTimeResponse:
         st = self.st_repo.get_by_id_with_patient_medication(schedule_time_id)
         if not st:
             raise NotFoundException("Schedule time not found")
-        
+
         pm = st.schedule.patient_medication
         if pm.user_id != current_user_id:
             raise BadRequestException("User does not own this schedule time")
@@ -295,7 +315,7 @@ class MedicationService:
                     "schedule_time_id": str(schedule_time_id),
                     "needed": need,
                     "current": pm.current_stock,
-                }
+                },
             )
             raise BadRequestException("Not enough stock")
 
@@ -306,19 +326,24 @@ class MedicationService:
         st.skip_reason = None
 
         st = self.st_repo.update(st)
-        
+
         logger.info(
             "Dose taken successfully",
             extra={
                 "schedule_time_id": str(schedule_time_id),
                 "patient_medication_id": str(pm.id),
                 "remaining_stock": pm.current_stock,
-            }
+            },
         )
-        
+
         return ScheduleTimeResponse.model_validate(st)
 
-    def mark_dose_skipped(self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID, reason: str | None = None) -> ScheduleTimeResponse:
+    def mark_dose_skipped(
+        self,
+        schedule_time_id: uuid.UUID,
+        current_user_id: uuid.UUID,
+        reason: str | None = None,
+    ) -> ScheduleTimeResponse:
         st = self.st_repo.get_by_id(schedule_time_id)
         if not st:
             raise NotFoundException("Schedule time not found")
@@ -332,12 +357,17 @@ class MedicationService:
         st.skip_reason = reason
 
         st = self.st_repo.update(st)
-        
-        logger.info("Dose skipped", extra={"schedule_time_id": str(schedule_time_id), "reason": reason})
-        
+
+        logger.info(
+            "Dose skipped",
+            extra={"schedule_time_id": str(schedule_time_id), "reason": reason},
+        )
+
         return ScheduleTimeResponse.model_validate(st)
 
-    def mark_dose_missed(self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID) -> ScheduleTimeResponse:
+    def mark_dose_missed(
+        self, schedule_time_id: uuid.UUID, current_user_id: uuid.UUID
+    ) -> ScheduleTimeResponse:
         st = self.st_repo.get_by_id(schedule_time_id)
         if not st:
             raise NotFoundException("Schedule time not found")

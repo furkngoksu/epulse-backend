@@ -1,6 +1,7 @@
 """
 Tests for doctor profile endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -20,10 +18,7 @@ def get_auth_token():
 def get_admin_token():
     """Helper function to get admin authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "00000000000",
-        "password": "adminpassword"
-    }
+    data = {"national_id": "00000000000", "password": "adminpassword"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -40,7 +35,7 @@ def create_sample_doctor_and_hospital():
         "address": "456 Medical Ave",
         "city": "Boston",
         "district": "Suffolk",
-        "phone": "+9876543210"
+        "phone": "+9876543210",
     }
 
     hospital_response = requests.post(hospital_url, json=hospital_data, headers=headers)
@@ -71,7 +66,7 @@ def test_create_doctor_profile():
         "license_number": "LIC123456",
         "years_of_experience": 10,
         "education": "MD from Harvard Medical School",
-        "bio": "Experienced cardiologist specializing in heart disease"
+        "bio": "Experienced cardiologist specializing in heart disease",
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -142,7 +137,7 @@ def test_update_doctor_profile(profile_id):
 
     data = {
         "years_of_experience": 15,
-        "bio": "Updated: Highly experienced cardiologist"
+        "bio": "Updated: Highly experienced cardiologist",
     }
 
     response = requests.put(url, json=data, headers=headers)

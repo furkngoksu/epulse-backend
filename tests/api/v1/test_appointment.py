@@ -1,6 +1,7 @@
 """
 Tests for appointment endpoints.
 """
+
 import requests
 from datetime import datetime, timedelta
 
@@ -10,10 +11,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -21,10 +19,7 @@ def get_auth_token():
 def get_admin_token():
     """Helper function to get admin authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "00000000000",
-        "password": "adminpassword"
-    }
+    data = {"national_id": "00000000000", "password": "adminpassword"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -34,7 +29,7 @@ def get_doctor_token():
     url = f"{BASE_URL}/auth/login"
     data = {
         "national_id": "11111111111",  # Doctor national ID
-        "password": "doctorpassword"
+        "password": "doctorpassword",
     }
     response = requests.post(url, json=data)
     return response.json()["access_token"]
@@ -45,7 +40,7 @@ def get_patient_token():
     url = f"{BASE_URL}/auth/login"
     data = {
         "national_id": "22222222222",  # Patient national ID
-        "password": "patientpassword"
+        "password": "patientpassword",
     }
     response = requests.post(url, json=data)
     return response.json()["access_token"]
@@ -64,7 +59,7 @@ def test_create_appointment():
     data = {
         "doctor_id": "00000000-0000-0000-0000-000000000001",  # Placeholder doctor ID
         "appointment_datetime": appointment_time.isoformat(),
-        "duration_minutes": 30
+        "duration_minutes": 30,
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -165,9 +160,7 @@ def test_book_appointment(appointment_id):
     token = get_patient_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    data = {
-        "reason": "Regular checkup"
-    }
+    data = {"reason": "Regular checkup"}
 
     response = requests.post(url, json=data, headers=headers)
 
@@ -232,9 +225,7 @@ def test_update_appointment(appointment_id):
     token = get_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    data = {
-        "duration_minutes": 45
-    }
+    data = {"duration_minutes": 45}
 
     response = requests.put(url, json=data, headers=headers)
 

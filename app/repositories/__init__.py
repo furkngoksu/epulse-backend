@@ -5,11 +5,11 @@ from .medication_repository import MedicationRepository
 from .patient_medication_repository import PatientMedicationRepository
 from .schedule_repository import ScheduleRepository, ScheduleTimeRepository
 from .doctor_profile_repository import DoctorProfileRepository
-from .hospital import HospitalRepository
-from .clinic import ClinicRepository
-from .user import UserRepository
-from .doctor_patient_relationship import DoctorPatientRelationshipRepository
-from .appointment import AppointmentRepository
+from .hospital_repository import HospitalRepository
+from .clinic_repository import ClinicRepository
+from .user_repository import UserRepository
+from .doctor_patient_repository import DoctorPatientRelationshipRepository
+from .appointment_repository import AppointmentRepository
 from .medication_alias_repository import MedicationAliasRepository
 
 __all__ = [

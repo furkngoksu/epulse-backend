@@ -4,13 +4,14 @@ from .exceptions import (
     ForbiddenException,
     NotFoundException,
     ConflictException,
-    PermissionDeniedException
+    PermissionDeniedException,
 )
+
 __all__ = [
     "BadRequestException",
     "UnauthorizedException",
     "ForbiddenException",
     "NotFoundException",
     "ConflictException",
-    "PermissionDeniedException"
+    "PermissionDeniedException",
 ]

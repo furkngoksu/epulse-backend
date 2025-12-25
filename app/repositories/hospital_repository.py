@@ -4,7 +4,6 @@ from app.models.hospital import Hospital
 
 
 class HospitalRepository:
-
     def __init__(self, db: Session):
         self.db = db
 

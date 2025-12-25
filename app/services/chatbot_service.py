@@ -9,7 +9,7 @@ from app.core.config import settings
 from app.exceptions.exceptions import (
     ServiceUnavailableException,
     BadGatewayException,
-    GatewayTimeoutException
+    GatewayTimeoutException,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,9 +22,7 @@ class ChatbotService:
 
     def __init__(self):
         self.client = (
-            OpenAI(api_key=settings.OPENAI_API_KEY)
-            if settings.OPENAI_API_KEY
-            else None
+            OpenAI(api_key=settings.OPENAI_API_KEY) if settings.OPENAI_API_KEY else None
         )
         self.assistant_id = settings.OPENAI_ASSISTANT_ID
 
@@ -45,11 +43,14 @@ class ChatbotService:
         thread_id = thread_id or self._create_thread()
         instructions = self._build_instructions(extra_context=extra_context)
 
-        logger.info("Chatbot query started", extra={
-            "thread_id": thread_id,
-            "is_new_thread": is_new_thread,
-            "has_context": extra_context is not None
-        })
+        logger.info(
+            "Chatbot query started",
+            extra={
+                "thread_id": thread_id,
+                "is_new_thread": is_new_thread,
+                "has_context": extra_context is not None,
+            },
+        )
 
         try:
             if extra_context and (persist_context or is_new_thread):
@@ -62,7 +63,9 @@ class ChatbotService:
                         f"{extra_context}"
                     ),
                 )
-                logger.debug("Patient context added to thread", extra={"thread_id": thread_id})
+                logger.debug(
+                    "Patient context added to thread", extra={"thread_id": thread_id}
+                )
 
             self.client.beta.threads.messages.create(
                 thread_id=thread_id,
@@ -78,10 +81,9 @@ class ChatbotService:
                 max_completion_tokens=4096,
             )
 
-            logger.debug("OpenAI run created", extra={
-                "thread_id": thread_id,
-                "run_id": run.id
-            })
+            logger.debug(
+                "OpenAI run created", extra={"thread_id": thread_id, "run_id": run.id}
+            )
 
             self._wait_for_run_completion(
                 thread_id=thread_id,
@@ -89,14 +91,16 @@ class ChatbotService:
             )
 
             answer = self._get_latest_assistant_message(thread_id)
-            
-            logger.info("Chatbot response generated successfully", extra={
-                "thread_id": thread_id,
-                "answer_length": len(answer)
-            })
-            
+
+            logger.info(
+                "Chatbot response generated successfully",
+                extra={"thread_id": thread_id, "answer_length": len(answer)},
+            )
+
         except OpenAIError as exc:
-            logger.error(f"OpenAI API error: {str(exc)}", extra={"thread_id": thread_id})
+            logger.error(
+                f"OpenAI API error: {str(exc)}", extra={"thread_id": thread_id}
+            )
             raise BadGatewayException("Chatbot failed to generate response") from exc
 
         return answer, thread_id
@@ -136,29 +140,34 @@ class ChatbotService:
             )
 
             if run.status == "completed":
-                logger.debug("Run completed", extra={
-                    "thread_id": thread_id,
-                    "run_id": run_id,
-                    "attempts": attempts
-                })
+                logger.debug(
+                    "Run completed",
+                    extra={
+                        "thread_id": thread_id,
+                        "run_id": run_id,
+                        "attempts": attempts,
+                    },
+                )
                 return run
 
             if run.status in {"failed", "cancelled", "expired"}:
-                logger.error(f"Run failed with status: {run.status}", extra={
-                    "thread_id": thread_id,
-                    "run_id": run_id,
-                    "status": run.status
-                })
+                logger.error(
+                    f"Run failed with status: {run.status}",
+                    extra={
+                        "thread_id": thread_id,
+                        "run_id": run_id,
+                        "status": run.status,
+                    },
+                )
                 raise BadGatewayException("Chatbot failed to generate response")
 
             attempts += 1
             time.sleep(0.5)
 
-        logger.error("Run timed out", extra={
-            "thread_id": thread_id,
-            "run_id": run_id,
-            "attempts": attempts
-        })
+        logger.error(
+            "Run timed out",
+            extra={"thread_id": thread_id, "run_id": run_id, "attempts": attempts},
+        )
         raise GatewayTimeoutException("Chatbot response timed out")
 
     def _get_latest_assistant_message(self, thread_id: str) -> str:
@@ -172,7 +181,9 @@ class ChatbotService:
             if message.role == "assistant" and message.content:
                 # Get the first text content block
                 first_content = message.content[0]
-                if hasattr(first_content, 'text') and hasattr(first_content.text, 'value'):  # type: ignore
+                if hasattr(first_content, "text") and hasattr(
+                    first_content.text, "value"
+                ):  # type: ignore
                     content = first_content.text.value.strip()  # type: ignore
                     if content:
                         return content

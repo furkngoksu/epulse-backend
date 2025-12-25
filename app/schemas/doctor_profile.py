@@ -32,6 +32,7 @@ class DoctorProfileResponse(BaseModel):
 
 class DoctorProfileDetailResponse(DoctorProfileResponse):
     """Detailed response with user and clinic information"""
+
     user: dict | None = None
     clinic: dict | None = None
 

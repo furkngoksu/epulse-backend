@@ -51,7 +51,9 @@ class PrescriptionRepository:
         limit: int = 50,
         status: Optional[Status] = None,
     ) -> list[PrescriptionModel]:
-        q = self.db.query(PrescriptionModel).filter(PrescriptionModel.doctor_id == doctor_id)
+        q = self.db.query(PrescriptionModel).filter(
+            PrescriptionModel.doctor_id == doctor_id
+        )
         if status is not None:
             q = q.filter(PrescriptionModel.status == status)
         return q.offset(skip).limit(limit).all()
@@ -63,7 +65,9 @@ class PrescriptionRepository:
         limit: int = 50,
         status: Optional[Status] = None,
     ) -> list[PrescriptionModel]:
-        q = self.db.query(PrescriptionModel).filter(PrescriptionModel.patient_id == patient_id)
+        q = self.db.query(PrescriptionModel).filter(
+            PrescriptionModel.patient_id == patient_id
+        )
         if status is not None:
             q = q.filter(PrescriptionModel.status == status)
         return q.offset(skip).limit(limit).all()

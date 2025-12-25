@@ -1,7 +1,6 @@
 import uuid
 from typing import List
 from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
 
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.schemas.base import SuccessResponse
@@ -9,7 +8,7 @@ from app.schemas.user import User, RoleEnum
 from app.schemas.doctor_patient_relationship import (
     DoctorPatientRelationshipCreate,
     DoctorPatientRelationshipResponse,
-    PatientSummary
+    PatientSummary,
 )
 from app.services.doctor_service import DoctorService
 from app.api.deps.services import get_doctor_service
@@ -23,7 +22,7 @@ def get_all_relationships(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_admin)
+    current_user: User = Depends(get_current_admin),
 ):
     """
     Get all doctor-patient relationships.
@@ -39,7 +38,7 @@ def get_patients_for_doctor(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all patients for a specific doctor with basic patient information.
@@ -66,7 +65,7 @@ def get_doctors_for_patient(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all doctors for a specific patient.
@@ -91,7 +90,7 @@ def get_doctors_for_patient(
 def get_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a doctor-patient relationship by ID.
@@ -105,7 +104,7 @@ def get_relationship(
 def create_relationship(
     data: DoctorPatientRelationshipCreate,
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Create a new doctor-patient relationship.
@@ -128,7 +127,7 @@ def create_relationship(
 def delete_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_admin)
+    current_user: User = Depends(get_current_admin),
 ):
     """
     Delete a doctor-patient relationship.

@@ -3,14 +3,18 @@ from sqlalchemy import UUID, String, Text
 from app.db.base import Base
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from app.models.prescription_item import PrescriptionItemModel
     from app.models.patient_medication import PatientMedicationModel
 
+
 class MedicationModel(Base):
     __tablename__ = "medications"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
     commercial_name: Mapped[str] = mapped_column(String(200), nullable=False)
     active_ingredients: Mapped[str] = mapped_column(String(500), nullable=False)
     dosage_form: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -18,5 +22,9 @@ class MedicationModel(Base):
     manufacturer: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
 
-    prescription_items: Mapped[list["PrescriptionItemModel"]] = relationship("PrescriptionItemModel", back_populates="medication")
-    patient_medications: Mapped[list["PatientMedicationModel"]] = relationship("PatientMedicationModel", back_populates="medication")
+    prescription_items: Mapped[list["PrescriptionItemModel"]] = relationship(
+        "PrescriptionItemModel", back_populates="medication"
+    )
+    patient_medications: Mapped[list["PatientMedicationModel"]] = relationship(
+        "PatientMedicationModel", back_populates="medication"
+    )

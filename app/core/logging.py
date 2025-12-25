@@ -1,10 +1,10 @@
 import logging
 import logging.config
-from logging.handlers import TimedRotatingFileHandler
 import os
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_FILE = "logs/app.log"
+
 
 def setup_logging():
     os.makedirs("logs", exist_ok=True)
@@ -15,12 +15,10 @@ def setup_logging():
         "formatters": {
             "default": {
                 "format": "%(asctime)s | %(levelname)-7s | %(name)s | req=%(request_id)s user=%(user_id)s | %(message)s",
-                "datefmt": "%Y-%m-%d %H:%M:%S"
+                "datefmt": "%Y-%m-%d %H:%M:%S",
             }
         },
-        "filters": {
-            "context": {"()": "app.core.log_context.ContextFilter"}
-        },
+        "filters": {"context": {"()": "app.core.log_context.ContextFilter"}},
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",

@@ -1,6 +1,7 @@
 """
 Tests for medication endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -20,10 +18,7 @@ def get_auth_token():
 def get_admin_token():
     """Helper function to get admin authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "00000000000",
-        "password": "adminpassword"
-    }
+    data = {"national_id": "00000000000", "password": "adminpassword"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -41,7 +36,7 @@ def test_create_medication():
         "dosage_form": "Tablet",
         "strength": "100mg",
         "manufacturer": "Generic Pharma",
-        "description": "Pain reliever and anti-inflammatory"
+        "description": "Pain reliever and anti-inflammatory",
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -113,9 +108,7 @@ def test_update_medication(medication_id):
     token = get_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    data = {
-        "description": "Updated description for Aspirin"
-    }
+    data = {"description": "Updated description for Aspirin"}
 
     response = requests.put(url, json=data, headers=headers)
 
