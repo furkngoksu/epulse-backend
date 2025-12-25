@@ -5,7 +5,6 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-
     DATABASE_URL: str
     JWT_SECRET_KEY: str
     JWT_REFRESH_SECRET_KEY: str
@@ -25,5 +24,6 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
 
 settings = get_settings()

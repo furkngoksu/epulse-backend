@@ -8,10 +8,14 @@ from app.schemas.medication_alias import MedicationAliasCreate, MedicationAliasR
 from app.schemas.user import User
 from app.services.medication_service import MedicationService
 
-router = APIRouter(prefix="/medications", tags=["medication-alias"])
+router = APIRouter()
 
 
-@router.post("/alias", response_model=SuccessResponse[MedicationAliasResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/alias",
+    response_model=SuccessResponse[MedicationAliasResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 def set_medication_alias(
     data: MedicationAliasCreate,
     svc: MedicationService = Depends(get_medication_service),
@@ -25,7 +29,11 @@ def set_medication_alias(
     return SuccessResponse(content=alias)
 
 
-@router.get("/aliases", response_model=SuccessResponse[list[MedicationAliasResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/aliases",
+    response_model=SuccessResponse[list[MedicationAliasResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_medication_aliases(
     svc: MedicationService = Depends(get_medication_service),
     patient: User = Depends(get_current_patient),

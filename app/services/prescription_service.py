@@ -3,7 +3,11 @@ import logging
 from itertools import combinations
 from typing import Optional
 
-from app.exceptions.exceptions import NotFoundException, BadRequestException, ForbiddenException
+from app.exceptions.exceptions import (
+    NotFoundException,
+    BadRequestException,
+    ForbiddenException,
+)
 from app.models import PrescriptionModel, PrescriptionItemModel
 from app.repositories import (
     PrescriptionRepository,
@@ -12,8 +16,16 @@ from app.repositories import (
     MedicationRepository,
 )
 from app.models.prescription import Status
-from app.schemas.prescription import PrescriptionCreate, PrescriptionUpdate, Prescription
-from app.schemas.prescription_item import PrescriptionItem, PrescriptionItemCreate, PrescriptionItemUpdate
+from app.schemas.prescription import (
+    PrescriptionCreate,
+    PrescriptionUpdate,
+    Prescription,
+)
+from app.schemas.prescription_item import (
+    PrescriptionItem,
+    PrescriptionItemCreate,
+    PrescriptionItemUpdate,
+)
 from app.schemas.drug_interaction import DrugInteractionResponse
 from app.schemas.user import User
 
@@ -91,7 +103,9 @@ class PrescriptionService:
     # Prescriptions
     # -------------------------
 
-    def create_prescription(self, doctor_id: uuid.UUID, data: PrescriptionCreate) -> Prescription:
+    def create_prescription(
+        self, doctor_id: uuid.UUID, data: PrescriptionCreate
+    ) -> Prescription:
         rx = PrescriptionModel(
             doctor_id=doctor_id,
             patient_id=data.patient_id,
@@ -99,10 +113,18 @@ class PrescriptionService:
             status=Status.inactive,
         )
         created = self.prescription_repo.create(prescription=rx)
-        logger.info("prescription_created", extra={"prescription_id": str(created.id), "patient_id": str(data.patient_id)})
+        logger.info(
+            "prescription_created",
+            extra={
+                "prescription_id": str(created.id),
+                "patient_id": str(data.patient_id),
+            },
+        )
         return Prescription.model_validate(created)
 
-    def get_prescription_by_id(self, prescription_id: uuid.UUID, current_user: User) -> Prescription:
+    def get_prescription_by_id(
+        self, prescription_id: uuid.UUID, current_user: User
+    ) -> Prescription:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id and rx.patient_id != current_user.id:
@@ -119,7 +141,9 @@ class PrescriptionService:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id:
-            raise ForbiddenException("You do not have permission to update this prescription")
+            raise ForbiddenException(
+                "You do not have permission to update this prescription"
+            )
 
         for k, v in data.model_dump(exclude_unset=True).items():
             setattr(rx, k, v)
@@ -127,11 +151,15 @@ class PrescriptionService:
         updated = self.prescription_repo.update(prescription=rx)
         return Prescription.model_validate(updated)
 
-    def delete_prescription(self, prescription_id: uuid.UUID, current_user: User) -> None:
+    def delete_prescription(
+        self, prescription_id: uuid.UUID, current_user: User
+    ) -> None:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id:
-            raise ForbiddenException("You do not have permission to delete this prescription")
+            raise ForbiddenException(
+                "You do not have permission to delete this prescription"
+            )
 
         self.prescription_repo.delete(rx)
 
@@ -139,7 +167,9 @@ class PrescriptionService:
     # Items
     # -------------------------
 
-    def get_all_prescription_items(self, prescription_id: uuid.UUID, current_user: User) -> list[PrescriptionItem]:
+    def get_all_prescription_items(
+        self, prescription_id: uuid.UUID, current_user: User
+    ) -> list[PrescriptionItem]:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id and rx.patient_id != current_user.id:
@@ -157,7 +187,9 @@ class PrescriptionService:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id:
-            raise ForbiddenException("You do not have permission to modify items for this prescription")
+            raise ForbiddenException(
+                "You do not have permission to modify items for this prescription"
+            )
 
         self._ensure_medication_exists(data.medication_id)
 
@@ -168,7 +200,13 @@ class PrescriptionService:
             duration=data.duration,
         )
         created = self.item_repo.create(item)
-        logger.info("prescription_item_added", extra={"prescription_id": str(prescription_id), "medication_id": str(data.medication_id)})
+        logger.info(
+            "prescription_item_added",
+            extra={
+                "prescription_id": str(prescription_id),
+                "medication_id": str(data.medication_id),
+            },
+        )
         return PrescriptionItem.model_validate(created)
 
     def add_prescription_items(
@@ -184,7 +222,9 @@ class PrescriptionService:
 
         # bulk add doctor-only endpoint
         if rx.doctor_id != current_user.id:
-            raise ForbiddenException("You do not have permission to modify items for this prescription")
+            raise ForbiddenException(
+                "You do not have permission to modify items for this prescription"
+            )
 
         med_ids = list({i.medication_id for i in items})
         for mid in med_ids:
@@ -239,7 +279,9 @@ class PrescriptionService:
     # Interactions
     # -------------------------
 
-    def check_prescription_interactions(self, prescription_id: uuid.UUID, current_user: User) -> list[DrugInteractionResponse]:
+    def check_prescription_interactions(
+        self, prescription_id: uuid.UUID, current_user: User
+    ) -> list[DrugInteractionResponse]:
         rx = self._get_rx_model(prescription_id)
 
         if rx.doctor_id != current_user.id and rx.patient_id != current_user.id:

@@ -6,17 +6,25 @@ from app.db.base import Base
 from sqlalchemy.orm import Mapped, mapped_column
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from app.models.user import UserModel
     from app.models.medication import MedicationModel
     from app.models.schedule import ScheduleModel
 
+
 class PatientMedicationModel(Base):
     __tablename__ = "patient_medications"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    medication_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("medications.id"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
+    )
+    medication_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("medications.id"), nullable=False
+    )
 
     custom_name: Mapped[str] = mapped_column(String(255), nullable=False)
 
@@ -28,9 +36,17 @@ class PatientMedicationModel(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
-    user: Mapped["UserModel"] = relationship("UserModel", back_populates="patient_medications", foreign_keys=[user_id])
-    medication: Mapped["MedicationModel"] = relationship("MedicationModel", back_populates="patient_medications", foreign_keys=[medication_id])
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="patient_medications", foreign_keys=[user_id]
+    )
+    medication: Mapped["MedicationModel"] = relationship(
+        "MedicationModel",
+        back_populates="patient_medications",
+        foreign_keys=[medication_id],
+    )
 
     schedules: Mapped[list["ScheduleModel"]] = relationship(
-        "ScheduleModel", back_populates="patient_medication", cascade="all, delete-orphan"
+        "ScheduleModel",
+        back_populates="patient_medication",
+        cascade="all, delete-orphan",
     )

@@ -18,7 +18,9 @@ class DrugInteractionRepository:
             .first()
         )
 
-    def get_by_medication_ids(self, med_id_1: uuid.UUID, med_id_2: uuid.UUID) -> DrugInteractionModel | None:
+    def get_by_medication_ids(
+        self, med_id_1: uuid.UUID, med_id_2: uuid.UUID
+    ) -> DrugInteractionModel | None:
         return (
             self.db.query(DrugInteractionModel)
             .filter(

@@ -5,7 +5,6 @@ from app.models.clinic import Clinic
 
 
 class DoctorProfileRepository:
-
     def __init__(self, db: Session):
         self.db = db
 
@@ -14,7 +13,7 @@ class DoctorProfileRepository:
             self.db.query(DoctorProfile)
             .options(
                 joinedload(DoctorProfile.user),
-                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital)
+                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital),
             )
             .offset(skip)
             .limit(limit)
@@ -26,7 +25,7 @@ class DoctorProfileRepository:
             self.db.query(DoctorProfile)
             .options(
                 joinedload(DoctorProfile.user),
-                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital)
+                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital),
             )
             .filter(DoctorProfile.id == profile_id)
             .first()
@@ -37,7 +36,7 @@ class DoctorProfileRepository:
             self.db.query(DoctorProfile)
             .options(
                 joinedload(DoctorProfile.user),
-                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital)
+                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital),
             )
             .filter(DoctorProfile.id == profile_id)
             .first()
@@ -51,7 +50,7 @@ class DoctorProfileRepository:
             self.db.query(DoctorProfile)
             .options(
                 joinedload(DoctorProfile.user),
-                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital)
+                joinedload(DoctorProfile.clinic).joinedload(Clinic.hospital),
             )
             .filter(DoctorProfile.clinic_id == clinic_id)
             .all()

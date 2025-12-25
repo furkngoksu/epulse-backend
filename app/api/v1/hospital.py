@@ -15,7 +15,7 @@ def get_hospitals(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all hospitals.
@@ -25,11 +25,13 @@ def get_hospitals(
     return hospitals
 
 
-@router.get("/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK)
+@router.get(
+    "/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK
+)
 def get_hospital(
     hospital_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a hospital by ID.
@@ -43,7 +45,7 @@ def get_hospital(
 def create_hospital(
     data: HospitalCreate,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Create a new hospital.
@@ -53,12 +55,14 @@ def create_hospital(
     return hospital
 
 
-@router.put("/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK)
+@router.put(
+    "/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK
+)
 def update_hospital(
     hospital_id: uuid.UUID,
     data: HospitalUpdate,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Update a hospital.
@@ -72,7 +76,7 @@ def update_hospital(
 def delete_hospital(
     hospital_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Delete a hospital.

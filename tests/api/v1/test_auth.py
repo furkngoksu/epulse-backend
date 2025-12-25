@@ -1,6 +1,7 @@
 """
 Tests for authentication endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -18,7 +19,7 @@ def test_register():
         "phone_number": "+1234567890",
         "password": "securepassword123",
         "date_of_birth": "1990-01-01",
-        "gender": "male"
+        "gender": "male",
     }
 
     response = requests.post(url, json=data)
@@ -36,10 +37,7 @@ def test_login():
     """Test user login endpoint."""
     url = f"{BASE_URL}/auth/login"
 
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
 
     response = requests.post(url, json=data)
 

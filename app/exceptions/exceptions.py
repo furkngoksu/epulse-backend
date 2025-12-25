@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from typing import Optional
 
+
 class BadRequestException(HTTPException):
     def __init__(self, message: str, fields: Optional[dict] = None):
         detail: dict[str, object] = {
@@ -10,10 +11,8 @@ class BadRequestException(HTTPException):
         if fields:
             detail["fields"] = fields
 
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=detail
-        )
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
 
 class UnauthorizedException(HTTPException):
     def __init__(self, message: str = "Unauthorized"):
@@ -23,6 +22,7 @@ class UnauthorizedException(HTTPException):
         }
         super().__init__(status.HTTP_401_UNAUTHORIZED, detail)
 
+
 class ForbiddenException(HTTPException):
     def __init__(self, message: str = "Forbidden"):
         detail: dict[str, object] = {
@@ -30,6 +30,7 @@ class ForbiddenException(HTTPException):
             "message": message,
         }
         super().__init__(status.HTTP_403_FORBIDDEN, detail)
+
 
 class NotFoundException(HTTPException):
     def __init__(self, message: str = "Not found"):
@@ -39,6 +40,7 @@ class NotFoundException(HTTPException):
         }
         super().__init__(status.HTTP_404_NOT_FOUND, detail)
 
+
 class ConflictException(HTTPException):
     def __init__(self, message: str = "Conflict"):
         detail: dict[str, object] = {
@@ -46,6 +48,7 @@ class ConflictException(HTTPException):
             "message": message,
         }
         super().__init__(status.HTTP_409_CONFLICT, detail)
+
 
 class PermissionDeniedException(HTTPException):
     def __init__(self, message: str = "Permission Denied"):

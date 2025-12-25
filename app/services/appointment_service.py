@@ -5,26 +5,37 @@ from datetime import datetime, date, time
 from app.models.appointment import Appointment, AppointmentStatusEnum
 from app.models.user import RoleEnum
 from app.models.doctor_patient_relationship import DoctorPatientRelationship
-from app.repositories.appointment import AppointmentRepository
-from app.repositories.user import UserRepository
-from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
-from app.schemas.appointment import AppointmentCreate, AppointmentUpdate, AppointmentBook
-from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
+from app.repositories.appointment_repository import AppointmentRepository
+from app.repositories.user_repository import UserRepository
+from app.repositories.doctor_patient_repository import (
+    DoctorPatientRelationshipRepository,
+)
+from app.schemas.appointment import (
+    AppointmentCreate,
+    AppointmentUpdate,
+    AppointmentBook,
+)
+from app.exceptions.exceptions import (
+    NotFoundException,
+    BadRequestException,
+    ConflictException,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class AppointmentService:
-
     def __init__(
         self,
         appointment_repository: AppointmentRepository,
         user_repository: UserRepository,
-        doctor_patient_relationship_repository: DoctorPatientRelationshipRepository
+        doctor_patient_relationship_repository: DoctorPatientRelationshipRepository,
     ):
         self.appointment_repository = appointment_repository
         self.user_repository = user_repository
-        self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
+        self.doctor_patient_relationship_repository = (
+            doctor_patient_relationship_repository
+        )
 
     def get_all(self, skip: int = 0, limit: int = 100) -> list[Appointment]:
         return self.appointment_repository.get_all(skip=skip, limit=limit)
@@ -42,7 +53,7 @@ class AppointmentService:
         limit: int = 100,
         status: AppointmentStatusEnum | None = None,
         from_date: datetime | None = None,
-        to_date: datetime | None = None
+        to_date: datetime | None = None,
     ) -> list[Appointment]:
         """Get all appointments for a specific doctor."""
         # Verify doctor exists and has doctor role
@@ -52,7 +63,9 @@ class AppointmentService:
         if doctor.role != RoleEnum.doctor:
             raise BadRequestException("User is not a doctor")
 
-        return self.appointment_repository.get_by_doctor(doctor_id, skip, limit, status, from_date, to_date)
+        return self.appointment_repository.get_by_doctor(
+            doctor_id, skip, limit, status, from_date, to_date
+        )
 
     def get_by_patient(
         self,
@@ -61,7 +74,7 @@ class AppointmentService:
         limit: int = 100,
         status: AppointmentStatusEnum | None = None,
         from_date: datetime | None = None,
-        to_date: datetime | None = None
+        to_date: datetime | None = None,
     ) -> list[Appointment]:
         """Get all appointments for a specific patient."""
         # Verify patient exists and has patient role
@@ -71,14 +84,16 @@ class AppointmentService:
         if patient.role != RoleEnum.patient:
             raise BadRequestException("User is not a patient")
 
-        return self.appointment_repository.get_by_patient(patient_id, skip, limit, status, from_date, to_date)
+        return self.appointment_repository.get_by_patient(
+            patient_id, skip, limit, status, from_date, to_date
+        )
 
     def get_free_appointments(
         self,
         skip: int = 0,
         limit: int = 100,
         doctor_id: uuid.UUID | None = None,
-        from_datetime: datetime | None = None
+        from_datetime: datetime | None = None,
     ) -> list[Appointment]:
         """Get available appointments for booking."""
         if doctor_id:
@@ -107,20 +122,27 @@ class AppointmentService:
             raise BadRequestException("Cannot create appointment in the past")
 
         # Check if doctor already has an appointment at this time
-        if not self.appointment_repository.check_doctor_availability(data.doctor_id, data.appointment_datetime):
+        if not self.appointment_repository.check_doctor_availability(
+            data.doctor_id, data.appointment_datetime
+        ):
             raise ConflictException("Doctor already has an appointment at this time")
 
         appointment = Appointment(
             doctor_id=data.doctor_id,
             appointment_datetime=data.appointment_datetime,
             notes=data.notes,
-            status=AppointmentStatusEnum.free
+            status=AppointmentStatusEnum.free,
         )
         created = self.appointment_repository.create(appointment)
-        logger.info("appointment_created", extra={"appointment_id": str(created.id), "doctor_id": str(data.doctor_id)})
+        logger.info(
+            "appointment_created",
+            extra={"appointment_id": str(created.id), "doctor_id": str(data.doctor_id)},
+        )
         return created
 
-    def book(self, appointment_id: uuid.UUID, patient_id: uuid.UUID, data: AppointmentBook) -> Appointment:
+    def book(
+        self, appointment_id: uuid.UUID, patient_id: uuid.UUID, data: AppointmentBook
+    ) -> Appointment:
         """Patient books a free appointment."""
         appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
@@ -135,7 +157,9 @@ class AppointmentService:
 
         # Check appointment status
         if appointment.status != AppointmentStatusEnum.free:
-            raise BadRequestException(f"Appointment is not available for booking (status: {appointment.status.value})")
+            raise BadRequestException(
+                f"Appointment is not available for booking (status: {appointment.status.value})"
+            )
 
         # Validate appointment is not in the past
         if appointment.appointment_datetime < datetime.now():
@@ -148,21 +172,30 @@ class AppointmentService:
             appointment.notes = data.notes
 
         # Create doctor-patient relationship if it doesn't exist
-        existing_relationship = self.doctor_patient_relationship_repository.get_by_doctor_and_patient(
-            appointment.doctor_id, patient_id
+        existing_relationship = (
+            self.doctor_patient_relationship_repository.get_by_doctor_and_patient(
+                appointment.doctor_id, patient_id
+            )
         )
         if not existing_relationship:
             relationship = DoctorPatientRelationship(
-                doctor_id=appointment.doctor_id,
-                patient_id=patient_id
+                doctor_id=appointment.doctor_id, patient_id=patient_id
             )
             self.doctor_patient_relationship_repository.create(relationship)
 
         updated = self.appointment_repository.update(appointment)
-        logger.info("appointment_booked", extra={"appointment_id": str(appointment_id), "patient_id": str(patient_id)})
+        logger.info(
+            "appointment_booked",
+            extra={
+                "appointment_id": str(appointment_id),
+                "patient_id": str(patient_id),
+            },
+        )
         return updated
 
-    def patient_cancel(self, appointment_id: uuid.UUID, patient_id: uuid.UUID) -> Appointment:
+    def patient_cancel(
+        self, appointment_id: uuid.UUID, patient_id: uuid.UUID
+    ) -> Appointment:
         """Patient cancels their booked appointment (reverts to free)."""
         appointment = self.appointment_repository.get_by_id(appointment_id)
         if not appointment:
@@ -174,11 +207,15 @@ class AppointmentService:
 
         # Check if appointment can be cancelled by patient
         if appointment.status != AppointmentStatusEnum.booked:
-            raise BadRequestException(f"Cannot cancel appointment with status: {appointment.status.value}")
+            raise BadRequestException(
+                f"Cannot cancel appointment with status: {appointment.status.value}"
+            )
 
         # Validate appointment is not in the past
         if appointment.appointment_datetime < datetime.now():
-            raise BadRequestException("Cannot cancel appointment that has already passed")
+            raise BadRequestException(
+                "Cannot cancel appointment that has already passed"
+            )
 
         # Revert to free status
         appointment.patient_id = None
@@ -186,7 +223,10 @@ class AppointmentService:
         appointment.notes = None
 
         updated = self.appointment_repository.update(appointment)
-        logger.info("appointment_cancelled_by_patient", extra={"appointment_id": str(appointment_id)})
+        logger.info(
+            "appointment_cancelled_by_patient",
+            extra={"appointment_id": str(appointment_id)},
+        )
         return updated
 
     def admin_cancel(self, appointment_id: uuid.UUID) -> Appointment:
@@ -196,8 +236,13 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Check if appointment can be cancelled
-        if appointment.status in [AppointmentStatusEnum.completed, AppointmentStatusEnum.no_show]:
-            raise BadRequestException(f"Cannot cancel appointment with status: {appointment.status.value}")
+        if appointment.status in [
+            AppointmentStatusEnum.completed,
+            AppointmentStatusEnum.no_show,
+        ]:
+            raise BadRequestException(
+                f"Cannot cancel appointment with status: {appointment.status.value}"
+            )
 
         if appointment.status == AppointmentStatusEnum.cancelled:
             raise BadRequestException("Appointment is already cancelled")
@@ -214,7 +259,9 @@ class AppointmentService:
 
         # Check if appointment can be completed
         if appointment.status != AppointmentStatusEnum.booked:
-            raise BadRequestException(f"Only booked appointments can be completed (current status: {appointment.status.value})")
+            raise BadRequestException(
+                f"Only booked appointments can be completed (current status: {appointment.status.value})"
+            )
 
         appointment.status = AppointmentStatusEnum.completed
 
@@ -228,7 +275,9 @@ class AppointmentService:
 
         # Check if appointment can be marked as no-show
         if appointment.status != AppointmentStatusEnum.booked:
-            raise BadRequestException(f"Only booked appointments can be marked as no-show (current status: {appointment.status.value})")
+            raise BadRequestException(
+                f"Only booked appointments can be marked as no-show (current status: {appointment.status.value})"
+            )
 
         appointment.status = AppointmentStatusEnum.no_show
 
@@ -241,8 +290,14 @@ class AppointmentService:
             raise NotFoundException("Appointment not found")
 
         # Cannot update cancelled, completed, or no_show appointments
-        if appointment.status in [AppointmentStatusEnum.cancelled, AppointmentStatusEnum.completed, AppointmentStatusEnum.no_show]:
-            raise BadRequestException(f"Cannot update appointment with status: {appointment.status.value}")
+        if appointment.status in [
+            AppointmentStatusEnum.cancelled,
+            AppointmentStatusEnum.completed,
+            AppointmentStatusEnum.no_show,
+        ]:
+            raise BadRequestException(
+                f"Cannot update appointment with status: {appointment.status.value}"
+            )
 
         # Update datetime if provided
         if data.appointment_datetime is not None:
@@ -254,7 +309,9 @@ class AppointmentService:
             if not self.appointment_repository.check_doctor_availability(
                 appointment.doctor_id, data.appointment_datetime, appointment.id
             ):
-                raise ConflictException("Doctor already has an appointment at this time")
+                raise ConflictException(
+                    "Doctor already has an appointment at this time"
+                )
 
             appointment.appointment_datetime = data.appointment_datetime
 
@@ -271,10 +328,7 @@ class AppointmentService:
         self.appointment_repository.delete(appointment)
 
     def create_multiple_free_appointments(
-        self,
-        doctor_id: uuid.UUID,
-        dates: list[date],
-        time_slots: list[time]
+        self, doctor_id: uuid.UUID, dates: list[date], time_slots: list[time]
     ) -> list[Appointment]:
         """Create multiple free appointment slots for a doctor on specified dates and time slots."""
         # Validate doctor exists and has doctor role
@@ -299,15 +353,19 @@ class AppointmentService:
                     continue
 
                 # Check if doctor already has an appointment at this time
-                if not self.appointment_repository.check_doctor_availability(doctor_id, appointment_datetime):
-                    errors.append(f"Doctor already has an appointment at {appointment_datetime}")
+                if not self.appointment_repository.check_doctor_availability(
+                    doctor_id, appointment_datetime
+                ):
+                    errors.append(
+                        f"Doctor already has an appointment at {appointment_datetime}"
+                    )
                     continue
 
                 # Create the appointment
                 appointment = Appointment(
                     doctor_id=doctor_id,
                     appointment_datetime=appointment_datetime,
-                    status=AppointmentStatusEnum.free
+                    status=AppointmentStatusEnum.free,
                 )
                 created_appointment = self.appointment_repository.create(appointment)
                 created_appointments.append(created_appointment)
@@ -331,7 +389,7 @@ class AppointmentService:
         from_date: date | None = None,
         to_date: date | None = None,
         skip: int = 0,
-        limit: int = 20
+        limit: int = 20,
     ) -> list[Appointment]:
         """Search for free appointments with advanced filtering."""
         return self.appointment_repository.search_free_appointments(
@@ -343,5 +401,5 @@ class AppointmentService:
             from_date=from_date,
             to_date=to_date,
             skip=skip,
-            limit=limit
+            limit=limit,
         )

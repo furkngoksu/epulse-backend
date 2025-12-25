@@ -6,16 +6,26 @@ from app.models.clinic import Clinic
 from app.models.doctor_profile import DoctorProfile
 from app.models.doctor_patient_relationship import DoctorPatientRelationship
 from app.models.user import RoleEnum
-from app.repositories.hospital import HospitalRepository
-from app.repositories.clinic import ClinicRepository
+from app.repositories.hospital_repository import HospitalRepository
+from app.repositories.clinic_repository import ClinicRepository
 from app.repositories.doctor_profile_repository import DoctorProfileRepository
-from app.repositories.doctor_patient_relationship import DoctorPatientRelationshipRepository
-from app.repositories.user import UserRepository
+from app.repositories.doctor_patient_repository import (
+    DoctorPatientRelationshipRepository,
+)
+from app.repositories.user_repository import UserRepository
 from app.schemas.hospital import HospitalCreate, HospitalUpdate
 from app.schemas.clinic import ClinicCreate, ClinicUpdate
-from app.schemas.doctor_profile import DoctorProfileCreate, DoctorProfileUpdate, DoctorProfileResponse
+from app.schemas.doctor_profile import (
+    DoctorProfileCreate,
+    DoctorProfileUpdate,
+    DoctorProfileResponse,
+)
 from app.schemas.doctor_patient_relationship import DoctorPatientRelationshipCreate
-from app.exceptions.exceptions import NotFoundException, BadRequestException, ConflictException
+from app.exceptions.exceptions import (
+    NotFoundException,
+    BadRequestException,
+    ConflictException,
+)
 
 if TYPE_CHECKING:
     from app.services.report_service import ReportService
@@ -35,12 +45,14 @@ class DoctorService:
         doctor_profile_repository: DoctorProfileRepository,
         doctor_patient_relationship_repository: DoctorPatientRelationshipRepository,
         user_repository: UserRepository,
-        report_service: "ReportService"
+        report_service: "ReportService",
     ):
         self.hospital_repository = hospital_repository
         self.clinic_repository = clinic_repository
         self.doctor_profile_repository = doctor_profile_repository
-        self.doctor_patient_relationship_repository = doctor_patient_relationship_repository
+        self.doctor_patient_relationship_repository = (
+            doctor_patient_relationship_repository
+        )
         self.user_repository = user_repository
         self.report_service = report_service
 
@@ -55,7 +67,7 @@ class DoctorService:
             hospital_id=profile.clinic.hospital_id,
             hospital_name=profile.clinic.hospital.name,
             clinic_id=profile.clinic_id,
-            clinic_name=profile.clinic.name
+            clinic_name=profile.clinic.name,
         )
 
     # ==================== Hospital Methods ====================
@@ -75,7 +87,7 @@ class DoctorService:
             address=data.address,
             city=data.city,
             district=data.district,
-            phone=data.phone
+            phone=data.phone,
         )
         return self.hospital_repository.create(hospital)
 
@@ -129,10 +141,7 @@ class DoctorService:
         if not hospital:
             raise NotFoundException("Hospital not found")
 
-        clinic = Clinic(
-            name=data.name,
-            hospital_id=data.hospital_id
-        )
+        clinic = Clinic(name=data.name, hospital_id=data.hospital_id)
         return self.clinic_repository.create(clinic)
 
     def update_clinic(self, clinic_id: uuid.UUID, data: ClinicUpdate) -> Clinic:
@@ -160,7 +169,9 @@ class DoctorService:
 
     # ==================== Doctor Profile Methods ====================
 
-    def get_all_doctor_profiles(self, skip: int = 0, limit: int = 100) -> list[DoctorProfileResponse]:
+    def get_all_doctor_profiles(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[DoctorProfileResponse]:
         profiles = self.doctor_profile_repository.get_all(skip=skip, limit=limit)
         return [self._to_doctor_profile_response(profile) for profile in profiles]
 
@@ -170,7 +181,9 @@ class DoctorService:
             raise NotFoundException("Doctor profile not found")
         return self._to_doctor_profile_response(profile)
 
-    def get_doctors_by_clinic(self, clinic_id: uuid.UUID) -> list[DoctorProfileResponse]:
+    def get_doctors_by_clinic(
+        self, clinic_id: uuid.UUID
+    ) -> list[DoctorProfileResponse]:
         # Verify clinic exists
         clinic = self.clinic_repository.get_by_id(clinic_id)
         if not clinic:
@@ -199,19 +212,24 @@ class DoctorService:
             raise NotFoundException("Clinic not found")
 
         profile = DoctorProfile(
-            id=data.user_id,
-            clinic_id=data.clinic_id,
-            specialty=data.specialty
+            id=data.user_id, clinic_id=data.clinic_id, specialty=data.specialty
         )
         created_profile = self.doctor_profile_repository.create(profile)
 
-        logger.info("Doctor profile created successfully", extra={"user_id": str(data.user_id), "clinic_id": str(data.clinic_id)})
+        logger.info(
+            "Doctor profile created successfully",
+            extra={"user_id": str(data.user_id), "clinic_id": str(data.clinic_id)},
+        )
 
         # Fetch the profile with all relations to return proper response
-        profile_with_relations = self.doctor_profile_repository.get_by_id(created_profile.id)
+        profile_with_relations = self.doctor_profile_repository.get_by_id(
+            created_profile.id
+        )
         return self._to_doctor_profile_response(profile_with_relations)
 
-    def update_doctor_profile(self, profile_id: uuid.UUID, data: DoctorProfileUpdate) -> DoctorProfileResponse:
+    def update_doctor_profile(
+        self, profile_id: uuid.UUID, data: DoctorProfileUpdate
+    ) -> DoctorProfileResponse:
         profile = self.doctor_profile_repository.get_by_id(profile_id)
         if not profile:
             raise NotFoundException("Doctor profile not found")
@@ -230,7 +248,9 @@ class DoctorService:
         updated_profile = self.doctor_profile_repository.update(profile)
 
         # Fetch the profile with all relations to return proper response
-        profile_with_relations = self.doctor_profile_repository.get_by_id(updated_profile.id)
+        profile_with_relations = self.doctor_profile_repository.get_by_id(
+            updated_profile.id
+        )
         return self._to_doctor_profile_response(profile_with_relations)
 
     def delete_doctor_profile(self, profile_id: uuid.UUID) -> None:
@@ -241,11 +261,19 @@ class DoctorService:
 
     # ==================== Doctor-Patient Relationship Methods ====================
 
-    def get_all_relationships(self, skip: int = 0, limit: int = 100) -> list[DoctorPatientRelationship]:
-        return self.doctor_patient_relationship_repository.get_all(skip=skip, limit=limit)
+    def get_all_relationships(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[DoctorPatientRelationship]:
+        return self.doctor_patient_relationship_repository.get_all(
+            skip=skip, limit=limit
+        )
 
-    def get_relationship_by_id(self, relationship_id: uuid.UUID) -> DoctorPatientRelationship:
-        relationship = self.doctor_patient_relationship_repository.get_by_id(relationship_id)
+    def get_relationship_by_id(
+        self, relationship_id: uuid.UUID
+    ) -> DoctorPatientRelationship:
+        relationship = self.doctor_patient_relationship_repository.get_by_id(
+            relationship_id
+        )
         if not relationship:
             raise NotFoundException("Doctor-patient relationship not found")
         return relationship
@@ -261,7 +289,9 @@ class DoctorService:
         if doctor.role != RoleEnum.doctor:
             raise BadRequestException("User is not a doctor")
 
-        return self.doctor_patient_relationship_repository.get_patients_for_doctor(doctor_id, skip, limit)
+        return self.doctor_patient_relationship_repository.get_patients_for_doctor(
+            doctor_id, skip, limit
+        )
 
     def get_doctor_patient_summaries(
         self, doctor_id: uuid.UUID, skip: int = 0, limit: int = 100
@@ -275,8 +305,10 @@ class DoctorService:
             raise BadRequestException("User is not a doctor")
 
         # Get basic patient list from repository
-        relationships = self.doctor_patient_relationship_repository.get_patients_for_doctor(
-            doctor_id, skip, limit
+        relationships = (
+            self.doctor_patient_relationship_repository.get_patients_for_doctor(
+                doctor_id, skip, limit
+            )
         )
 
         # Use ReportService to get statistics for each patient
@@ -287,15 +319,17 @@ class DoctorService:
             # Get basic stats from ReportService
             try:
                 stats = self.report_service.get_basic_stats(patient_id=patient_id)
-                patient_summaries.append({
-                    "patient_id": stats.patient_id,
-                    "first_name": stats.first_name,
-                    "last_name": stats.last_name,
-                    "age": stats.age,
-                    "active_prescriptions": stats.active_medications_count,
-                    "adherence_rate": stats.overall_adherence_rate,
-                    "pending_doses_today": stats.pending_doses_today,
-                })
+                patient_summaries.append(
+                    {
+                        "patient_id": stats.patient_id,
+                        "first_name": stats.first_name,
+                        "last_name": stats.last_name,
+                        "age": stats.age,
+                        "active_prescriptions": stats.active_medications_count,
+                        "adherence_rate": stats.overall_adherence_rate,
+                        "pending_doses_today": stats.pending_doses_today,
+                    }
+                )
             except Exception:
                 # If stats fail for a patient, skip them
                 continue
@@ -313,9 +347,13 @@ class DoctorService:
         if patient.role != RoleEnum.patient:
             raise BadRequestException("User is not a patient")
 
-        return self.doctor_patient_relationship_repository.get_doctors_for_patient(patient_id, skip, limit)
+        return self.doctor_patient_relationship_repository.get_doctors_for_patient(
+            patient_id, skip, limit
+        )
 
-    def create_doctor_patient_relationship(self, data: DoctorPatientRelationshipCreate) -> DoctorPatientRelationship:
+    def create_doctor_patient_relationship(
+        self, data: DoctorPatientRelationshipCreate
+    ) -> DoctorPatientRelationship:
         # Validate doctor exists and has doctor role
         doctor = self.user_repository.get_by_id(data.doctor_id)
         if not doctor:
@@ -328,25 +366,38 @@ class DoctorService:
         if not patient:
             raise NotFoundException(f"Patient with id {data.patient_id} not found")
         if patient.role != RoleEnum.patient:
-            raise BadRequestException(f"User with id {data.patient_id} is not a patient")
+            raise BadRequestException(
+                f"User with id {data.patient_id} is not a patient"
+            )
 
         # Check if relationship already exists
-        existing = self.doctor_patient_relationship_repository.get_by_doctor_and_patient(
-            data.doctor_id, data.patient_id
+        existing = (
+            self.doctor_patient_relationship_repository.get_by_doctor_and_patient(
+                data.doctor_id, data.patient_id
+            )
         )
         if existing:
-            raise ConflictException("Relationship between this doctor and patient already exists")
+            raise ConflictException(
+                "Relationship between this doctor and patient already exists"
+            )
 
         relationship = DoctorPatientRelationship(
-            doctor_id=data.doctor_id,
-            patient_id=data.patient_id
+            doctor_id=data.doctor_id, patient_id=data.patient_id
         )
         created = self.doctor_patient_relationship_repository.create(relationship)
-        logger.info("Doctor-patient relationship created successfully", extra={"doctor_id": str(data.doctor_id), "patient_id": str(data.patient_id)})
+        logger.info(
+            "Doctor-patient relationship created successfully",
+            extra={
+                "doctor_id": str(data.doctor_id),
+                "patient_id": str(data.patient_id),
+            },
+        )
         return created
 
     def delete_doctor_patient_relationship(self, relationship_id: uuid.UUID) -> None:
-        relationship = self.doctor_patient_relationship_repository.get_by_id(relationship_id)
+        relationship = self.doctor_patient_relationship_repository.get_by_id(
+            relationship_id
+        )
         if not relationship:
             raise NotFoundException("Doctor-patient relationship not found")
         self.doctor_patient_relationship_repository.delete(relationship)

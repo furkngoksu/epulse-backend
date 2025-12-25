@@ -1,6 +1,7 @@
 """
 Tests for doctor-patient relationship endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -20,10 +18,7 @@ def get_auth_token():
 def get_admin_token():
     """Helper function to get admin authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "00000000000",
-        "password": "adminpassword"
-    }
+    data = {"national_id": "00000000000", "password": "adminpassword"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -38,7 +33,7 @@ def test_create_relationship():
     # These would need to be valid doctor and patient IDs from your database
     data = {
         "doctor_id": "00000000-0000-0000-0000-000000000001",  # Placeholder
-        "patient_id": "00000000-0000-0000-0000-000000000002"  # Placeholder
+        "patient_id": "00000000-0000-0000-0000-000000000002",  # Placeholder
     }
 
     response = requests.post(url, json=data, headers=headers)

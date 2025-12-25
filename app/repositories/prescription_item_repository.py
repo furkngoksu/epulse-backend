@@ -10,7 +10,9 @@ class PrescriptionItemRepository:
     def get_all(self, skip: int = 0, limit: int = 50) -> list[PrescriptionItemModel]:
         return self.db.query(PrescriptionItemModel).offset(skip).limit(limit).all()
 
-    def get_by_id(self, prescription_item_id: uuid.UUID) -> PrescriptionItemModel | None:
+    def get_by_id(
+        self, prescription_item_id: uuid.UUID
+    ) -> PrescriptionItemModel | None:
         return (
             self.db.query(PrescriptionItemModel)
             .filter(PrescriptionItemModel.id == prescription_item_id)
@@ -37,7 +39,9 @@ class PrescriptionItemRepository:
         self.db.refresh(prescription_item)
         return prescription_item
 
-    def create_many(self, items: list[PrescriptionItemModel]) -> list[PrescriptionItemModel]:
+    def create_many(
+        self, items: list[PrescriptionItemModel]
+    ) -> list[PrescriptionItemModel]:
         if not items:
             return []
         self.db.add_all(items)

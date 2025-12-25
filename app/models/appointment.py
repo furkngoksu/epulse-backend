@@ -1,7 +1,7 @@
 import enum
 import uuid
 from datetime import datetime
-from sqlalchemy import String, Text, DateTime, ForeignKey, Enum as SAEnum
+from sqlalchemy import Text, DateTime, ForeignKey, Enum as SAEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import TYPE_CHECKING
@@ -18,6 +18,7 @@ class AppointmentStatusEnum(str, enum.Enum):
     completed = "completed"
     no_show = "no_show"
 
+
 class Appointment(Base):
     __tablename__ = "appointments"
 
@@ -32,7 +33,9 @@ class Appointment(Base):
     )
     appointment_datetime: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[AppointmentStatusEnum] = mapped_column(
-        SAEnum(AppointmentStatusEnum), nullable=False, default=AppointmentStatusEnum.free
+        SAEnum(AppointmentStatusEnum),
+        nullable=False,
+        default=AppointmentStatusEnum.free,
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 

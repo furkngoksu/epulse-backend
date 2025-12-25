@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.schemas.medication import MedicationResponse
 from app.schemas.schedule import ScheduleResponse
 
+
 class PatientMedicationFields(BaseModel):
     user_id: uuid.UUID
     medication_id: uuid.UUID

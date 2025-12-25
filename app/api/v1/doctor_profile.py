@@ -8,19 +8,23 @@ from app.schemas.base import SuccessResponse
 from app.schemas.doctor_profile import (
     DoctorProfileCreate,
     DoctorProfileUpdate,
-    DoctorProfileResponse
+    DoctorProfileResponse,
 )
 from app.services.doctor_service import DoctorService
 
 router = APIRouter()
 
 
-@router.get("/", response_model=SuccessResponse[list[DoctorProfileResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/",
+    response_model=SuccessResponse[list[DoctorProfileResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_doctor_profiles(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all doctor profiles.
@@ -30,11 +34,15 @@ def get_doctor_profiles(
     return SuccessResponse(content=profiles)
 
 
-@router.get("/clinic/{clinic_id}", response_model=SuccessResponse[list[DoctorProfileResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/clinic/{clinic_id}",
+    response_model=SuccessResponse[list[DoctorProfileResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_doctors_by_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get all doctors at a specific hospital.
@@ -44,11 +52,15 @@ def get_doctors_by_clinic(
     return SuccessResponse(content=profiles)
 
 
-@router.get("/{profile_id}", response_model=SuccessResponse[DoctorProfileResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{profile_id}",
+    response_model=SuccessResponse[DoctorProfileResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_doctor_profile(
     profile_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a doctor profile by ID.
@@ -58,11 +70,15 @@ def get_doctor_profile(
     return SuccessResponse(content=profile)
 
 
-@router.post("/", response_model=SuccessResponse[DoctorProfileResponse], status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=SuccessResponse[DoctorProfileResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 def create_doctor_profile(
     data: DoctorProfileCreate,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Create a new doctor profile.
@@ -72,12 +88,16 @@ def create_doctor_profile(
     return SuccessResponse(content=profile)
 
 
-@router.put("/{profile_id}", response_model=SuccessResponse[DoctorProfileResponse], status_code=status.HTTP_200_OK)
+@router.put(
+    "/{profile_id}",
+    response_model=SuccessResponse[DoctorProfileResponse],
+    status_code=status.HTTP_200_OK,
+)
 def update_doctor_profile(
     profile_id: uuid.UUID,
     data: DoctorProfileUpdate,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Update a doctor profile.
@@ -91,7 +111,7 @@ def update_doctor_profile(
 def delete_doctor_profile(
     profile_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
-    current_admin: User = Depends(get_current_admin)
+    current_admin: User = Depends(get_current_admin),
 ):
     """
     Delete a doctor profile.

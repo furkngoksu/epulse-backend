@@ -19,6 +19,7 @@ from app.repositories import (
     UserRepository,
 )
 
+
 # User Repository
 def get_user_repository(
     db: Session = Depends(get_db),

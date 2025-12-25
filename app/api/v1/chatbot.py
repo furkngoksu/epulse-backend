@@ -28,9 +28,9 @@ def _format_prescription(
     current_user: User,
 ) -> str:
     parts: list[str] = []
-    status_value = getattr(getattr(prescription, "status", None), "value", None) or getattr(
-        prescription, "status", None
-    )
+    status_value = getattr(
+        getattr(prescription, "status", None), "value", None
+    ) or getattr(prescription, "status", None)
     if status_value:
         parts.append(str(status_value))
     if getattr(prescription, "notes", None):
@@ -38,11 +38,15 @@ def _format_prescription(
 
     meds: list[str] = []
     try:
-        items = prescription_service.get_all_prescription_items(prescription.id, current_user)
+        items = prescription_service.get_all_prescription_items(
+            prescription.id, current_user
+        )
         for item in items:
-            med = prescription_service.med_repo.get_by_id(item.medication_id) if hasattr(
-                prescription_service, "med_repo"
-            ) else None
+            med = (
+                prescription_service.med_repo.get_by_id(item.medication_id)
+                if hasattr(prescription_service, "med_repo")
+                else None
+            )
             med_name = getattr(med, "commercial_name", None) if med else "Medication"
             med_strength = getattr(med, "strength", None) if med else None
             med_desc = med_name
@@ -104,7 +108,9 @@ def ask_chatbot(
                         getattr(appt, "city", None),
                         getattr(appt, "district", None),
                         getattr(appt, "doctor_name", None),
-                        f"notes: {appt.notes}" if getattr(appt, "notes", None) else None,
+                        f"notes: {appt.notes}"
+                        if getattr(appt, "notes", None)
+                        else None,
                     ]
                     if part
                 )
@@ -118,7 +124,9 @@ def ask_chatbot(
             status=PrescriptionStatus.active,
         )
         active_prescriptions = [
-            p for p in prescriptions if getattr(p, "status", None) == PrescriptionStatus.active
+            p
+            for p in prescriptions
+            if getattr(p, "status", None) == PrescriptionStatus.active
         ]
         if active_prescriptions:
             formatted_prescriptions = "; ".join(

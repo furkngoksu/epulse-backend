@@ -10,11 +10,13 @@ from enum import Enum
 if TYPE_CHECKING:
     from app.models.schedule import ScheduleModel
 
+
 class DoseStatusEnum(str, Enum):
     pending = "pending"
     taken = "taken"
     missed = "missed"
     skipped = "skipped"
+
 
 class ScheduleTimeModel(Base):
     __tablename__ = "schedule_times"
@@ -32,15 +34,13 @@ class ScheduleTimeModel(Base):
     )
 
     status: Mapped[DoseStatusEnum] = mapped_column(
-        SQLEnum(DoseStatusEnum),
-        default=DoseStatusEnum.pending,
-        nullable=False
+        SQLEnum(DoseStatusEnum), default=DoseStatusEnum.pending, nullable=False
     )
 
     taken_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    
+
     skip_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     schedule: Mapped["ScheduleModel"] = relationship(

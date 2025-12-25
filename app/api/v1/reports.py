@@ -18,10 +18,14 @@ from app.schemas.user import User
 from app.services.report_service import ReportService
 from app.services.user_service import UserService
 
-router = APIRouter(prefix="/reports", tags=["Reports"])
+router = APIRouter()
 
 
-@router.get("/{patient_id}/adherence-rate", response_model=SuccessResponse[AdherenceRateResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{patient_id}/adherence-rate",
+    response_model=SuccessResponse[AdherenceRateResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_adherence_rate(
     patient_id: UUID,
     start_date: date = Query(..., description="Start date for the report"),
@@ -42,12 +46,18 @@ def get_adherence_rate(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/dose-count", response_model=SuccessResponse[DoseCountResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{patient_id}/dose-count",
+    response_model=SuccessResponse[DoseCountResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_dose_count(
     patient_id: UUID,
     start_date: date = Query(..., description="Start date for the report"),
     end_date: date = Query(..., description="End date for the report"),
-    status: DoseStatusEnum = Query(..., description="Dose status to count (pending, taken, missed, skipped)"),
+    status: DoseStatusEnum = Query(
+        ..., description="Dose status to count (pending, taken, missed, skipped)"
+    ),
     current_user: User = Depends(get_current_user),
     report_service: ReportService = Depends(get_report_service),
 ) -> SuccessResponse[DoseCountResponse]:
@@ -63,7 +73,11 @@ def get_dose_count(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/active-medications", response_model=SuccessResponse[list[MedicationAdherenceResponse]], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{patient_id}/active-medications",
+    response_model=SuccessResponse[list[MedicationAdherenceResponse]],
+    status_code=status.HTTP_200_OK,
+)
 def get_active_medications(
     patient_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -76,7 +90,11 @@ def get_active_medications(
     return SuccessResponse(content=result)
 
 
-@router.get("/{patient_id}/basic-stats", response_model=SuccessResponse[BasicStatsResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/{patient_id}/basic-stats",
+    response_model=SuccessResponse[BasicStatsResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_basic_stats(
     patient_id: UUID,
     current_user: User = Depends(get_current_user),
@@ -93,18 +111,14 @@ def get_basic_stats(
     return SuccessResponse(content=result)
 
 
-
-@router.get("/total-users", response_model=SuccessResponse[UserCountResponse], status_code=status.HTTP_200_OK)
+@router.get(
+    "/total-users",
+    response_model=SuccessResponse[UserCountResponse],
+    status_code=status.HTTP_200_OK,
+)
 def get_total_user_count(
     current_user: User = Depends(get_current_admin),
-    user_service: UserService = Depends(get_user_service)
+    user_service: UserService = Depends(get_user_service),
 ) -> SuccessResponse[UserCountResponse]:
-    """
-    Get user counts by role.
-    
-    Returns total number of users broken down by role (admin, doctor, patient).
-    
-    Requires admin authentication.
-    """
-    counts = user_service.get_user_counts_by_role()
-    return SuccessResponse(content=UserCountResponse(**counts))
+    result = user_service.get_user_counts_by_role()
+    return SuccessResponse(content=result)

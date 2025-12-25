@@ -22,5 +22,7 @@ class DoctorProfile(Base):
     specialty: Mapped[str] = mapped_column(String(100), nullable=False)
 
     # Relationships
-    user: Mapped["UserModel"] = relationship("UserModel", back_populates="doctor_profile")
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="doctor_profile"
+    )
     clinic: Mapped["Clinic"] = relationship("Clinic", back_populates="doctor_profiles")

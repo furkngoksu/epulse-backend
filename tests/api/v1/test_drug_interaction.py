@@ -1,6 +1,7 @@
 """
 Tests for drug interaction endpoints.
 """
+
 import requests
 
 BASE_URL = "http://127.0.0.1:8000/api/v1"
@@ -9,10 +10,7 @@ BASE_URL = "http://127.0.0.1:8000/api/v1"
 def get_auth_token():
     """Helper function to get authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "12345678901",
-        "password": "securepassword123"
-    }
+    data = {"national_id": "12345678901", "password": "securepassword123"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -20,10 +18,7 @@ def get_auth_token():
 def get_admin_token():
     """Helper function to get admin authentication token."""
     url = f"{BASE_URL}/auth/login"
-    data = {
-        "national_id": "00000000000",
-        "password": "adminpassword"
-    }
+    data = {"national_id": "00000000000", "password": "adminpassword"}
     response = requests.post(url, json=data)
     return response.json()["access_token"]
 
@@ -39,7 +34,7 @@ def create_sample_medications():
         "active_ingredients": "TestIngredient1",
         "dosage_form": "Tablet",
         "strength": "50mg",
-        "manufacturer": "Test Pharma"
+        "manufacturer": "Test Pharma",
     }
 
     med2_data = {
@@ -47,7 +42,7 @@ def create_sample_medications():
         "active_ingredients": "TestIngredient2",
         "dosage_form": "Capsule",
         "strength": "100mg",
-        "manufacturer": "Test Pharma"
+        "manufacturer": "Test Pharma",
     }
 
     response1 = requests.post(url, json=med1_data, headers=headers)
@@ -67,7 +62,7 @@ def test_create_drug_interaction(med1_id, med2_id):
         "medication_id_1": str(med1_id),
         "medication_id_2": str(med2_id),
         "severity": "moderate",
-        "description": "May cause increased drowsiness"
+        "description": "May cause increased drowsiness",
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -103,10 +98,7 @@ def test_check_drug_interaction(med1_id, med2_id):
 
     token = get_auth_token()
     headers = {"Authorization": f"Bearer {token}"}
-    params = {
-        "medication_id_1": str(med1_id),
-        "medication_id_2": str(med2_id)
-    }
+    params = {"medication_id_1": str(med1_id), "medication_id_2": str(med2_id)}
 
     response = requests.get(url, headers=headers, params=params)
 
@@ -157,7 +149,7 @@ def test_update_drug_interaction(interaction_id):
 
     data = {
         "severity": "severe",
-        "description": "Updated: May cause serious drowsiness"
+        "description": "Updated: May cause serious drowsiness",
     }
 
     response = requests.put(url, json=data, headers=headers)

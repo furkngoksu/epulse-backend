@@ -8,7 +8,9 @@ from app.api.v1.doctor_profile import router as doctor_profile_router
 from app.api.v1.patient_medications import router as medication_router
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.medication_alias import router as medication_alias_router
-from app.api.v1.doctor_patient_relationship import router as doctor_patient_relationship_router
+from app.api.v1.doctor_patient_relationship import (
+    router as doctor_patient_relationship_router,
+)
 from app.api.v1.appointment import router as appointment_router
 from app.api.v1.prescription import router as prescription_router
 from app.api.v1.schedule_times import router as schedule_time_router
@@ -22,14 +24,30 @@ app_router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 app_router.include_router(user_router, prefix="/user", tags=["User"])
 app_router.include_router(hospital_router, prefix="/hospitals", tags=["Hospitals"])
 app_router.include_router(clinic_router, prefix="/clinics", tags=["Clinics"])
-app_router.include_router(doctor_profile_router, prefix="/doctor-profiles", tags=["Doctor Profiles"])
-app_router.include_router(catalog_router)
-app_router.include_router(medication_alias_router)
-app_router.include_router(doctor_patient_relationship_router, prefix="/doctor-patient-relationships", tags=["Doctor-Patient Relationships"])
-app_router.include_router(appointment_router, prefix="/appointments", tags=["Appointments"])
-app_router.include_router(prescription_router)
-app_router.include_router(schedule_time_router)
-app_router.include_router(medication_router)
+app_router.include_router(
+    doctor_profile_router, prefix="/doctor-profiles", tags=["Doctor Profiles"]
+)
+app_router.include_router(catalog_router, prefix="/catalog", tags=["Catalog"])
+app_router.include_router(
+    medication_alias_router, prefix="/medications", tags=["medication-alias"]
+)
+app_router.include_router(
+    doctor_patient_relationship_router,
+    prefix="/doctor-patient-relationships",
+    tags=["Doctor-Patient Relationships"],
+)
+app_router.include_router(
+    appointment_router, prefix="/appointments", tags=["Appointments"]
+)
+app_router.include_router(
+    prescription_router, prefix="/prescriptions", tags=["Prescriptions"]
+)
+app_router.include_router(
+    schedule_time_router, prefix="/schedule-times", tags=["Schedule Times"]
+)
+app_router.include_router(
+    medication_router, prefix="/patient-medications", tags=["PatientMedications"]
+)
 app_router.include_router(test_router, tags=["Test"])
-app_router.include_router(reports_router)
+app_router.include_router(reports_router, prefix="/reports", tags=["Reports"])
 app_router.include_router(chatbot_router, prefix="/chatbot", tags=["Chatbot"])

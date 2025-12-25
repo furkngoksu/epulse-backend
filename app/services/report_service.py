@@ -1,19 +1,16 @@
 import uuid
 import logging
 from datetime import date, datetime, timezone
-from typing import Optional
 
-from sqlalchemy import func, case
 from sqlalchemy.orm import Session, selectinload
 
 from app.exceptions import NotFoundException
 from app.models.patient_medication import PatientMedicationModel
 from app.models.schedule import ScheduleModel
 from app.models.schedule_time import ScheduleTimeModel, DoseStatusEnum
-from app.models.user import UserModel
 from app.repositories.patient_medication_repository import PatientMedicationRepository
 from app.repositories.schedule_repository import ScheduleTimeRepository
-from app.repositories.user import UserRepository
+from app.repositories.user_repository import UserRepository
 from app.schemas.report import (
     AdherenceRateResponse,
     DoseCountResponse,
@@ -163,7 +160,9 @@ class ReportService:
                         patient_medication_id=pm.id,
                         medication_id=pm.medication_id,
                         custom_name=pm.custom_name,
-                        commercial_name=pm.medication.commercial_name if pm.medication else "",
+                        commercial_name=pm.medication.commercial_name
+                        if pm.medication
+                        else "",
                         adherence_rate=round(adherence_rate, 2),
                         total_doses=total_completed,
                         taken_doses=taken,
@@ -216,7 +215,7 @@ class ReportService:
                 ScheduleModel.patient_medication_id == PatientMedicationModel.id,
             )
             .filter(PatientMedicationModel.user_id == patient_id)
-            .filter(PatientMedicationModel.is_active == True)
+            .filter(PatientMedicationModel.is_active)
             .all()
         )
 

@@ -1,14 +1,15 @@
 import logging
 from uuid import UUID
-from app.repositories.user import UserRepository
+from app.repositories.user_repository import UserRepository
+from app.schemas.report import UserCountResponse
 from app.schemas.user import UserResponse, UserUpdate
 from app.models.user import RoleEnum
 from app.exceptions import NotFoundException, ConflictException, ForbiddenException
 
 logger = logging.getLogger(__name__)
 
-class UserService:
 
+class UserService:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
@@ -18,8 +19,12 @@ class UserService:
             raise NotFoundException("User not found")
         return UserResponse.model_validate(user)
 
-    def get_user_profile(self, current_user_id: UUID, current_user_role: RoleEnum, requested_user_id: UUID) -> UserResponse:
-
+    def get_user_profile(
+        self,
+        current_user_id: UUID,
+        current_user_role: RoleEnum,
+        requested_user_id: UUID,
+    ) -> UserResponse:
         # Authorization check
         if current_user_role != RoleEnum.admin:
             if current_user_id != requested_user_id:
@@ -49,8 +54,20 @@ class UserService:
             setattr(user, field, value)
 
         updated = self.user_repo.update(user)
-        logger.info("User profile updated successfully", extra={"user_id": str(user_id)})
+        logger.info(
+            "User profile updated successfully", extra={"user_id": str(user_id)}
+        )
         return UserResponse.model_validate(updated)
-    
-    def get_total_user_count(self) -> int:
-        return self.user_repo.get_total_count()
+
+    def get_user_counts_by_role(self) -> UserCountResponse:
+        total_users = self.user_repo.get_total_count()
+        total_admins = self.user_repo.get_count_by_role(RoleEnum.admin)
+        total_doctors = self.user_repo.get_count_by_role(RoleEnum.doctor)
+        total_patients = self.user_repo.get_count_by_role(RoleEnum.patient)
+
+        return UserCountResponse(
+            total_users=total_users,
+            total_admins=total_admins,
+            total_doctors=total_doctors,
+            total_patients=total_patients,
+        )
