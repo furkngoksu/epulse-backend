@@ -1,5 +1,7 @@
+import uuid
 from pydantic import BaseModel, Field
 from app.schemas.user import UserResponse
+from app.schemas.doctor_profile import DoctorProfileResponse
 from pydantic.networks import EmailStr
 from datetime import date
 
@@ -51,3 +53,26 @@ class ResetPasswordRequest(BaseModel):
 
 class ResetPasswordResponse(BaseModel):
     pass
+
+
+class RegisterDoctorRequest(BaseModel):
+    # User fields
+    national_id: str = Field(..., min_length=11, max_length=11)
+    first_name: str
+    last_name: str
+    email: str
+    phone_number: str
+    password: str
+    date_of_birth: str
+    gender: str
+
+    # Doctor profile fields
+    clinic_id: uuid.UUID
+    specialty: str = Field(..., min_length=1, max_length=100)
+
+
+class RegisterDoctorResponse(BaseModel):
+    user: UserResponse
+    doctor_profile: DoctorProfileResponse
+    access_token: str
+    refresh_token: str

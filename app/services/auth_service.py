@@ -6,12 +6,16 @@ from app.repositories import UserRepository
 from app.repositories.password_reset_request_repository import (
     PasswordResetRequestRepository,
 )
+from app.repositories.doctor_profile_repository import DoctorProfileRepository
+from app.repositories.clinic_repository import ClinicRepository
 from app.schemas.auth import (
     LoginRequest,
     RefreshTokenRequest,
     RegisterRequest,
     RegisterResponse,
     LoginResponse,
+    RegisterDoctorRequest,
+    RegisterDoctorResponse,
 )
 from app.schemas.password_reset import (
     ForgotPasswordRequest,
@@ -35,7 +39,9 @@ from app.exceptions import (
     BadRequestException,
 )
 from app.schemas.auth import UserResponse
-from app.models.user import UserModel
+from app.schemas.doctor_profile import DoctorProfileResponse
+from app.models.user import UserModel, RoleEnum
+from app.models.doctor_profile import DoctorProfile
 from app.models.password_reset_request import PasswordResetRequestModel
 from app.services.email_service import email_service
 
@@ -47,9 +53,13 @@ class AuthService:
         self,
         user_repository: UserRepository,
         reset_request_repository: PasswordResetRequestRepository,
+        doctor_profile_repository: DoctorProfileRepository,
+        clinic_repository: ClinicRepository,
     ):
         self.user_repository = user_repository
         self.reset_request_repository = reset_request_repository
+        self.doctor_profile_repository = doctor_profile_repository
+        self.clinic_repository = clinic_repository
 
     def register(self, request: RegisterRequest) -> RegisterResponse:
         existing_email = self.user_repository.get_by_email(email=request.email)
@@ -269,3 +279,89 @@ class AuthService:
         email_service.send_password_changed_notification(user.email)
 
         return ResetPasswordResponse()
+
+    # ==================== Doctor Registration ====================
+
+    def register_doctor(self, request: RegisterDoctorRequest) -> RegisterDoctorResponse:
+        # Validation phase
+        existing_email = self.user_repository.get_by_email(email=request.email)
+        if existing_email:
+            logger.warning(
+                "Register doctor failed: Email already exists",
+                extra={"email": request.email},
+            )
+            raise ConflictException("Email already exists")
+
+        existing_tc = self.user_repository.get_by_national_id(
+            national_id=request.national_id
+        )
+        if existing_tc:
+            logger.warning(
+                "Register doctor failed: National ID already exists",
+                extra={"national_id": request.national_id},
+            )
+            raise ConflictException("National ID already registered")
+
+        clinic = self.clinic_repository.get_by_id(request.clinic_id)
+        if not clinic:
+            logger.warning(
+                "Register doctor failed: Clinic not found",
+                extra={"clinic_id": str(request.clinic_id)},
+            )
+            raise NotFoundException("Clinic not found")
+
+        # Transaction phase - create user and profile atomically
+        password_hash = hash_password(request.password)
+        user = UserModel(
+            national_id=request.national_id,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            email=request.email,
+            phone_number=request.phone_number,
+            password_hash=password_hash,
+            date_of_birth=request.date_of_birth,
+            gender=request.gender,
+            role=RoleEnum.doctor,  # KEY: Set role to doctor
+        )
+
+        # Add user to session and flush to get ID without committing
+        self.user_repository.db.add(user)
+        self.user_repository.db.flush()
+
+        # Create doctor profile
+        profile = DoctorProfile(
+            id=user.id,  # FK to user
+            clinic_id=request.clinic_id,
+            specialty=request.specialty,
+        )
+
+        # Add profile and commit both together
+        self.doctor_profile_repository.db.add(profile)
+        self.user_repository.db.commit()
+
+        # Refresh to get relationships
+        self.user_repository.db.refresh(user)
+
+        # Generate tokens
+        access_token = create_access_token({"sub": str(user.id)})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+
+        # Get full profile with relationships
+        full_profile = self.doctor_profile_repository.get_by_id_with_relations(user.id)
+
+        logger.info(
+            "Doctor registered successfully",
+            extra={
+                "user_id": str(user.id),
+                "role": user.role.value,
+                "clinic_id": str(request.clinic_id),
+                "specialty": request.specialty,
+            },
+        )
+
+        return RegisterDoctorResponse(
+            user=UserResponse.model_validate(user),
+            doctor_profile=DoctorProfileResponse.model_validate(full_profile),
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )

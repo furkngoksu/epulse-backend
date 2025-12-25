@@ -5,6 +5,8 @@ from app.repositories import UserRepository
 from app.repositories.password_reset_request_repository import (
     PasswordResetRequestRepository,
 )
+from app.repositories.doctor_profile_repository import DoctorProfileRepository
+from app.repositories.clinic_repository import ClinicRepository
 from app.exceptions.exceptions import UnauthorizedException, ForbiddenException
 from app.schemas.user import User
 from app.models.user import RoleEnum
@@ -70,4 +72,11 @@ def get_auth_service(
     db: Session = Depends(get_db),
 ) -> AuthService:
     reset_repo = PasswordResetRequestRepository(db)
-    return AuthService(user_repository=user_repo, reset_request_repository=reset_repo)
+    doctor_profile_repo = DoctorProfileRepository(db)
+    clinic_repo = ClinicRepository(db)
+    return AuthService(
+        user_repository=user_repo,
+        reset_request_repository=reset_repo,
+        doctor_profile_repository=doctor_profile_repo,
+        clinic_repository=clinic_repo,
+    )

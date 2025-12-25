@@ -6,7 +6,10 @@ from app.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
     LoginResponse,
+    RegisterDoctorRequest,
+    RegisterDoctorResponse,
 )
+from app.schemas.user import User
 from app.schemas.password_reset import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
@@ -16,7 +19,7 @@ from app.schemas.password_reset import (
     ResetPasswordResponse,
 )
 from app.services import AuthService
-from app.api.deps.auth import get_auth_service
+from app.api.deps.auth import get_auth_service, get_current_admin
 from app.schemas.base import SuccessResponse
 
 router = APIRouter()
@@ -31,6 +34,31 @@ def register(
     request: RegisterRequest, auth: AuthService = Depends(get_auth_service)
 ) -> SuccessResponse[RegisterResponse]:
     response = auth.register(request)
+    return SuccessResponse(content=response)
+
+
+@router.post(
+    "/register-doctor",
+    response_model=SuccessResponse[RegisterDoctorResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+def register_doctor(
+    request: RegisterDoctorRequest,
+    auth: AuthService = Depends(get_auth_service),
+    current_admin: User = Depends(get_current_admin),
+) -> SuccessResponse[RegisterDoctorResponse]:
+    """
+    Register a new doctor with both user account and doctor profile.
+
+    **Admin only** - Requires admin role.
+
+    This endpoint creates:
+    - User account with role='doctor'
+    - Doctor profile with specialty and clinic assignment
+
+    Returns user details, doctor profile, and authentication tokens.
+    """
+    response = auth.register_doctor(request)
     return SuccessResponse(content=response)
 
 
