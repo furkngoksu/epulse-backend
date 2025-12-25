@@ -21,7 +21,7 @@ class ScheduleTimeResponse(BaseModel):
 
 
 class MarkDoseTakenRequest(BaseModel):
-    taken_at: datetime | None = None
+    taken_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 class MarkDoseSkippedRequest(BaseModel):
