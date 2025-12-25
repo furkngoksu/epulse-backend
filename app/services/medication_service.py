@@ -321,6 +321,17 @@ class MedicationService:
 
         pm.current_stock -= need
 
+        # Check if medication is depleted
+        if pm.current_stock <= 0:
+            pm.is_active = False
+            logger.warning(
+                "Medication depleted - marked as inactive",
+                extra={
+                    "patient_medication_id": str(pm.id),
+                    "medication_name": pm.custom_name,
+                },
+            )
+
         st.status = DoseStatusEnum.taken
         st.taken_at = taken_at or datetime.now(timezone.utc)
         st.skip_reason = None
@@ -333,6 +344,7 @@ class MedicationService:
                 "schedule_time_id": str(schedule_time_id),
                 "patient_medication_id": str(pm.id),
                 "remaining_stock": pm.current_stock,
+                "is_active": pm.is_active,
             },
         )
 
