@@ -26,9 +26,7 @@ def get_clinics(
     return SuccessResponse(content=clinics)
 
 
-@router.get(
-    "/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK
-)
+@router.get("/{clinic_id}", response_model=SuccessResponse[ClinicResponse], status_code=status.HTTP_200_OK)
 def get_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
@@ -56,9 +54,7 @@ def create_clinic(
     return SuccessResponse(content=clinic)
 
 
-@router.put(
-    "/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK
-)
+@router.put("/{clinic_id}", response_model=SuccessResponse[ClinicResponse], status_code=status.HTTP_200_OK)
 def update_clinic(
     clinic_id: uuid.UUID,
     data: ClinicUpdate,

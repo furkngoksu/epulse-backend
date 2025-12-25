@@ -78,7 +78,7 @@ class ChatbotService:
                 assistant_id=self.assistant_id,
                 instructions=instructions,
                 temperature=0.2,
-                max_completion_tokens=400,
+                max_completion_tokens=4096,
             )
 
             logger.debug(

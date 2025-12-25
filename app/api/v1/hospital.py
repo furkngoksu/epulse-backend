@@ -26,9 +26,7 @@ def get_hospitals(
     return SuccessResponse(content=hospitals)
 
 
-@router.get(
-    "/{hospital_id}", response_model=HospitalResponse, status_code=status.HTTP_200_OK
-)
+@router.get("/{hospital_id}", response_model=SuccessResponse[HospitalResponse], status_code=status.HTTP_200_OK)
 def get_hospital(
     hospital_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),

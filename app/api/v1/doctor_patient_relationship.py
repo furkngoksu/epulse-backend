@@ -17,11 +17,7 @@ from app.exceptions.exceptions import ForbiddenException
 router = APIRouter()
 
 
-@router.get(
-    "/",
-    response_model=List[DoctorPatientRelationshipResponse],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/", response_model=SuccessResponse[List[DoctorPatientRelationshipResponse]], status_code=status.HTTP_200_OK)
 def get_all_relationships(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -36,11 +32,7 @@ def get_all_relationships(
     return SuccessResponse(content=relationships)
 
 
-@router.get(
-    "/doctor/{doctor_id}/patients",
-    response_model=List[PatientSummary],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/doctor/{doctor_id}/patients", response_model=SuccessResponse[List[PatientSummary]], status_code=status.HTTP_200_OK)
 def get_patients_for_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -67,11 +59,7 @@ def get_patients_for_doctor(
     return SuccessResponse(content=patient_summaries)
 
 
-@router.get(
-    "/patient/{patient_id}/doctors",
-    response_model=List[DoctorPatientRelationshipResponse],
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/patient/{patient_id}/doctors", response_model=SuccessResponse[List[DoctorPatientRelationshipResponse]], status_code=status.HTTP_200_OK)
 def get_doctors_for_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
@@ -98,11 +86,7 @@ def get_doctors_for_patient(
     return SuccessResponse(content=relationships)
 
 
-@router.get(
-    "/{relationship_id}",
-    response_model=DoctorPatientRelationshipResponse,
-    status_code=status.HTTP_200_OK,
-)
+@router.get("/{relationship_id}", response_model=SuccessResponse[DoctorPatientRelationshipResponse], status_code=status.HTTP_200_OK)
 def get_relationship(
     relationship_id: uuid.UUID,
     doctor_service: DoctorService = Depends(get_doctor_service),
@@ -116,11 +100,7 @@ def get_relationship(
     return SuccessResponse(content=relationship)
 
 
-@router.post(
-    "/",
-    response_model=DoctorPatientRelationshipResponse,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("/", response_model=SuccessResponse[DoctorPatientRelationshipResponse], status_code=status.HTTP_201_CREATED)
 def create_relationship(
     data: DoctorPatientRelationshipCreate,
     doctor_service: DoctorService = Depends(get_doctor_service),
