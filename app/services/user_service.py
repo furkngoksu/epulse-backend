@@ -51,43 +51,6 @@ class UserService:
         updated = self.user_repo.update(user)
         logger.info("User profile updated successfully", extra={"user_id": str(user_id)})
         return UserResponse.model_validate(updated)
-
-    def update_profile_photo(self, user_id: UUID, url: str):
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            raise NotFoundException("User not found")
-
-        user.profile_photo_url = url
-        updated = self.user_repo.update(user)
-        return UserResponse.model_validate(updated)
-
-    def admin_update_user(self, admin_id: UUID, user_id: UUID, data: UserUpdate):
-        admin = self.user_repo.get_by_id(admin_id)
-        if not admin or admin.role != RoleEnum.admin:
-            raise ForbiddenException("Only admin can modify these fields")
-
-        user = self.user_repo.get_by_id(user_id)
-        if not user:
-            raise NotFoundException("User not found")
-
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(user, field, value)
-
-        updated = self.user_repo.update(user)
-        return UserResponse.model_validate(updated)
     
     def get_total_user_count(self) -> int:
         return self.user_repo.get_total_count()
-    
-    def get_user_counts_by_role(self) -> dict[str, int]:
-        total_users = self.user_repo.get_total_count()
-        total_admins = self.user_repo.get_count_by_role(RoleEnum.admin)
-        total_doctors = self.user_repo.get_count_by_role(RoleEnum.doctor)
-        total_patients = self.user_repo.get_count_by_role(RoleEnum.patient)
-        
-        return {
-            "total_users": total_users,
-            "total_admins": total_admins,
-            "total_doctors": total_doctors,
-            "total_patients": total_patients
-        }
