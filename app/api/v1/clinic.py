@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps.auth import get_current_user, get_current_admin
 from app.api.deps.services import get_doctor_service
+from app.schemas.base import SuccessResponse
 from app.schemas.user import User
 from app.schemas.clinic import ClinicCreate, ClinicUpdate, ClinicResponse
 from app.services.doctor_service import DoctorService
@@ -10,7 +11,7 @@ from app.services.doctor_service import DoctorService
 router = APIRouter()
 
 
-@router.get("/", response_model=list[ClinicResponse], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=SuccessResponse[list[ClinicResponse]], status_code=status.HTTP_200_OK)
 def get_clinics(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -22,10 +23,10 @@ def get_clinics(
     Requires authentication.
     """
     clinics = service.get_all_clinics(skip=skip, limit=limit)
-    return clinics
+    return SuccessResponse(content=clinics)
 
 
-@router.get("/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK)
+@router.get("/{clinic_id}", response_model=SuccessResponse[ClinicResponse], status_code=status.HTTP_200_OK)
 def get_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
@@ -36,10 +37,10 @@ def get_clinic(
     Requires authentication.
     """
     clinic = service.get_clinic_by_id(clinic_id)
-    return clinic
+    return SuccessResponse(content=clinic)
 
 
-@router.post("/", response_model=ClinicResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=SuccessResponse[ClinicResponse], status_code=status.HTTP_201_CREATED)
 def create_clinic(
     data: ClinicCreate,
     service: DoctorService = Depends(get_doctor_service),
@@ -50,10 +51,10 @@ def create_clinic(
     Requires admin role.
     """
     clinic = service.create_clinic(data)
-    return clinic
+    return SuccessResponse(content=clinic)
 
 
-@router.put("/{clinic_id}", response_model=ClinicResponse, status_code=status.HTTP_200_OK)
+@router.put("/{clinic_id}", response_model=SuccessResponse[ClinicResponse], status_code=status.HTTP_200_OK)
 def update_clinic(
     clinic_id: uuid.UUID,
     data: ClinicUpdate,
@@ -65,10 +66,10 @@ def update_clinic(
     Requires admin role.
     """
     clinic = service.update_clinic(clinic_id, data)
-    return clinic
+    return SuccessResponse(content=clinic)
 
 
-@router.delete("/{clinic_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{clinic_id}", response_model=SuccessResponse[None], status_code=status.HTTP_200_OK)
 def delete_clinic(
     clinic_id: uuid.UUID,
     service: DoctorService = Depends(get_doctor_service),
@@ -79,3 +80,4 @@ def delete_clinic(
     Requires admin role.
     """
     service.delete_clinic(clinic_id)
+    return SuccessResponse(content=None)
