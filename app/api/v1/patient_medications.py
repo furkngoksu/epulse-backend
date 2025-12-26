@@ -73,7 +73,7 @@ def list_patient_medications_between(
 def list_patient_medications(
     status: str = Query("all", pattern="^(active|paused|all)$"),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = Query(300, ge=1, le=1000),
     svc: MedicationService = Depends(get_medication_service),
     current_user: User = Depends(get_current_user),
 ) -> SuccessResponse[list[PatientMedicationResponse]]:

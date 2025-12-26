@@ -14,7 +14,7 @@ router = APIRouter()
 @router.get("/", response_model=SuccessResponse[list[HospitalResponse]], status_code=status.HTTP_200_OK)
 def get_hospitals(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     service: DoctorService = Depends(get_doctor_service),
     current_user: User = Depends(get_current_user),
 ):

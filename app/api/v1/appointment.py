@@ -28,7 +28,7 @@ router = APIRouter()
 )
 def get_all_appointments(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     appointment_service: AppointmentService = Depends(get_appointment_service),
     current_user: UserModel = Depends(get_current_admin),
 ):
@@ -47,7 +47,7 @@ def get_all_appointments(
 )
 def get_free_appointments(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     doctor_id: uuid.UUID | None = Query(None),
     from_datetime: datetime | None = None,
     appointment_service: AppointmentService = Depends(get_appointment_service),
@@ -122,7 +122,7 @@ def search_free_appointments(
 def get_appointments_by_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     status: AppointmentStatusEnum | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
@@ -167,7 +167,7 @@ def get_appointments_by_doctor(
 def get_appointments_by_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     status: AppointmentStatusEnum | None = None,
     from_date: date | None = None,
     to_date: date | None = None,

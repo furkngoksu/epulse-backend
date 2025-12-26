@@ -27,7 +27,7 @@ router = APIRouter()
 )
 def list_medications(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = Query(300, ge=1, le=300),
     q: str | None = Query(None, min_length=1),
     svc: CatalogService = Depends(get_catalog_service),
     current_user: User = Depends(get_current_user),
@@ -140,7 +140,7 @@ def get_interactions_for_medication(
 )
 def get_all_interactions(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200),
+    limit: int = Query(300, ge=1, le=300),
     svc: CatalogService = Depends(get_catalog_service),
     current_admin: User = Depends(get_current_admin),
 ) -> SuccessResponse[list[DrugInteractionResponse]]:
