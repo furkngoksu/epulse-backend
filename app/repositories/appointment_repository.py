@@ -210,10 +210,6 @@ class AppointmentRepository:
 
         if from_date:
             from_datetime = datetime.combine(from_date, datetime.min.time())
-            # If from_date is in the past, set it to now + 1 day
-            now = datetime.now()
-            if from_datetime < now:
-                from_datetime = now + timedelta(days=1)
             query = query.filter(Appointment.appointment_datetime >= from_datetime)
         else:
             # By default, only show future appointments
