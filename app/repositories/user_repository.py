@@ -24,12 +24,38 @@ class UserRepository:
         return self.db.query(UserModel).offset(skip).limit(limit).all()
 
     def create(self, user: UserModel) -> UserModel:
+        # Convert enums to lowercase before saving
+        if isinstance(user.role, RoleEnum):
+            user.role = RoleEnum(user.role.value.lower())
+        elif isinstance(user.role, str):
+            user.role = RoleEnum(user.role.lower())
+
+        if hasattr(user, 'gender') and user.gender:
+            from app.models.user import GenderEnum
+            if isinstance(user.gender, GenderEnum):
+                user.gender = GenderEnum(user.gender.value.lower())
+            elif isinstance(user.gender, str):
+                user.gender = GenderEnum(user.gender.lower())
+
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
         return user
 
     def update(self, user: UserModel) -> UserModel:
+        # Convert enums to lowercase before saving
+        if isinstance(user.role, RoleEnum):
+            user.role = RoleEnum(user.role.value.lower())
+        elif isinstance(user.role, str):
+            user.role = RoleEnum(user.role.lower())
+
+        if hasattr(user, 'gender') and user.gender:
+            from app.models.user import GenderEnum
+            if isinstance(user.gender, GenderEnum):
+                user.gender = GenderEnum(user.gender.value.lower())
+            elif isinstance(user.gender, str):
+                user.gender = GenderEnum(user.gender.lower())
+
         self.db.merge(user)
         self.db.commit()
         self.db.refresh(user)

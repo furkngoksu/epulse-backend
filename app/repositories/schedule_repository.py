@@ -46,6 +46,12 @@ class ScheduleTimeRepository:
         )
 
     def create(self, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
+        # Convert enums to lowercase before saving
+        if isinstance(schedule_time.status, DoseStatusEnum):
+            schedule_time.status = DoseStatusEnum(schedule_time.status.value.lower())
+        elif isinstance(schedule_time.status, str):
+            schedule_time.status = DoseStatusEnum(schedule_time.status.lower())
+
         self.db.add(schedule_time)
         self.db.commit()
         self.db.refresh(schedule_time)
@@ -56,6 +62,14 @@ class ScheduleTimeRepository:
     ) -> list[ScheduleTimeModel]:
         if not schedule_times:
             return []
+
+        # Convert enums to lowercase before saving
+        for st in schedule_times:
+            if isinstance(st.status, DoseStatusEnum):
+                st.status = DoseStatusEnum(st.status.value.lower())
+            elif isinstance(st.status, str):
+                st.status = DoseStatusEnum(st.status.lower())
+
         self.db.add_all(schedule_times)
         self.db.commit()
         for st in schedule_times:
@@ -63,6 +77,12 @@ class ScheduleTimeRepository:
         return schedule_times
 
     def update(self, schedule_time: ScheduleTimeModel) -> ScheduleTimeModel:
+        # Convert enums to lowercase before saving
+        if isinstance(schedule_time.status, DoseStatusEnum):
+            schedule_time.status = DoseStatusEnum(schedule_time.status.value.lower())
+        elif isinstance(schedule_time.status, str):
+            schedule_time.status = DoseStatusEnum(schedule_time.status.lower())
+
         self.db.commit()
         self.db.refresh(schedule_time)
         return schedule_time

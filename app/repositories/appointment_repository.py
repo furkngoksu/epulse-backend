@@ -143,12 +143,24 @@ class AppointmentRepository:
         return query.first() is None
 
     def create(self, appointment: Appointment) -> Appointment:
+        # Convert enums to lowercase before saving
+        if isinstance(appointment.status, AppointmentStatusEnum):
+            appointment.status = AppointmentStatusEnum(appointment.status.value.lower())
+        elif isinstance(appointment.status, str):
+            appointment.status = AppointmentStatusEnum(appointment.status.lower())
+
         self.db.add(appointment)
         self.db.commit()
         self.db.refresh(appointment)
         return appointment
 
     def update(self, appointment: Appointment) -> Appointment:
+        # Convert enums to lowercase before saving
+        if isinstance(appointment.status, AppointmentStatusEnum):
+            appointment.status = AppointmentStatusEnum(appointment.status.value.lower())
+        elif isinstance(appointment.status, str):
+            appointment.status = AppointmentStatusEnum(appointment.status.lower())
+
         self.db.commit()
         self.db.refresh(appointment)
         return appointment
