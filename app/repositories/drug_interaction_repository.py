@@ -1,7 +1,7 @@
 import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from app.models.drug_interaction import DrugInteractionModel
+from app.models.drug_interaction import DrugInteractionModel, SeverityEnum
 
 
 class DrugInteractionRepository:
@@ -58,12 +58,24 @@ class DrugInteractionRepository:
         )
 
     def create(self, interaction: DrugInteractionModel) -> DrugInteractionModel:
+        # Convert enums to lowercase before saving
+        if isinstance(interaction.severity, SeverityEnum):
+            interaction.severity = SeverityEnum(interaction.severity.value.lower())
+        elif isinstance(interaction.severity, str):
+            interaction.severity = SeverityEnum(interaction.severity.lower())
+
         self.db.add(interaction)
         self.db.commit()
         self.db.refresh(interaction)
         return interaction
 
     def update(self, interaction: DrugInteractionModel) -> DrugInteractionModel:
+        # Convert enums to lowercase before saving
+        if isinstance(interaction.severity, SeverityEnum):
+            interaction.severity = SeverityEnum(interaction.severity.value.lower())
+        elif isinstance(interaction.severity, str):
+            interaction.severity = SeverityEnum(interaction.severity.lower())
+
         self.db.commit()
         self.db.refresh(interaction)
         return interaction

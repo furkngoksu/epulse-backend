@@ -30,12 +30,24 @@ class PrescriptionRepository:
         )
 
     def create(self, prescription: PrescriptionModel) -> PrescriptionModel:
+        # Convert enums to lowercase before saving
+        if isinstance(prescription.status, Status):
+            prescription.status = Status(prescription.status.value.lower())
+        elif isinstance(prescription.status, str):
+            prescription.status = Status(prescription.status.lower())
+
         self.db.add(prescription)
         self.db.commit()
         self.db.refresh(prescription)
         return prescription
 
     def update(self, prescription: PrescriptionModel) -> PrescriptionModel:
+        # Convert enums to lowercase before saving
+        if isinstance(prescription.status, Status):
+            prescription.status = Status(prescription.status.value.lower())
+        elif isinstance(prescription.status, str):
+            prescription.status = Status(prescription.status.lower())
+
         self.db.commit()
         self.db.refresh(prescription)
         return prescription
