@@ -359,9 +359,21 @@ class AuthService:
             },
         )
 
+        # Manually construct DoctorProfileResponse from related models
+        doctor_profile_response = DoctorProfileResponse(
+            id=full_profile.id,
+            first_name=full_profile.user.first_name,
+            last_name=full_profile.user.last_name,
+            specialty=full_profile.specialty,
+            hospital_id=full_profile.clinic.hospital_id,
+            hospital_name=full_profile.clinic.hospital.name,
+            clinic_id=full_profile.clinic_id,
+            clinic_name=full_profile.clinic.name,
+        )
+
         return RegisterDoctorResponse(
             user=UserResponse.model_validate(user),
-            doctor_profile=DoctorProfileResponse.model_validate(full_profile),
+            doctor_profile=doctor_profile_response,
             access_token=access_token,
             refresh_token=refresh_token,
         )
