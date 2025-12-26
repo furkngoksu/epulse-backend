@@ -20,7 +20,7 @@ router = APIRouter()
 @router.get("/", response_model=SuccessResponse[List[DoctorPatientRelationshipResponse]], status_code=status.HTTP_200_OK)
 def get_all_relationships(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     doctor_service: DoctorService = Depends(get_doctor_service),
     current_user: User = Depends(get_current_admin),
 ):
@@ -36,7 +36,7 @@ def get_all_relationships(
 def get_patients_for_doctor(
     doctor_id: uuid.UUID,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     doctor_service: DoctorService = Depends(get_doctor_service),
     current_user: User = Depends(get_current_user),
 ):
@@ -63,7 +63,7 @@ def get_patients_for_doctor(
 def get_doctors_for_patient(
     patient_id: uuid.UUID,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(300, ge=1, le=1000),
     doctor_service: DoctorService = Depends(get_doctor_service),
     current_user: User = Depends(get_current_user),
 ):
